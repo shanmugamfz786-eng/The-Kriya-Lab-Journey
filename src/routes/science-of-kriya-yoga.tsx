@@ -122,7 +122,7 @@ function SciencePage() {
           )}
         </p>
         <Link
-          to="/enroll"
+          to="/programs"
           className="mt-10 inline-block rounded-full bg-velvet px-8 py-3.5 text-sm text-primary-foreground transition-colors hover:bg-primary"
         >
           {t(bi("Experience Kriya Yoga", "கிரியா யோகத்தை அனுபவியுங்கள்"))} · {t(ui.begin)}

@@ -71,7 +71,7 @@ export function CTARow({ className }: { className?: string }) {
   return (
     <div className={cn("flex flex-wrap items-center gap-4", className)}>
       <Link
-        to="/enroll"
+        to="/programs"
         className="rounded-full bg-velvet px-7 py-3.5 text-sm text-primary-foreground transition-colors hover:bg-primary"
       >
         {t(ui.begin)}

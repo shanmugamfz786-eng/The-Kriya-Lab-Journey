@@ -62,7 +62,7 @@ function Index() {
 
             <div className="mt-11 flex flex-wrap items-center gap-4">
               <Link
-                to="/enroll"
+                to="/programs"
                 className="rounded-full bg-gold px-8 py-3.5 text-sm text-velvet-deep transition-opacity hover:opacity-90"
               >
                 {t(ui.begin)}

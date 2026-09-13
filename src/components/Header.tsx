@@ -1,5 +1,5 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { Menu, X, ArrowRight, Compass, Sparkles, BookOpen } from "lucide-react";
+import { Menu, X, ArrowRight, Compass, Sparkles, BookOpen, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { settings, ui } from "@/content/site";
 import { supabase } from "@/integrations/supabase/client";
@@ -184,15 +184,16 @@ function AccountLink({
 
   return (
     <Link
-      to={signedIn ? "/my-programs" : "/auth"}
+      to="/auth"
       onClick={onClick}
       className={cn(
-        "text-[0.82rem] tracking-wide transition-colors font-medium",
-        isTransparent ? "text-white/80 hover:text-white" : "text-muted-foreground hover:text-foreground",
+        "inline-flex items-center gap-1.5 text-[0.82rem] tracking-wide transition-colors font-medium hover:text-gold",
+        isTransparent ? "text-white/90 hover:text-gold" : "text-muted-foreground hover:text-foreground",
         className,
       )}
     >
-      {signedIn ? t(bi("My Programs", "என் நிகழ்ச்சிகள்")) : t(bi("Sign in", "உள்நுழை"))}
+      <User className="size-3.5 text-gold/90" />
+      <span>{t(bi("Sign in", "உள்நுழை"))}</span>
     </Link>
   );
 }
@@ -323,7 +324,7 @@ export function Header() {
               className={cn("px-1", isTransparent && "text-white hover:text-white hover:bg-white/10")}
             />
             <Link
-              to="/enroll"
+              to="/programs"
               className={cn(
                 "rounded-full px-4 sm:px-5 py-2 text-[0.82rem] font-medium transition-all shadow-xs whitespace-nowrap flex-shrink-0",
                 isTransparent
@@ -433,7 +434,7 @@ export function Header() {
                   className="border-gold/40 text-white hover:border-gold hover:text-gold hover:bg-white/5"
                 />
                 <Link
-                  to="/enroll"
+                  to="/programs"
                   onClick={() => setOpen(false)}
                   className="rounded-full bg-gold px-6 py-3 text-center text-sm font-medium text-velvet-deep transition-all hover:bg-gold/90 shadow-md"
                 >
