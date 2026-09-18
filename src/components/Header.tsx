@@ -97,8 +97,10 @@ const navigationGroups = [
 /** Fast-access links on the primary desktop header */
 const primaryHeaderNav = [
   { label: bi("Kriya Yoga", "கிரியா யோகம்"), to: "/kriya-yoga" },
-  { label: bi("Programs", "நிகழ்ச்சிகள்"), to: "/programs" },
-  { label: bi("Events", "நிகழ்வுகள்"), to: "/events" },
+  { label: bi("Science of Kriya Yoga", "யோக அறிவியல்"), to: "/science-of-kriya-yoga" },
+  { label: bi("The Kriya Lab", "தி கிரியா லேப்"), to: "/the-kriya-lab" },
+  { label: bi("Guru Lineage", "குரு பரம்பரை"), to: "/lineage" },
+  { label: bi("About the Teacher", "ஆசிரியர் பற்றி"), to: "/about" },
 ];
 
 function LanguageSwitcher({ className, isTransparent }: { className?: string; isTransparent?: boolean }) {
@@ -247,20 +249,19 @@ export function Header() {
       >
         <div
           className={cn(
-            "mx-auto flex h-20 w-full items-center justify-between px-3 sm:px-6 lg:px-8 transition-all",
-            lang === "ta" ? "max-w-[1400px]" : "max-w-7xl",
+            "mx-auto flex h-20 w-full items-center justify-between px-3 sm:px-5 lg:px-6 transition-all max-w-[1560px]",
           )}
         >
           {/* Brand Logo */}
           <Link
             to="/"
-            className="group flex flex-shrink-0 flex-col justify-center leading-none min-w-max mr-4"
+            className="group flex flex-shrink-0 flex-col justify-center leading-none min-w-max mr-2 sm:mr-3"
             onClick={() => setOpen(false)}
           >
             <span
               className={cn(
-                "font-serif tracking-[0.2em] transition-colors whitespace-nowrap",
-                lang === "ta" ? "text-lg sm:text-xl" : "text-xl sm:text-2xl",
+                "font-serif tracking-[0.18em] transition-colors whitespace-nowrap",
+                lang === "ta" ? "text-base sm:text-lg lg:text-xl" : "text-lg sm:text-xl lg:text-2xl",
                 isTransparent ? "text-white" : "text-foreground",
               )}
             >
@@ -268,8 +269,8 @@ export function Header() {
             </span>
             <span
               className={cn(
-                "mt-1 block tracking-[0.22em] transition-colors whitespace-nowrap",
-                lang === "ta" ? "text-[0.6rem] sm:text-[0.66rem]" : "text-[0.55rem] sm:text-[0.62rem] tracking-[0.28em]",
+                "mt-0.5 block transition-colors whitespace-nowrap",
+                lang === "ta" ? "text-[0.50rem] sm:text-[0.56rem] tracking-[0.14em]" : "text-[0.50rem] sm:text-[0.56rem] tracking-[0.24em]",
                 isTransparent ? "text-gold/90" : "text-muted-foreground",
               )}
             >
@@ -277,15 +278,16 @@ export function Header() {
             </span>
           </Link>
 
-          {/* Desktop Primary Nav + Menu Trigger */}
-          <div className={cn("hidden items-center md:flex", lang === "ta" ? "gap-6 lg:gap-8" : "gap-6")}>
-            <nav className={cn("flex items-center", lang === "ta" ? "gap-4 lg:gap-6" : "gap-6")} aria-label="Primary">
+          {/* Desktop Primary Nav + Menu Trigger (5 key items + Explore All) */}
+          <div className="hidden xl:flex items-center gap-3 2xl:gap-5">
+            <nav className={cn("flex items-center", lang === "ta" ? "gap-2 xl:gap-2.5 2xl:gap-4" : "gap-2.5 xl:gap-3.5 2xl:gap-4.5")} aria-label="Primary">
               {primaryHeaderNav.map((item) => (
                 <Link
                   key={item.to}
                   to={item.to}
                   className={cn(
-                    "text-[0.84rem] tracking-wide transition-colors font-medium hover:text-gold whitespace-nowrap",
+                    "tracking-wide transition-colors font-medium hover:text-gold whitespace-nowrap",
+                    lang === "ta" ? "text-[0.74rem] 2xl:text-[0.78rem]" : "text-[0.78rem] 2xl:text-[0.82rem]",
                     isTransparent
                       ? "text-white/85 [&.active]:text-gold font-light"
                       : "text-foreground/80 [&.active]:text-primary",
@@ -301,21 +303,20 @@ export function Header() {
               type="button"
               onClick={() => setOpen(true)}
               className={cn(
-                "flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[0.82rem] font-medium tracking-wide transition-all hover:scale-105 whitespace-nowrap",
-                lang === "ta" ? "mr-2 lg:mr-4" : "",
+                "flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[0.75rem] font-medium tracking-wide transition-all hover:scale-105 whitespace-nowrap",
                 isTransparent
                   ? "border-gold/40 bg-white/10 text-white hover:border-gold hover:bg-gold/20"
                   : "border-border bg-secondary/80 text-foreground hover:border-primary/40 hover:bg-secondary",
               )}
               aria-label="Open Explore Menu"
             >
-              <Menu className="size-4 text-gold" />
+              <Menu className="size-3 text-gold" />
               <span>{t(bi("Explore All", "அனைத்தும்"))}</span>
             </button>
           </div>
 
           {/* Right Controls */}
-          <div className={cn("hidden items-center sm:flex", lang === "ta" ? "gap-3 lg:gap-4" : "gap-4")}>
+          <div className={cn("hidden items-center sm:flex", lang === "ta" ? "gap-2 xl:gap-2.5" : "gap-2.5 xl:gap-3.5")}>
             <LanguageSwitcher isTransparent={isTransparent} />
             <AccountLink isTransparent={isTransparent} />
             <WhatsAppButton
@@ -326,7 +327,8 @@ export function Header() {
             <Link
               to="/programs"
               className={cn(
-                "rounded-full px-4 sm:px-5 py-2 text-[0.82rem] font-medium transition-all shadow-xs whitespace-nowrap flex-shrink-0",
+                "rounded-full font-medium transition-all shadow-xs whitespace-nowrap flex-shrink-0",
+                lang === "ta" ? "px-3.5 py-1.5 text-[0.75rem] 2xl:text-[0.78rem]" : "px-4 sm:px-5 py-2 text-[0.80rem]",
                 isTransparent
                   ? "bg-gold text-velvet-deep hover:bg-gold/90 hover:shadow-md"
                   : "bg-velvet text-primary-foreground hover:bg-primary",
@@ -340,7 +342,7 @@ export function Header() {
           <button
             type="button"
             className={cn(
-              "flex items-center gap-2 rounded-lg p-2 md:hidden transition-colors",
+              "flex items-center gap-2 rounded-lg p-2 xl:hidden transition-colors",
               isTransparent ? "text-white bg-white/10" : "text-foreground bg-secondary",
             )}
             aria-label="Open Menu"

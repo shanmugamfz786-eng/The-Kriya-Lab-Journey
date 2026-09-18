@@ -31,7 +31,6 @@ import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TestimonialsRouteImport } from './routes/testimonials'
 import { Route as ThankYouRouteImport } from './routes/thank-you'
 import { Route as TheKriyaLabRouteImport } from './routes/the-kriya-lab'
-import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedMyProgramsRouteImport } from './routes/_authenticated/my-programs'
 import { Route as JournalIndexRouteImport } from './routes/journal/index'
 import { Route as JournalSlugRouteImport } from './routes/journal/$slug'
@@ -148,11 +147,6 @@ const TheKriyaLabRoute = TheKriyaLabRouteImport.update({
   path: '/the-kriya-lab',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedMyProgramsRoute = AuthenticatedMyProgramsRouteImport.update({
   id: '/my-programs',
   path: '/my-programs',
@@ -207,7 +201,6 @@ export interface FileRoutesByFullPath {
   '/testimonials': typeof TestimonialsRoute
   '/thank-you': typeof ThankYouRoute
   '/the-kriya-lab': typeof TheKriyaLabRoute
-  '/admin': typeof AuthenticatedAdminRoute
   '/my-programs': typeof AuthenticatedMyProgramsRoute
   '/journal/$slug': typeof JournalSlugRoute
   '/programs/$slug': typeof ProgramsSlugRoute
@@ -237,7 +230,6 @@ export interface FileRoutesByTo {
   '/testimonials': typeof TestimonialsRoute
   '/thank-you': typeof ThankYouRoute
   '/the-kriya-lab': typeof TheKriyaLabRoute
-  '/admin': typeof AuthenticatedAdminRoute
   '/my-programs': typeof AuthenticatedMyProgramsRoute
   '/journal/$slug': typeof JournalSlugRoute
   '/programs/$slug': typeof ProgramsSlugRoute
@@ -269,7 +261,6 @@ export interface FileRoutesById {
   '/testimonials': typeof TestimonialsRoute
   '/thank-you': typeof ThankYouRoute
   '/the-kriya-lab': typeof TheKriyaLabRoute
-  '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/my-programs': typeof AuthenticatedMyProgramsRoute
   '/journal/$slug': typeof JournalSlugRoute
   '/programs/$slug': typeof ProgramsSlugRoute
@@ -301,7 +292,6 @@ export interface FileRouteTypes {
     | '/testimonials'
     | '/thank-you'
     | '/the-kriya-lab'
-    | '/admin'
     | '/my-programs'
     | '/journal/$slug'
     | '/programs/$slug'
@@ -331,7 +321,6 @@ export interface FileRouteTypes {
     | '/testimonials'
     | '/thank-you'
     | '/the-kriya-lab'
-    | '/admin'
     | '/my-programs'
     | '/journal/$slug'
     | '/programs/$slug'
@@ -362,7 +351,6 @@ export interface FileRouteTypes {
     | '/testimonials'
     | '/thank-you'
     | '/the-kriya-lab'
-    | '/_authenticated/admin'
     | '/_authenticated/my-programs'
     | '/journal/$slug'
     | '/programs/$slug'
@@ -557,13 +545,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TheKriyaLabRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/admin': {
-      id: '/_authenticated/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AuthenticatedAdminRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/my-programs': {
       id: '/_authenticated/my-programs'
       path: '/my-programs'
@@ -610,12 +591,10 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
-  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedMyProgramsRoute: typeof AuthenticatedMyProgramsRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedMyProgramsRoute: AuthenticatedMyProgramsRoute,
 }
 

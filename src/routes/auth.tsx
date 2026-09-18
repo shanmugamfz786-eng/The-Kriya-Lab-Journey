@@ -82,25 +82,29 @@ function AuthPage() {
   return (
     <div className="relative w-full flex-1 min-h-[calc(100vh-80px)] flex flex-col lg:flex-row bg-[#ede5f5] dark:bg-[#180a1c]">
 
-      {/* Left Column: Rich Magenta Gradient Form Area (Fills 100% height on mobile & 50% on desktop) */}
-      <div className="relative w-full lg:w-1/2 flex-1 min-h-full flex items-center justify-center bg-gradient-to-br from-[#9c1252] via-[#c2185b] to-[#6d0733] text-white px-6 py-10 sm:p-10 md:p-14 lg:p-16 z-10 overflow-hidden">
+      {/* Left Column: Brand Velvet-Deep & Gold Form Sanctuary (Fills 100% height on mobile & 50% on desktop) */}
+      <div className="relative w-full lg:w-1/2 flex-1 min-h-full flex items-center justify-center bg-gradient-to-br from-[#150719] via-[#240d2d] to-[#100414] text-white px-6 py-10 sm:p-10 md:p-14 lg:p-16 z-10 overflow-hidden">
+
+        {/* Ambient subtle glow */}
+        <div className="pointer-events-none absolute -top-20 -left-20 w-80 h-80 bg-gold/10 rounded-full blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 -right-20 w-80 h-80 bg-purple-600/10 rounded-full blur-3xl" />
 
         {/* Floating Geometric Rings and Squares with Slow Wave Animations (Left Side Only) */}
-        <div className="absolute top-[8%] left-[7%] w-14 h-14 rounded-2xl border-[3px] border-white/20 -rotate-12 animate-float-wave pointer-events-none" />
-        <div className="absolute bottom-[8%] left-[5%] w-28 h-28 rounded-full border-[6px] border-white/15 animate-float-wave-reverse pointer-events-none" />
-        <div className="absolute top-[12%] right-[10%] w-10 h-10 rounded-full border-[2px] border-white/25 animate-float-slow pointer-events-none" />
-        <div className="absolute bottom-[14%] right-[8%] w-9 h-9 rounded-xl border-[2px] border-white/20 rotate-45 animate-float-slow-reverse pointer-events-none" />
+        <div className="absolute top-[8%] left-[7%] w-14 h-14 rounded-2xl border-[2px] border-gold/20 -rotate-12 animate-float-wave pointer-events-none" />
+        <div className="absolute bottom-[8%] left-[5%] w-28 h-28 rounded-full border-[3px] border-gold/15 animate-float-wave-reverse pointer-events-none" />
+        <div className="absolute top-[12%] right-[10%] w-10 h-10 rounded-full border-[2px] border-purple-300/20 animate-float-slow pointer-events-none" />
+        <div className="absolute bottom-[14%] right-[8%] w-9 h-9 rounded-xl border-[2px] border-gold/25 rotate-45 animate-float-slow-reverse pointer-events-none" />
 
         <div className="relative z-10 w-full max-w-md flex flex-col justify-center my-auto">
 
           {/* Heading and subtitle */}
           <div className="mb-6 text-left">
-            <h1 className="text-3xl sm:text-4xl xl:text-5xl font-bold text-white tracking-tight drop-shadow-sm font-sans">
+            <h1 className="font-serif text-3xl sm:text-4xl xl:text-5xl font-light text-white tracking-wide drop-shadow-sm">
               {mode === "signin"
                 ? t(bi("Welcome Back", "மீண்டும் வருக"))
                 : t(bi("Create Account", "கணக்கை உருவாக்கு"))}
             </h1>
-            <p className="text-xs sm:text-sm text-white/90 mt-2 font-normal leading-relaxed">
+            <p className="text-xs sm:text-sm text-white/80 mt-2 font-light leading-relaxed">
               {mode === "signin"
                 ? t(bi(
                     "To keep connected with us please login with your personal info",
@@ -117,7 +121,7 @@ function AuthPage() {
             {/* Username (signup only) */}
             {mode === "signup" && (
               <div className="relative animate-fadeIn">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/80">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gold/80">
                   <User className="w-4 h-4" />
                 </div>
                 <input
@@ -125,7 +129,7 @@ function AuthPage() {
                   type="text"
                   required
                   placeholder={t(bi("Full Name / Username", "முழுப்பெயர் / பயனர்பெயர்"))}
-                  className="w-full pl-11 pr-4 py-3 rounded-full bg-white/15 hover:bg-white/20 focus:bg-white/25 border border-white/35 focus:border-white text-white placeholder:text-white/70 text-sm focus:outline-none transition-all shadow-inner"
+                  className="w-full pl-11 pr-4 py-3 rounded-full bg-white/10 hover:bg-white/15 focus:bg-white/20 border border-gold/30 focus:border-gold text-white placeholder:text-white/60 text-sm focus:outline-none transition-all shadow-inner"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                 />
@@ -134,7 +138,7 @@ function AuthPage() {
 
             {/* Email */}
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/80">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gold/80">
                 <Mail className="w-4 h-4" />
               </div>
               <input
@@ -143,7 +147,7 @@ function AuthPage() {
                 autoComplete="email"
                 required
                 placeholder={t(bi("Email Address", "மின்னஞ்சல் முகவரி"))}
-                className="w-full pl-11 pr-4 py-3 rounded-full bg-white/15 hover:bg-white/20 focus:bg-white/25 border border-white/35 focus:border-white text-white placeholder:text-white/70 text-sm focus:outline-none transition-all shadow-inner"
+                className="w-full pl-11 pr-4 py-3 rounded-full bg-white/10 hover:bg-white/15 focus:bg-white/20 border border-gold/30 focus:border-gold text-white placeholder:text-white/60 text-sm focus:outline-none transition-all shadow-inner"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -151,7 +155,7 @@ function AuthPage() {
 
             {/* Password */}
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/80">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gold/80">
                 <Lock className="w-4 h-4" />
               </div>
               <input
@@ -161,14 +165,14 @@ function AuthPage() {
                 required
                 minLength={6}
                 placeholder={t(bi("Password", "கடவுச்சொல்"))}
-                className="w-full pl-11 pr-11 py-3 rounded-full bg-white/15 hover:bg-white/20 focus:bg-white/25 border border-white/35 focus:border-white text-white placeholder:text-white/70 text-sm focus:outline-none transition-all shadow-inner"
+                className="w-full pl-11 pr-11 py-3 rounded-full bg-white/10 hover:bg-white/15 focus:bg-white/20 border border-gold/30 focus:border-gold text-white placeholder:text-white/60 text-sm focus:outline-none transition-all shadow-inner"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 pr-4 flex items-center text-white/75 hover:text-white transition-colors"
+                className="absolute inset-y-0 right-0 pr-4 flex items-center text-white/70 hover:text-gold transition-colors"
                 aria-label="Toggle password visibility"
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -182,12 +186,12 @@ function AuthPage() {
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="w-3.5 h-3.5 rounded border-white/40 cursor-pointer accent-white"
+                  className="w-3.5 h-3.5 rounded border-gold/40 cursor-pointer accent-gold"
                 />
-                <span>{t(bi("Remember me", "என்னை நினைவில் கொள்"))}</span>
+                <span className="text-white/80">{t(bi("Remember me", "என்னை நினைவில் கொள்"))}</span>
               </label>
               {mode === "signin" && (
-                <span className="hover:underline cursor-pointer text-white/90 hover:text-white">
+                <span className="hover:underline cursor-pointer text-gold/90 hover:text-gold">
                   {t(bi("Forgot Password?", "கடவுச்சொல் மறந்துவிட்டதா?"))}
                 </span>
               )}
@@ -195,13 +199,13 @@ function AuthPage() {
 
             {/* Error / notice */}
             {error && (
-              <div className="p-3 rounded-2xl bg-black/40 border border-white/30 text-xs text-white text-center">
+              <div className="p-3 rounded-2xl bg-black/50 border border-red-400/40 text-xs text-red-200 text-center">
                 {error}
               </div>
             )}
             {notice && (
-              <div className="p-3 rounded-2xl bg-emerald-950/60 border border-emerald-400/50 text-xs text-emerald-200 flex items-center justify-center gap-2">
-                <ShieldCheck className="w-4 h-4 shrink-0" />
+              <div className="p-3 rounded-2xl bg-emerald-950/70 border border-emerald-400/50 text-xs text-emerald-200 flex items-center justify-center gap-2">
+                <ShieldCheck className="w-4 h-4 shrink-0 text-emerald-400" />
                 <span>{notice}</span>
               </div>
             )}
@@ -210,10 +214,10 @@ function AuthPage() {
             <button
               type="submit"
               disabled={busy}
-              className="w-full rounded-full bg-white text-[#c2185b] hover:bg-white/95 py-3.5 px-6 text-sm font-bold tracking-wide shadow-xl hover:shadow-2xl hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 disabled:opacity-60 flex items-center justify-center cursor-pointer mt-2"
+              className="w-full rounded-full bg-gradient-to-r from-[#d4af37] via-[#f7de8b] to-[#d4af37] text-[#1a1208] hover:brightness-110 py-3.5 px-6 text-sm font-bold tracking-wide shadow-lg shadow-gold/20 hover:shadow-xl hover:shadow-gold/30 hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 disabled:opacity-60 flex items-center justify-center cursor-pointer mt-3"
             >
               {busy ? (
-                <div className="w-4 h-4 border-2 border-[#c2185b] border-t-transparent rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-[#1a1208] border-t-transparent rounded-full animate-spin" />
               ) : (
                 <span>{mode === "signin" ? t(bi("Sign In", "உள்நுழைக")) : t(bi("Sign Up", "கணக்கை உருவாக்கு"))}</span>
               )}
@@ -225,12 +229,12 @@ function AuthPage() {
             <button
               type="button"
               onClick={() => { setMode(mode === "signin" ? "signup" : "signin"); setError(null); setNotice(null); }}
-              className="text-xs text-white/90 hover:text-white font-medium transition-colors cursor-pointer"
+              className="text-xs text-white/80 hover:text-white font-normal transition-colors cursor-pointer"
             >
               {mode === "signin" ? (
-                <>{t(bi("Don't have an account?", "கணக்கு இல்லையா?"))}{" "}<span className="font-bold underline ml-1">{t(bi("Sign Up", "பதிவு செய்"))}</span></>
+                <>{t(bi("Don't have an account?", "கணக்கு இல்லையா?"))}{" "}<span className="font-semibold text-gold underline ml-1 hover:text-gold/90">{t(bi("Sign Up", "பதிவு செய்"))}</span></>
               ) : (
-                <>{t(bi("Already have an account?", "ஏற்கனவே கணக்கு உள்ளதா?"))}{" "}<span className="font-bold underline ml-1">{t(bi("Sign In", "உள்நுழைக"))}</span></>
+                <>{t(bi("Already have an account?", "ஏற்கனவே கணக்கு உள்ளதா?"))}{" "}<span className="font-semibold text-gold underline ml-1 hover:text-gold/90">{t(bi("Sign In", "உள்நுழைக"))}</span></>
               )}
             </button>
           </div>

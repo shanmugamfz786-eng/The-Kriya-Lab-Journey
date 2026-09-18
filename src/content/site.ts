@@ -20,7 +20,7 @@ export const settings = {
 };
 
 export const ui = {
-  begin: bi("Begin Your Journey", "உங்கள் பயணத்தைத் தொடங்குங்கள்"),
+  begin: bi("Begin Your Journey", "பயணம் தொடங்கு"),
   explore: bi("Explore Kriya Yoga", "கிரியா யோகத்தை அறியுங்கள்"),
   learnMore: bi("Learn More", "மேலும் அறிக"),
   enroll: bi("Enroll", "பதிவு செய்க"),

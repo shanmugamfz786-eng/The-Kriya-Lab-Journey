@@ -1,10 +1,9 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { PageHero, Section } from "@/components/Primitives";
 import { getMyPrograms, linkMyPurchases, type StudentProgram } from "@/lib/student.functions";
-import { getAdminStatus } from "@/lib/admin.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { bi, useLang } from "@/lib/i18n";
 
@@ -33,7 +32,6 @@ function MyProgramsPage() {
   const qc = useQueryClient();
   const fetchPrograms = useServerFn(getMyPrograms);
   const linkFn = useServerFn(linkMyPurchases);
-  const statusFn = useServerFn(getAdminStatus);
 
   useEffect(() => {
     void linkFn().then(() => qc.invalidateQueries({ queryKey: ["student", "programs"] }));
@@ -42,11 +40,6 @@ function MyProgramsPage() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["student", "programs"],
     queryFn: () => fetchPrograms() as Promise<StudentProgram[]>,
-  });
-
-  const { data: admin } = useQuery({
-    queryKey: ["admin", "status"],
-    queryFn: () => statusFn() as Promise<{ isAdmin: boolean }>,
   });
 
   async function signOut() {
@@ -69,15 +62,7 @@ function MyProgramsPage() {
         )}
       />
       <Section>
-        <div className="mb-10 flex flex-wrap items-center gap-3">
-          {admin?.isAdmin ? (
-            <Link
-              to="/admin"
-              className="rounded-full border border-border px-6 py-2.5 text-xs transition-colors hover:border-primary hover:text-primary"
-            >
-              {t(bi("Admin dashboard", "நிர்வாகப் பலகை"))}
-            </Link>
-          ) : null}
+        <div className="mb-10 flex flex-wrap items-center justify-end gap-3">
           <button
             type="button"
             onClick={signOut}
