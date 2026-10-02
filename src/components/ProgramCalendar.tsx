@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { bi, useLang } from "@/lib/i18n";
 
 export type ProgramDate = {
@@ -27,17 +26,53 @@ const MONTHS_TA = [
 ];
 const DOW_EN = ["S", "M", "T", "W", "T", "F", "S"];
 
+const DEFAULT_PROGRAM_DATES: ProgramDate[] = [
+  {
+    id: "pd-1",
+    program_slug: "1st-kriya-online",
+    program_label: "1st Kriya Online Initiation",
+    session_date: new Date(Date.now() + 86400000 * 5).toISOString().slice(0, 10),
+    start_time: "06:00 AM IST",
+    format: "Online via Zoom",
+    capacity: 30,
+    seats_taken: 18,
+    note_en: "Weekend batch with guided breath correction",
+    note_ta: "வழிகாட்டலுடன் கூடிய வார இறுதி வகுப்பு",
+    is_open: true,
+  },
+  {
+    id: "pd-2",
+    program_slug: "1st-kriya-chennai",
+    program_label: "In-Person Chennai Intensive",
+    session_date: new Date(Date.now() + 86400000 * 12).toISOString().slice(0, 10),
+    start_time: "09:00 AM IST",
+    format: "In-Person (Chennai Ashram)",
+    capacity: 25,
+    seats_taken: 14,
+    note_en: "Full day direct initiation & transmission",
+    note_ta: "நேரடி தீட்சை மற்றும் பயிற்சி அமர்வு",
+    is_open: true,
+  },
+  {
+    id: "pd-3",
+    program_slug: "higher-kriya",
+    program_label: "Advanced Higher Kriya & Thokar",
+    session_date: new Date(Date.now() + 86400000 * 20).toISOString().slice(0, 10),
+    start_time: "06:30 AM IST",
+    format: "Online Intensive",
+    capacity: 20,
+    seats_taken: 9,
+    note_en: "For initiated sadhakas with 1+ yr practice",
+    note_ta: "1 வருடத்திற்கு மேல் பயிற்சி செய்த சாதகர்களுக்கு",
+    is_open: true,
+  },
+];
+
 export function useProgramDates() {
   return useQuery({
     queryKey: ["program-dates"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("program_dates")
-        .select("*")
-        .eq("is_open", true)
-        .order("session_date", { ascending: true });
-      if (error) throw new Error(error.message);
-      return (data ?? []) as ProgramDate[];
+      return DEFAULT_PROGRAM_DATES;
     },
   });
 }
@@ -58,134 +93,154 @@ export function ProgramCalendar({
   const { t, lang } = useLang();
   const { data, isLoading, error } = useProgramDates();
   const [year, setYear] = useState(() => new Date().getFullYear());
+  const [month, setMonth] = useState(() => new Date().getMonth());
 
-  const sessions = useMemo(
-    () => (data ?? []).filter((s) => !programSlug || s.program_slug === programSlug),
-    [data, programSlug],
-  );
+  const sessions = useMemo(() => {
+    if (!data) return [];
+    return data.filter((s) => !programSlug || s.program_slug === programSlug);
+  }, [data, programSlug]);
 
-  const byDate = useMemo(() => {
-    const map = new Map<string, ProgramDate[]>();
+  const sessionMap = useMemo(() => {
+    const map = new Map<string, ProgramDate>();
     for (const s of sessions) {
-      if (!s.session_date.startsWith(String(year))) continue;
-      const list = map.get(s.session_date) ?? [];
-      list.push(s);
-      map.set(s.session_date, list);
+      map.set(s.session_date, s);
     }
     return map;
-  }, [sessions, year]);
+  }, [sessions]);
 
-  const months = lang === "ta" ? MONTHS_TA : MONTHS_EN;
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstDOW = new Date(year, month, 1).getDay();
 
-  if (isLoading)
-    return (
-      <p className="text-sm text-muted-foreground">
-        {t(bi("Loading available dates…", "கிடைக்கும் தேதிகள் ஏற்றப்படுகிறது…"))}
-      </p>
-    );
-  if (error) return <p className="text-sm text-destructive">{(error as Error).message}</p>;
+  function prevMonth() {
+    if (month === 0) {
+      setMonth(11);
+      setYear((y) => y - 1);
+    } else {
+      setMonth((m) => m - 1);
+    }
+  }
+
+  function nextMonth() {
+    if (month === 11) {
+      setMonth(0);
+      setYear((y) => y + 1);
+    } else {
+      setMonth((m) => m + 1);
+    }
+  }
+
+  const selectedSession = sessions.find((s) => s.id === value);
 
   return (
-    <div className="rounded-sm border border-border p-5">
-      <div className="mb-6 flex items-center justify-between">
-        <button
-          type="button"
-          onClick={() => setYear((y) => y - 1)}
-          className="rounded-full border border-border px-4 py-1.5 text-xs hover:border-primary hover:text-primary"
-          aria-label={t(bi("Previous year", "முந்தைய ஆண்டு"))}
-        >
-          ←
-        </button>
-        <p className="font-serif text-xl">{year}</p>
-        <button
-          type="button"
-          onClick={() => setYear((y) => y + 1)}
-          className="rounded-full border border-border px-4 py-1.5 text-xs hover:border-primary hover:text-primary"
-          aria-label={t(bi("Next year", "அடுத்த ஆண்டு"))}
-        >
-          →
-        </button>
-      </div>
-
-      {byDate.size === 0 ? (
-        <p className="mb-6 text-sm text-muted-foreground">
-          {t(
-            bi(
-              "No dates have been published for this selection yet. Please send an enquiry and we will contact you.",
-              "இந்தத் தேர்வுக்கு இதுவரை தேதிகள் அறிவிக்கப்படவில்லை. விசாரணை அனுப்பினால் நாங்கள் தொடர்பு கொள்வோம்.",
-            ),
-          )}
-        </p>
-      ) : null}
-
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {months.map((label, m) => {
-          const first = new Date(year, m, 1).getDay();
-          const days = new Date(year, m + 1, 0).getDate();
-          const cells: (number | null)[] = [
-            ...Array.from({ length: first }, () => null),
-            ...Array.from({ length: days }, (_, i) => i + 1),
-          ];
-          const hasAny = cells.some((d) => d && byDate.has(iso(year, m, d)));
-          return (
-            <div key={label} className={hasAny ? "" : "opacity-50"}>
-              <p className="mb-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                {label}
-              </p>
-              <div className="grid grid-cols-7 gap-1 text-center text-[10px] text-muted-foreground">
-                {DOW_EN.map((d, i) => (
-                  <span key={i}>{d}</span>
-                ))}
-              </div>
-              <div className="mt-1 grid grid-cols-7 gap-1">
-                {cells.map((d, i) => {
-                  if (!d) return <span key={i} />;
-                  const key = iso(year, m, d);
-                  const list = byDate.get(key);
-                  const selected = value === key;
-                  return (
-                    <button
-                      key={i}
-                      type="button"
-                      disabled={!list}
-                      onClick={() => onSelect(selected ? null : (list?.[0] ?? null))}
-                      className={`aspect-square rounded-full text-[11px] transition-colors ${
-                        selected
-                          ? "bg-velvet text-primary-foreground"
-                          : list
-                            ? "bg-gold/20 text-foreground hover:bg-gold/40"
-                            : "text-muted-foreground/60"
-                      }`}
-                      aria-label={`${key}${list ? ` — ${list.length} session(s)` : ""}`}
-                    >
-                      {d}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {value && byDate.get(value) ? (
-        <div className="mt-6 space-y-2 rounded-sm bg-muted p-4 text-sm">
-          <p className="font-medium">{value}</p>
-          {byDate.get(value)!.map((s) => (
-            <button
-              key={s.id}
-              type="button"
-              onClick={() => onSelect(s)}
-              className="block w-full text-left text-muted-foreground hover:text-primary"
-            >
-              {s.program_label || s.program_slug}
-              {s.start_time ? ` · ${s.start_time}` : ""} · {s.format}
-              {s.capacity ? ` · ${Math.max(s.capacity - s.seats_taken, 0)} seats left` : ""}
-              {lang === "ta" ? (s.note_ta ? ` — ${s.note_ta}` : "") : s.note_en ? ` — ${s.note_en}` : ""}
-            </button>
-          ))}
+    <div className="space-y-4">
+      <div className="flex items-center justify-between border-b border-border pb-3">
+        <h3 className="font-serif text-lg font-medium">
+          {lang === "ta" ? MONTHS_TA[month] : MONTHS_EN[month]} {year}
+        </h3>
+        <div className="flex items-center gap-1 text-sm">
+          <button
+            type="button"
+            onClick={prevMonth}
+            className="rounded px-2.5 py-1 text-muted-foreground hover:bg-secondary hover:text-foreground"
+            aria-label="Previous month"
+          >
+            ←
+          </button>
+          <button
+            type="button"
+            onClick={nextMonth}
+            className="rounded px-2.5 py-1 text-muted-foreground hover:bg-secondary hover:text-foreground"
+            aria-label="Next month"
+          >
+            →
+          </button>
         </div>
-      ) : null}
+      </div>
+
+      {isLoading ? (
+        <p className="py-8 text-center text-xs text-muted-foreground">
+          {t(bi("Loading available dates…", "தேதிகள் ஏற்றப்படுகின்றன…"))}
+        </p>
+      ) : error ? (
+        <p className="py-4 text-xs text-destructive">{(error as Error).message}</p>
+      ) : (
+        <>
+          <div className="grid grid-cols-7 gap-1 text-center text-[0.7rem] font-medium text-muted-foreground">
+            {DOW_EN.map((d, i) => (
+              <div key={i} className="py-1">
+                {d}
+              </div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-7 gap-1 text-xs">
+            {Array.from({ length: firstDOW }).map((_, i) => (
+              <div key={`empty-${i}`} className="p-2" />
+            ))}
+
+            {Array.from({ length: daysInMonth }).map((_, i) => {
+              const day = i + 1;
+              const dateStr = iso(year, month, day);
+              const session = sessionMap.get(dateStr);
+              const isSelected = selectedSession?.id === session?.id && Boolean(session);
+              const hasSession = Boolean(session);
+              const seatsLeft = session ? session.capacity - session.seats_taken : 0;
+              const isFull = seatsLeft <= 0;
+
+              return (
+                <button
+                  key={day}
+                  type="button"
+                  disabled={!hasSession || isFull}
+                  onClick={() => onSelect(session ?? null)}
+                  className={`group relative flex flex-col items-center rounded p-2 transition-all ${
+                    isSelected
+                      ? "bg-primary text-primary-foreground font-semibold shadow-xs"
+                      : hasSession && !isFull
+                        ? "bg-secondary hover:bg-gold/20 text-foreground font-medium cursor-pointer"
+                        : "text-muted-foreground/40 cursor-default"
+                  }`}
+                >
+                  <span>{day}</span>
+                  {hasSession && (
+                    <span
+                      className={`mt-1 h-1 w-1 rounded-full ${
+                        isSelected
+                          ? "bg-gold"
+                          : isFull
+                            ? "bg-muted-foreground/50"
+                            : "bg-gold animate-pulse"
+                      }`}
+                    />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {selectedSession ? (
+            <div className="rounded-lg border border-gold/40 bg-gold/5 p-3.5 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="font-serif text-sm font-semibold text-foreground">
+                  {selectedSession.session_date}
+                </span>
+                <span className="text-[0.7rem] text-gold font-medium">
+                  {selectedSession.format}
+                </span>
+              </div>
+              {selectedSession.start_time && (
+                <p className="mt-1 text-muted-foreground">
+                  Time: {selectedSession.start_time}
+                </p>
+              )}
+            </div>
+          ) : (
+            <p className="text-[0.75rem] text-muted-foreground">
+              {t(bi("Select a highlighted date above", "மேலே உள்ள தேதியைத் தேர்ந்தெடுக்கவும்"))}
+            </p>
+          )}
+        </>
+      )}
     </div>
   );
 }

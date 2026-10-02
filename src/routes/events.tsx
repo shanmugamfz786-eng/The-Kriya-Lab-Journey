@@ -1,9 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { PageHero, Section } from "@/components/Primitives";
 import { listPublicEvents, type PublicEvent } from "@/lib/events.functions";
 import { bi, useLang } from "@/lib/i18n";
+import { Search } from "lucide-react";
 
 export const Route = createFileRoute("/events")({
   staticData: { sitemap: true },
@@ -27,11 +29,7 @@ export const Route = createFileRoute("/events")({
   component: EventsPage,
 });
 
-const PLACEHOLDERS = [
-  bi("Event 1", "நிகழ்வு 1"),
-  bi("Event 2", "நிகழ்வு 2"),
-  bi("Event 3", "நிகழ்வு 3"),
-];
+
 
 function EventsPage() {
   const { t, lang } = useLang();
@@ -41,10 +39,32 @@ function EventsPage() {
     queryFn: () => fetchEvents() as Promise<PublicEvent[]>,
   });
 
+  const [searchTerm, setSearchTerm] = useState("");
+
   const rows = data ?? [];
-  const today = new Date().toISOString().slice(0, 10);
-  const future = rows.filter((r) => r.event_date >= today);
-  const past = rows.filter((r) => r.event_date < today).reverse();
+  
+  const filteredRows = rows.filter(
+    (e) =>
+      e.title_en.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      e.title_ta.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (e.venue_en && e.venue_en.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (e.venue_ta && e.venue_ta.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const future = filteredRows.filter((r) => {
+    const d = new Date(r.event_date);
+    if (!isNaN(d.getTime())) return d >= today;
+    return r.event_type === "future";
+  });
+  
+  const past = filteredRows.filter((r) => {
+    const d = new Date(r.event_date);
+    if (!isNaN(d.getTime())) return d < today;
+    return r.event_type === "past";
+  });
 
   return (
     <>
@@ -59,24 +79,29 @@ function EventsPage() {
         )}
       />
 
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 mb-4">
+        <div className="relative max-w-md mx-auto">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-gray-400" />
+          <input
+            type="text"
+            placeholder={t(bi("Search events by title or location...", "நிகழ்வுகளை தேடுக..."))}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full rounded-full border border-gray-300 bg-white py-3 pl-12 pr-6 text-sm text-gray-900 shadow-sm focus:border-[#522938] focus:outline-none focus:ring-1 focus:ring-[#522938] transition-shadow"
+          />
+        </div>
+      </div>
+
       <Section>
         <h2 className="font-serif text-3xl">{t(bi("Future Events", "வரவிருக்கும் நிகழ்வுகள்"))}</h2>
         <div className="mt-8 grid gap-6 md:grid-cols-3">
-          {future.length > 0
-            ? future.map((e) => <EventCard key={e.id} event={e} lang={lang} />)
-            : PLACEHOLDERS.map((p, i) => (
-                <article key={i} className="rounded-2xl border border-dashed border-border p-6">
-                  <h3 className="font-serif text-2xl">{t(p)}</h3>
-                  <p className="mt-3 text-sm text-muted-foreground">
-                    {t(
-                      bi(
-                        "Date, time and venue will appear here once this event is published.",
-                        "இந்நிகழ்வு வெளியிடப்பட்டவுடன் தேதி, நேரம் மற்றும் இடம் இங்கு தோன்றும்.",
-                      ),
-                    )}
-                  </p>
-                </article>
-              ))}
+          {future.length > 0 ? (
+            future.map((e) => <EventCard key={e.id} event={e} lang={lang} />)
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              {t(bi("No upcoming events at the moment.", "தற்போது வரவிருக்கும் நிகழ்வுகள் ஏதுமில்லை."))}
+            </p>
+          )}
         </div>
       </Section>
 
@@ -104,17 +129,37 @@ function EventCard({ event, lang }: { event: PublicEvent; lang: "en" | "ta" }) {
   const when = [event.start_time, event.end_time].filter(Boolean).join(" – ");
 
   return (
-    <article className="rounded-2xl border border-border p-6">
-      <h3 className="font-serif text-2xl">{title}</h3>
-      <dl className="mt-4 space-y-1 text-sm text-muted-foreground">
-        <div>
-          <dt className="sr-only">{ta ? "தேதி" : "Date"}</dt>
-          <dd>{event.event_date}</dd>
+    <article className="rounded-2xl border border-border overflow-hidden bg-background shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full group">
+      {event.image_url && (
+        <div className="w-full h-48 sm:h-64 bg-gray-50 flex items-center justify-center overflow-hidden border-b border-border">
+          <img src={event.image_url} alt={title} className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105" />
         </div>
-        {when ? <dd>{when}</dd> : null}
-        {venue ? <dd>{venue}</dd> : null}
-      </dl>
-      {description ? <p className="mt-4 whitespace-pre-line text-sm">{description}</p> : null}
+      )}
+      <div className="p-6 flex flex-col flex-1">
+        <h3 className="font-serif text-2xl">{title}</h3>
+        <dl className="mt-4 space-y-1 text-sm text-muted-foreground">
+          <div>
+            <dt className="sr-only">{ta ? "தேதி" : "Date"}</dt>
+            <dd>{event.event_date}</dd>
+          </div>
+          {when ? <dd>{when}</dd> : null}
+          {venue ? <dd>{venue}</dd> : null}
+        </dl>
+        {description ? <p className="mt-4 whitespace-pre-line text-sm text-gray-700">{description}</p> : null}
+        
+        {event.google_form_link && (
+          <div className="mt-auto pt-6">
+            <a 
+              href={event.google_form_link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex w-full items-center justify-center rounded-full bg-[#522938] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#41212d] hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300"
+            >
+              {ta ? "பதிவு செய்ய" : "Register Now"}
+            </a>
+          </div>
+        )}
+      </div>
     </article>
   );
 }

@@ -1,10 +1,22 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { Menu, X, ArrowRight, Compass, Sparkles, BookOpen, User } from "lucide-react";
+import {
+  Menu,
+  X,
+  ArrowRight,
+  Compass,
+  Sparkles,
+  BookOpen,
+  User,
+  LayoutDashboard,
+  ShieldCheck,
+  LogOut,
+  ChevronDown,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { settings, ui } from "@/content/site";
-import { supabase } from "@/integrations/supabase/client";
 import { bi, useLang } from "@/lib/i18n";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
+import { useAuth } from "@/lib/auth-store";
 import { cn } from "@/lib/utils";
 
 /** Grouped navigation items for the comprehensive Luxury Drawer */
@@ -168,21 +180,105 @@ function AccountLink({
   isTransparent?: boolean;
 }) {
   const { t } = useLang();
-  const [signedIn, setSignedIn] = useState(false);
+  const { user, isAuthenticated, logout } = useAuth();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  useEffect(() => {
-    let active = true;
-    void supabase.auth.getSession().then(({ data }) => {
-      if (active) setSignedIn(Boolean(data.session));
-    });
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      setSignedIn(Boolean(session));
-    });
-    return () => {
-      active = false;
-      sub.subscription.unsubscribe();
-    };
-  }, []);
+  if (isAuthenticated && user) {
+    return (
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setDropdownOpen(!dropdownOpen)}
+          className={cn(
+            "flex items-center gap-2 rounded-full py-1 px-2 transition-all",
+            isTransparent
+              ? "bg-white/10 text-white hover:bg-white/20"
+              : "bg-secondary/80 text-foreground hover:bg-secondary",
+            className,
+          )}
+        >
+          <img
+            src={user.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"}
+            alt={user.full_name}
+            className="h-6 w-6 rounded-full object-cover ring-1 ring-gold/50"
+          />
+          <span className="text-xs font-semibold max-w-[100px] truncate">
+            {user.full_name.split(" ")[0]}
+          </span>
+          <ChevronDown className="size-3 opacity-70" />
+        </button>
+
+        {dropdownOpen && (
+          <>
+            <div
+              className="fixed inset-0 z-40"
+              onClick={() => setDropdownOpen(false)}
+            />
+            <div className="absolute right-0 top-full mt-2 z-50 w-56 rounded-xl border border-gold/20 bg-velvet-deep text-white py-2 shadow-2xl animate-in fade-in-50 zoom-in-95">
+              <div className="border-b border-white/10 px-4 py-2.5">
+                <p className="text-xs font-semibold text-white truncate">{user.full_name}</p>
+                <p className="text-[0.68rem] text-gold truncate">{user.email}</p>
+                <span className="mt-1 inline-block rounded-full bg-gold/20 px-2 py-0.5 text-[0.6rem] font-semibold text-gold uppercase tracking-wider">
+                  {user.role}
+                </span>
+              </div>
+
+              <div className="py-1 text-xs">
+                <Link
+                  to="/dashboard"
+                  onClick={() => {
+                    setDropdownOpen(false);
+                    onClick?.();
+                  }}
+                  className="flex items-center gap-2.5 px-4 py-2 text-white/90 hover:bg-white/10 hover:text-gold transition-colors"
+                >
+                  <LayoutDashboard className="size-4 text-gold" />
+                  <span>User Dashboard</span>
+                </Link>
+                <Link
+                  to="/admin"
+                  onClick={() => {
+                    setDropdownOpen(false);
+                    onClick?.();
+                  }}
+                  className="flex items-center gap-2.5 px-4 py-2 text-white/90 hover:bg-white/10 hover:text-gold transition-colors"
+                >
+                  <ShieldCheck className="size-4 text-gold" />
+                  <span>Admin Panel</span>
+                </Link>
+                <Link
+                  to="/my-programs"
+                  onClick={() => {
+                    setDropdownOpen(false);
+                    onClick?.();
+                  }}
+                  className="flex items-center gap-2.5 px-4 py-2 text-white/90 hover:bg-white/10 hover:text-gold transition-colors"
+                >
+                  <Compass className="size-4 text-gold" />
+                  <span>My Sadhana</span>
+                </Link>
+              </div>
+
+              <div className="border-t border-white/10 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDropdownOpen(false);
+                    logout();
+                    onClick?.();
+                  }}
+                  className="flex w-full items-center gap-2.5 px-4 py-2 text-xs text-rose-400 hover:bg-rose-500/10 transition-colors"
+                >
+                  <LogOut className="size-4" />
+                  <span>{t(bi("Sign Out", "வெளியேறு"))}</span>
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    );
+  }
 
   return (
     <Link

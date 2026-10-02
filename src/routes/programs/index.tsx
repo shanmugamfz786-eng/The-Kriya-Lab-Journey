@@ -1,47 +1,69 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { PageHero, Section } from "@/components/Primitives";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { bi, useLang, type Bi } from "@/lib/i18n";
-import { programs, ui } from "@/content/site";
 import { programMessage } from "@/lib/whatsapp";
+import { Search, IndianRupee, DollarSign } from "lucide-react";
+import { listPublicPrograms } from "@/lib/programs.functions";
+import { type ProgramItem } from "@/lib/programs-api";
 
 export const Route = createFileRoute("/programs/")({
   staticData: { sitemap: true },
   head: () => ({
     meta: [
-      { title: "Initiation Programs | THE KRIYA LAB" },
+      { title: "Programs | THE KRIYA LAB" },
       {
         name: "description",
         content:
-          "Online and in-person Kriya Yoga initiation programs in English and Tamil, group and one-to-one.",
+          "Online and offline Kriya Yoga initiation programs in English and Tamil.",
       },
-      { property: "og:title", content: "Initiation Programs — THE KRIYA LAB" },
-      {
-        property: "og:description",
-        content: "Explore group and individual Kriya Yoga initiation sessions.",
-      },
+      { property: "og:title", content: "Programs — THE KRIYA LAB" },
     ],
   }),
   component: ProgramsPage,
 });
 
-
-
 const filters = [
-  { key: "all", label: bi("All", "அனைத்தும்") },
-  { key: "english", label: bi("English", "ஆங்கிலம்") },
-  { key: "tamil", label: bi("Tamil", "தமிழ்") },
-  { key: "beginner", label: bi("Beginner", "தொடக்கநிலை") },
+  { key: "all", label: bi("All Programs", "அனைத்து பயிற்சிகள்") },
   { key: "online", label: bi("Online", "ஆன்லைன்") },
-  { key: "in-person", label: bi("In Person", "நேரில்") },
+  { key: "offline", label: bi("Offline", "நேரடி (ஆஃப்லைன்)") },
 ] as const;
 
 function ProgramsPage() {
   const { t, lang } = useLang();
   const [filter, setFilter] = useState<(typeof filters)[number]["key"]>("all");
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const list = programs.filter((p) => filter === "all" || p.tags.includes(filter));
+  const fetchPrograms = useServerFn(listPublicPrograms);
+  const { data } = useQuery({
+    queryKey: ["programs"],
+    queryFn: () => fetchPrograms() as Promise<ProgramItem[]>,
+  });
+
+  const rows = data ?? [];
+
+  const searchedRows = rows.filter((p) => {
+    const titleEn = p.title_en?.toLowerCase() || "";
+    const titleTa = p.title_ta?.toLowerCase() || "";
+    const locEn = p.location_en?.toLowerCase() || "";
+    const locTa = p.location_ta?.toLowerCase() || "";
+    const search = searchTerm.toLowerCase();
+
+    return (
+      titleEn.includes(search) ||
+      titleTa.includes(search) ||
+      locEn.includes(search) ||
+      locTa.includes(search)
+    );
+  });
+
+  const filteredRows = searchedRows.filter((p) => {
+    if (filter === "all") return true;
+    return p.program_type === filter;
+  });
 
   return (
     <>
@@ -50,148 +72,162 @@ function ProgramsPage() {
         title={t(bi("Find the appropriate program that suits you", "உங்கள் நிலைக்கு ஏற்ற பயிற்சியைக் கண்டறியுங்கள்"))}
         intro={t(
           bi(
-            "Kriya Yoga initiation in English and Tamil — online group classes, individual sessions, in-person initiation and family initiation. Schedules, fees and availability are confirmed on enquiry.",
-            "ஆங்கிலம் மற்றும் தமிழில் கிரியா யோகா தீட்சை — ஆன்லைன் குழு வகுப்புகள், தனிநபர் வகுப்புகள், நேரடித் தீட்சை மற்றும் குடும்பத் தீட்சை. நேர அட்டவணை, கட்டணம் மற்றும் இடவசதி விசாரணையின் போது உறுதிப்படுத்தப்படும்.",
-          ),
+            "Kriya Yoga initiation in English and Tamil — online group classes, individual sessions, in-person initiation and family initiation.",
+            "ஆங்கிலம் மற்றும் தமிழில் கிரியா யோகா தீட்சை — ஆன்லைன் குழு வகுப்புகள், தனிநபர் வகுப்புகள், நேரடித் தீட்சை மற்றும் குடும்பத் தீட்சை."
+          )
         )}
       />
 
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 mb-4">
+        
+        <div className="flex w-full items-center justify-between gap-4 overflow-x-auto pb-2 scrollbar-none">
+          {/* Search Bar Left */}
+          <div className="relative w-[280px] shrink-0">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder={t(bi("Search programs...", "பயிற்சிகளை தேடுக..."))}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full rounded-full border border-gray-300 bg-white py-2.5 pl-12 pr-6 text-sm text-gray-900 shadow-sm focus:border-[#522938] focus:outline-none focus:ring-1 focus:ring-[#522938] transition-shadow"
+            />
+          </div>
+
+          {/* Category Filters Right */}
+          <div className="flex items-center gap-3 shrink-0">
+            {filters.map((f) => (
+              <button
+                key={f.key}
+                type="button"
+                onClick={() => setFilter(f.key)}
+                aria-pressed={filter === f.key}
+                className={`rounded-full border px-6 py-2 text-sm font-medium transition-all ${
+                  filter === f.key
+                    ? "border-[#522938] bg-[#522938] text-white shadow-md scale-105"
+                    : "border-gray-300 text-gray-600 hover:border-[#522938] hover:text-[#522938] hover:bg-rose-50"
+                }`}
+              >
+                {t(f.label)}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
 
       <Section>
-        <div className="flex flex-wrap gap-3">
-          {filters.map((f) => (
-            <button
-              key={f.key}
-              type="button"
-              onClick={() => setFilter(f.key)}
-              aria-pressed={filter === f.key}
-              className={`rounded-full border px-5 py-2 text-sm transition-colors ${
-                filter === f.key
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border text-muted-foreground hover:border-primary hover:text-primary"
-              }`}
-            >
-              {t(f.label)}
-            </button>
-          ))}
-        </div>
-
-        <div className="mt-12 grid gap-px bg-border md:grid-cols-2">
-          {list.map((p) => (
-            <ProgramCard key={p.slug} program={p} />
-          ))}
+        <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {filteredRows.length > 0 ? (
+            filteredRows.map((p) => <ProgramCard key={p.id} program={p} lang={lang} />)
+          ) : (
+            <p className="text-sm text-muted-foreground text-center col-span-full">
+              {t(bi("No programs found.", "பயிற்சிகள் ஏதுமில்லை."))}
+            </p>
+          )}
         </div>
       </Section>
     </>
   );
 }
 
-function ProgramCard({ program: p }: { program: (typeof programs)[number] }) {
-  const { t, lang } = useLang();
-  const [people, setPeople] = useState(1);
+function ProgramCard({ program: p, lang }: { program: ProgramItem; lang: "en" | "ta" }) {
+  const { t } = useLang();
+  const [currency, setCurrency] = useState<"INR" | "USD">("INR");
+  const ta = lang === "ta";
+  const title = (ta ? p.title_ta : p.title_en) || p.title_en;
+  const description = (ta ? p.description_ta : p.description_en) || p.description_en;
+  const instructor = (ta ? p.instructor_ta : p.instructor_en) || p.instructor_en;
+  const location = (ta ? p.location_ta : p.location_en) || p.location_en;
+  const language = (ta ? p.language_ta : p.language_en) || p.language_en;
 
-  const rows: [Bi, Bi][] = [
+  const rows: [Bi, string][] = [
+    [bi("Language", "மொழி"), language || ""],
     [bi("Level", "நிலை"), p.level],
-    [bi("Duration", "கால அளவு"), p.duration],
-    [bi("Format", "வடிவம்"), p.format],
-    [bi("Instructor", "ஆசிரியர்"), p.instructor],
-    [bi("Price", "கட்டணம்"), p.price],
-    [bi("Schedule", "அட்டவணை"), p.schedule],
+    [bi("Duration", "கால அளவு"), p.duration || ""],
+    [bi("Instructor", "ஆசிரியர்"), instructor],
+    [bi("Schedule", "அட்டவணை"), p.schedule_date || ""],
+    [bi("Location", "இடம்"), location],
+    [bi("Enrolment status", "பதிவு நிலை"), p.enrolment_status],
   ];
-  if (p.startDate) rows.push([bi("Start date", "தொடக்க தேதி"), p.startDate]);
-  if (p.endDate) rows.push([bi("End date", "முடிவு தேதி"), p.endDate]);
-  if (p.languages) rows.push([bi("Language", "மொழி"), p.languages]);
-  rows.push([bi("Location", "இடம்"), p.location]);
-  rows.push([bi("Enrolment status", "பதிவு நிலை"), p.status]);
 
-  const message =
-    p.maxParticipants
-      ? `${programMessage(t(p.name), lang)} ${
-          lang === "ta"
-            ? `தீட்சை பெற விரும்பும் நபர்களின் எண்ணிக்கை: ${people}.`
-            : `Number of persons who wish to be initiated: ${people}.`
-        }`
-      : programMessage(t(p.name), lang);
+  const message = programMessage(title, lang);
 
   return (
-    <article className="flex flex-col bg-background p-8 lg:p-10">
-      <h2 className="font-serif text-2xl leading-snug">{t(p.name)}</h2>
-      <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{t(p.description)}</p>
+    <article className="rounded-2xl border border-border overflow-hidden bg-background shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full group">
+      {p.image_url && (
+        <div className="w-full h-48 sm:h-64 bg-gray-50 flex items-center justify-center overflow-hidden border-b border-border">
+          <img src={p.image_url} alt={title} className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105" />
+        </div>
+      )}
+      <div className="p-6 flex flex-col flex-1">
+        <h2 className="font-serif text-2xl leading-snug text-gray-900 group-hover:text-[#522938] transition-colors">{title}</h2>
+        <p className="mt-4 text-base leading-relaxed text-muted-foreground whitespace-pre-line">{description}</p>
 
-      <dl className="mt-7 grid grid-cols-2 gap-y-3 text-xs">
-        {rows.map(([k, v], i) => (
-          <div key={i}>
-            <dt className="tracking-widest text-muted-foreground uppercase">{t(k)}</dt>
-            <dd className="mt-1">{t(v)}</dd>
+        <dl className="mt-7 grid grid-cols-2 gap-y-5 gap-x-3 text-sm">
+          {rows.map(([k, v], i) => (
+            v && (
+              <div key={i}>
+                <dt className="tracking-widest text-muted-foreground uppercase text-xs">{t(k)}</dt>
+                <dd className="mt-1 font-semibold text-gray-800">{v}</dd>
+              </div>
+            )
+          ))}
+        </dl>
+
+        {/* Price Section */}
+        <div className="mt-6 p-4 rounded-xl bg-gray-50/50 border border-gray-100 flex items-center justify-between">
+          <div>
+            <div className="text-xs tracking-widest text-muted-foreground uppercase mb-1">{t(bi("Price", "விலை"))}</div>
+            <div className="font-bold text-lg text-gray-900">
+              {currency === "INR" && (p.price_inr ? `₹ ${p.price_inr}` : "—")}
+              {currency === "USD" && (p.price_usd ? `$ ${p.price_usd}` : "—")}
+            </div>
           </div>
-        ))}
-      </dl>
+          <div className="flex bg-white rounded-lg border border-gray-200 p-0.5 shadow-xs">
+            <button
+              onClick={() => setCurrency("INR")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                currency === "INR" ? "bg-[#522938] text-white shadow-sm" : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              <IndianRupee className="size-3.5" />
+              INR
+            </button>
+            <button
+              onClick={() => setCurrency("USD")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                currency === "USD" ? "bg-[#522938] text-white shadow-sm" : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              <DollarSign className="size-3.5" />
+              USD
+            </button>
+          </div>
+        </div>
 
-      {p.maxParticipants ? (
-        <label className="mt-7 block text-xs" htmlFor={`people-${p.slug}`}>
-          <span className="block tracking-widest text-muted-foreground uppercase">
-            {t(bi("Number of persons to be initiated", "தீட்சை பெறும் நபர்களின் எண்ணிக்கை"))}
-          </span>
-          <select
-            id={`people-${p.slug}`}
-            value={people}
-            onChange={(e) => setPeople(Number(e.target.value))}
-            className="mt-2 rounded-full border border-border bg-transparent px-4 py-2 text-sm outline-none focus:border-primary"
+        <div className="mt-auto pt-8 flex flex-wrap items-center gap-3">
+          <Link
+            to="/programs/$id"
+            params={{ id: String(p.id) }}
+            className="rounded-full border border-gray-300 bg-transparent px-6 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
           >
-            {Array.from({ length: p.maxParticipants }, (_, i) => i + 1).map((n) => (
-              <option key={n} value={n}>
-                {n}
-              </option>
-            ))}
-          </select>
-          <span className="mt-3 block text-xs text-muted-foreground">
-            {p.unitPriceInr
-              ? t(
-                  bi(
-                    `Total for ${people} ${people > 1 ? "persons" : "person"}: ₹${(p.unitPriceInr * people).toLocaleString("en-IN")}`,
-                    `${people} நபர்களுக்கு மொத்தம்: ₹${(p.unitPriceInr * people).toLocaleString("en-IN")}`,
-                  ),
-                )
-              : t(
-                  bi(
-                    `Fee is per person and is multiplied by ${people} ${people > 1 ? "persons" : "person"}; confirmed on enquiry.`,
-                    `கட்டணம் ஒரு நபருக்கானது; ${people} நபர்களுக்கு பெருக்கப்படும். விசாரணையின் போது உறுதிப்படுத்தப்படும்.`,
-                  ),
-                )}
-          </span>
-          {people > 1 ? (
-            <span className="mt-2 block text-xs text-muted-foreground">
-              {t(
-                bi(
-                  "You will be asked for the details of each person on the enrollment page.",
-                  "பதிவு பக்கத்தில் ஒவ்வொரு நபரின் விவரங்களும் கேட்கப்படும்.",
-                ),
-              )}
-            </span>
-          ) : null}
-        </label>
-      ) : null}
+            {t(bi("Learn More", "மேலும் அறிய"))}
+          </Link>
+          
+          <Link 
+            to="/buy"
+            className="rounded-full bg-[#522938] px-8 py-2.5 text-sm font-medium text-white hover:bg-[#3f1f2b] transition-colors shadow-sm text-center inline-flex items-center justify-center"
+          >
+            {t(bi("Enroll", "பதிவு செய்"))}
+          </Link>
 
-
-
-      <div className="mt-8 flex flex-wrap gap-3">
-        <Link
-          to="/programs/$slug"
-          params={{ slug: p.slug }}
-          className="rounded-full border border-border px-6 py-2.5 text-sm transition-colors hover:border-primary hover:text-primary"
-        >
-          {t(ui.learnMore)}
-        </Link>
-        <Link
-          to="/buy"
-          search={{ program: p.slug }}
-          className="rounded-full bg-velvet px-6 py-2.5 text-sm text-primary-foreground transition-colors hover:bg-primary"
-        >
-          {t(ui.enroll)}
-        </Link>
-
-
-        <WhatsAppButton event="whatsapp_program_enquiry" variant="ghost" message={message} />
+          <WhatsAppButton 
+            event="whatsapp_program_enquiry" 
+            variant="ghost" 
+            message={message} 
+            label={t(bi("Enquire on WhatsApp", "வாட்ஸ்அப்பில் விசாரிக்கவும்"))}
+            className="px-2" 
+          />
+        </div>
       </div>
     </article>
   );

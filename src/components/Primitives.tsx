@@ -90,20 +90,33 @@ export function Field({
   label,
   children,
   htmlFor,
+  required,
+  error,
 }: {
   label: string;
-  htmlFor: string;
+  htmlFor?: string | undefined;
   children: ReactNode;
+  required?: boolean | undefined;
+  error?: string | undefined;
 }) {
   return (
     <label className="block" htmlFor={htmlFor}>
-      <span className="mb-2 block text-xs tracking-widest text-muted-foreground uppercase">
-        {label}
+      <span className="mb-2 flex items-center justify-between text-xs tracking-widest text-muted-foreground uppercase">
+        <span>
+          {label}
+          {required && <span className="ml-1 text-red-500">*</span>}
+        </span>
+        {error && <span className="text-xs font-normal normal-case text-red-500">{error}</span>}
       </span>
       {children}
     </label>
   );
 }
 
-export const inputClass =
-  "w-full rounded-none border-0 border-b border-border bg-transparent px-0 py-3 text-base outline-none transition-colors focus:border-primary";
+export function inputClass(error?: string | boolean | null): string {
+  return cn(
+    "w-full rounded-none border-0 border-b bg-transparent px-0 py-3 text-base outline-none transition-colors",
+    error ? "border-red-500 focus:border-red-500" : "border-border focus:border-primary",
+  );
+}
+

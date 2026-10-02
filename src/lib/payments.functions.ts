@@ -168,20 +168,5 @@ export const verifyRazorpayPayment = createServerFn({ method: "POST" })
       // Payment is verified; recording failure should not block the buyer.
     }
 
-    try {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      await supabaseAdmin.from("enquiries").insert({
-        name: (data.customerName ?? "").slice(0, 100) || "Online purchase",
-        email: (data.customerEmail ?? "").slice(0, 255) || null,
-        phone: (data.customerPhone ?? "").slice(0, 40) || null,
-        kind: "purchase",
-        programme: data.programSlug,
-        message: `Razorpay payment ${data.paymentId} (order ${data.orderId}) verified.`,
-        source_page: "/buy",
-        status: "paid",
-      });
-    } catch {
-      // Payment is verified; recording failure should not block the buyer.
-    }
     return { ok: true };
   });

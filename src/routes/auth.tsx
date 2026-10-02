@@ -1,12 +1,16 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { bi, useLang } from "@/lib/i18n";
 import { Mail, Lock, User, Eye, EyeOff, ShieldCheck } from "lucide-react";
 import authAvatar from "@/assets/images/auth-avatar.png";
 
+import { useAuth } from "@/lib/auth-store";
+
 export const Route = createFileRoute("/auth")({
   staticData: { sitemap: false },
+  validateSearch: (search: Record<string, unknown>): { redirect?: string | undefined } => ({
+    redirect: typeof search["redirect"] === "string" ? search["redirect"] : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Sign In / Sign Up | THE KRIYA LAB" },
@@ -25,8 +29,10 @@ export const Route = createFileRoute("/auth")({
 });
 
 function AuthPage() {
+  const { redirect: redirectPath } = Route.useSearch();
   const { t } = useLang();
   const navigate = useNavigate();
+  const { login, register: registerUser, isAuthenticated, user } = useAuth();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -38,10 +44,16 @@ function AuthPage() {
   const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (data?.session) navigate({ to: "/my-programs", replace: true });
-    });
-  }, [navigate]);
+    if (isAuthenticated && user) {
+      if (redirectPath) {
+        navigate({ to: redirectPath as any, replace: true });
+      } else if (user.role === "admin") {
+        navigate({ to: "/admin", replace: true });
+      } else {
+        navigate({ to: "/dashboard", replace: true });
+      }
+    }
+  }, [isAuthenticated, user, redirectPath, navigate]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -50,27 +62,23 @@ function AuthPage() {
     setNotice(null);
     try {
       if (mode === "signin") {
-        const { error: err } = await supabase.auth.signInWithPassword({ email, password });
-        if (err) throw err;
-        navigate({ to: "/my-programs", replace: true });
+        const loggedUser = await login(email, password);
+        if (redirectPath) {
+          navigate({ to: redirectPath as any, replace: true });
+        } else if (loggedUser.role === "admin") {
+          navigate({ to: "/admin", replace: true });
+        } else {
+          navigate({ to: "/dashboard", replace: true });
+        }
       } else {
-        const { error: err } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: { full_name: name },
-            emailRedirectTo: `${window.location.origin}/my-programs`,
-          },
-        });
-        if (err) throw err;
-        setNotice(
-          t(
-            bi(
-              "Account created successfully! Check your inbox if confirmation is required.",
-              "கணக்கு வெற்றிகரமாக உருவாக்கப்பட்டது! உறுதிப்படுத்தல் மின்னஞ்சலைச் சரிபார்க்கவும்.",
-            ),
-          ),
-        );
+        const registeredUser = await registerUser(name, email, password);
+        if (redirectPath) {
+          navigate({ to: redirectPath as any, replace: true });
+        } else if (registeredUser.role === "admin") {
+          navigate({ to: "/admin", replace: true });
+        } else {
+          navigate({ to: "/dashboard", replace: true });
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));

@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getRouterInstance } from "@tanstack/react-start";
 import { sitemapPathForLocation, sitemapStaticPaths, sitemapXML, isSitemapRouteIncluded, type SitemapEntry } from "@/lib/sitemap";
-import { journal, programs } from "@/content/site";
+import { journal } from "@/content/site";
+import { listPublicPrograms } from "@/lib/programs.functions";
 
 const BASE_URL = "https://thekriyalab.lovable.app";
 
@@ -13,15 +14,16 @@ export const Route = createFileRoute("/sitemap.xml")({
         const router = await getRouterInstance();
         const entries: SitemapEntry[] = sitemapStaticPaths(router).map((path) => ({ path }));
 
-        if (isSitemapRouteIncluded(router.routesById["/programs/$slug"])) {
+        if (isSitemapRouteIncluded(router.routesById["/programs/$id"])) {
+          const programs = await listPublicPrograms();
           for (const program of programs) {
             const location = router.buildLocation({
-              to: "/programs/$slug",
-              params: { slug: program.slug },
+              to: "/programs/$id",
+              params: { id: String(program.id) },
               search: () => ({}),
               hash: "",
             });
-            const path = sitemapPathForLocation(router, location, "/programs/$slug");
+            const path = sitemapPathForLocation(router, location, "/programs/$id");
             if (path) entries.push({ path });
           }
         }

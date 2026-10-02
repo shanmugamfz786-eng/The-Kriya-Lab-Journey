@@ -5,8 +5,8 @@ import { StripeEmbeddedCheckout } from "@/components/StripeEmbeddedCheckout";
 import { ProgramCalendar, type ProgramDate } from "@/components/ProgramCalendar";
 import { bi, useLang } from "@/lib/i18n";
 import { programs, purchaseTerms, ui } from "@/content/site";
-import { supabase } from "@/integrations/supabase/client";
 import { PAID_PROGRAMS, createRazorpayOrder, verifyRazorpayPayment } from "@/lib/payments.functions";
+import { useAuth } from "@/lib/auth-store";
 import { cn } from "@/lib/utils";
 
 declare global {
@@ -83,6 +83,7 @@ const emptyParticipant = (): Participant => ({ name: "", age: "", language: "Eng
 export function BuyPage() {
   const { program: preselected, persons: prePersons } = Route.useSearch();
   const { t, lang } = useLang();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   // Program selection
@@ -94,8 +95,8 @@ export function BuyPage() {
   const [session, setSession] = useState<ProgramDate | null>(null);
 
   // Student Details
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [name, setName] = useState(user?.full_name || "");
+  const [email, setEmail] = useState(user?.email || "");
   const [phone, setPhone] = useState("");
   const [country, setCountry] = useState("");
   const [age, setAge] = useState("");
@@ -120,21 +121,12 @@ export function BuyPage() {
   const [stripeOpen, setStripeOpen] = useState(false);
   const [method, setMethod] = useState<PaymentMethodId>("upi");
 
-  // Auth state detection
-  const [currentUser, setCurrentUser] = useState<any>(null);
-
   useEffect(() => {
-    void supabase.auth.getSession().then(({ data }) => {
-      if (data?.session?.user) {
-        const u = data.session.user;
-        setCurrentUser(u);
-        if (u.email) setEmail(u.email);
-        const meta = (u.user_metadata || {}) as Record<string, unknown>;
-        const fullName = (meta["full_name"] || meta["name"] || "") as string;
-        if (fullName) setName(fullName);
-      }
-    });
-  }, []);
+    if (user) {
+      if (!name && user.full_name) setName(user.full_name);
+      if (!email && user.email) setEmail(user.email);
+    }
+  }, [user]);
 
   // Sync family language
   useEffect(() => {
@@ -156,37 +148,20 @@ export function BuyPage() {
     return true;
   };
 
-  /** Saves lead / enrollment enquiry into Supabase */
+  /** Saves lead / enrollment enquiry into TiDB backend */
   const recordEnrollmentData = async (paymentRef?: string) => {
     try {
-      await supabase.from("enquiries").insert({
-        name: name.trim() || currentUser?.user_metadata?.full_name || "Seeker",
-        email: email.trim() || currentUser?.email || "student@thekriyalab.com",
-        phone: phone.trim() || null,
-        kind: "enrollment",
-        programme: program.slug,
-        session_date: session?.session_date ?? null,
-        program_date_id: session?.id ?? null,
-        language: lang,
-        message: [
-          message.trim(),
-          country ? `Country: ${country}` : "",
-          age ? `Age: ${age}` : "",
-          `Format: ${format}`,
-          session ? `Chosen date: ${session.session_date}${session.start_time ? " " + session.start_time : ""}` : "",
-          `Preferred language: ${prefLang}`,
-          maxPersons > 1 ? `Persons: ${count}` : "",
-          paymentRef ? `Payment Ref: ${paymentRef}` : "",
-          maxPersons > 1 && count > 1
-            ? participants
-                .slice(1, count)
-                .map((p, i) => `Person ${i + 2}: ${p.name}${p.age ? `, age ${p.age}` : ""}`)
-                .join("\n")
-            : "",
-        ]
-          .filter(Boolean)
-          .join("\n"),
-        source_page: "/buy",
+      const apiUrl = (import.meta.env["VITE_API_URL"] as string | undefined) || "http://localhost:5000";
+      await fetch(`${apiUrl}/api/auth/enquiry`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name || user?.full_name || "Participant",
+          email: email || user?.email || "",
+          phone: phone || null,
+          program: t(program.name),
+          message: `Booking for ${count} participant(s). Date: ${session ? session.session_date : "TBD"}. Payment Ref: ${paymentRef || "Pending"}`,
+        }),
       });
     } catch (e) {
       console.error("Enquiry save error:", e);
@@ -302,7 +277,7 @@ export function BuyPage() {
                       setSession(null);
                       setStripeOpen(false);
                     }}
-                    className={inputClass}
+                    className={inputClass()}
                   >
                     {programs.map((p) => (
                       <option key={p.slug} value={p.slug}>
@@ -318,7 +293,7 @@ export function BuyPage() {
                       id="format-select"
                       value={format}
                       onChange={(e) => setFormat(e.target.value)}
-                      className={inputClass}
+                      className={inputClass()}
                     >
                       <option>{t(bi("Online", "ஆன்லைன்"))}</option>
                       <option>{t(bi("In person", "நேரில்"))}</option>
@@ -330,7 +305,7 @@ export function BuyPage() {
                       id="lang-select"
                       value={prefLang}
                       onChange={(e) => setPrefLang(e.target.value)}
-                      className={inputClass}
+                      className={inputClass()}
                     >
                       <option>English</option>
                       <option>தமிழ்</option>
@@ -350,7 +325,7 @@ export function BuyPage() {
                       id="persons-select"
                       value={count}
                       onChange={(e) => setPersons(Number(e.target.value))}
-                      className={inputClass}
+                      className={inputClass()}
                     >
                       {Array.from({ length: maxPersons }, (_, i) => i + 1).map((n) => (
                         <option key={n} value={n}>
@@ -370,7 +345,7 @@ export function BuyPage() {
                           <div className="grid gap-3 sm:grid-cols-2">
                             <input
                               placeholder={t(ui.name)}
-                              className={inputClass}
+                              className={inputClass()}
                               value={participants[i]!.name}
                               onChange={(e) => setParticipant(i, { name: e.target.value })}
                             />
@@ -378,7 +353,7 @@ export function BuyPage() {
                               placeholder={t(ui.age)}
                               type="number"
                               min={1}
-                              className={inputClass}
+                              className={inputClass()}
                               value={participants[i]!.age}
                               onChange={(e) => setParticipant(i, { age: e.target.value })}
                             />
@@ -406,9 +381,9 @@ export function BuyPage() {
                 <h2 className="font-serif text-2xl text-foreground">
                   2. {t(bi("Student Details & Contact", "மாணவர் விவரங்கள் & தொடர்பு"))}
                 </h2>
-                {currentUser ? (
+                {user ? (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-700 dark:text-emerald-300 font-medium">
-                    ✓ {t(bi("Signed in as:", "உள்நுழைந்துள்ளீர்:"))} {currentUser.email}
+                    ✓ {t(bi("Signed in as:", "உள்நுழைந்துள்ளீர்:"))} {user.email}
                   </span>
                 ) : (
                   <Link
@@ -421,11 +396,11 @@ export function BuyPage() {
               </div>
 
               {/* If signed in, show clean profile card */}
-              {currentUser && (
+              {user && (
                 <div className="rounded-lg bg-secondary/40 border border-border p-4 text-xs text-muted-foreground flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
-                    <span className="font-semibold text-foreground">{name || currentUser.email}</span>
-                    <span className="ml-2">({currentUser.email})</span>
+                    <span className="font-semibold text-foreground">{name || user.email}</span>
+                    <span className="ml-2">({user.email})</span>
                   </div>
                   <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
                     {t(bi("Profile linked to order", "கணக்கு விவரங்கள் இணைக்கப்பட்டது"))}
@@ -440,7 +415,7 @@ export function BuyPage() {
                     type="tel"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    className={inputClass}
+                    className={inputClass()}
                     placeholder="+91 98765 43210"
                   />
                 </Field>
@@ -450,7 +425,7 @@ export function BuyPage() {
                     id="country-input"
                     value={country}
                     onChange={(e) => setCountry(e.target.value)}
-                    className={inputClass}
+                    className={inputClass()}
                     placeholder="e.g. India"
                   />
                 </Field>
@@ -462,7 +437,7 @@ export function BuyPage() {
                     min={1}
                     value={age}
                     onChange={(e) => setAge(e.target.value)}
-                    className={inputClass}
+                    className={inputClass()}
                     placeholder="e.g. 28"
                   />
                 </Field>
@@ -474,7 +449,7 @@ export function BuyPage() {
                   rows={2}
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  className={inputClass}
+                  className={inputClass()}
                   placeholder={t(bi("Any prior yoga experience or questions? (optional)", "முந்தைய யோக அனுபவம் அல்லது கேள்விகள்? (விருப்பத்திற்குரியது)"))}
                 />
               </Field>

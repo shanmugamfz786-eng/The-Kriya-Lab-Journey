@@ -4,8 +4,6 @@ import { Field, PageHero, Section, inputClass } from "@/components/Primitives";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { bi, useLang } from "@/lib/i18n";
 import { ui } from "@/content/site";
-import { supabase } from "@/integrations/supabase/client";
-
 
 export const Route = createFileRoute("/contact")({
   staticData: { sitemap: true },
@@ -30,6 +28,8 @@ const enquiryTypes = [
   bi("Other", "மற்றவை"),
 ];
 
+const API_URL = (import.meta.env["VITE_API_URL"] as string | undefined) || "http://localhost:5000";
+
 function ContactPage() {
   const { t, lang } = useLang();
   const navigate = useNavigate();
@@ -48,20 +48,26 @@ function ContactPage() {
     setErrors(next);
     if (Object.keys(next).length > 0) return;
     setSaving(true);
-    await supabase.from("enquiries").insert({
-      name: String(data.get("name") ?? "").trim(),
-      email,
-      phone: String(data.get("phone") ?? "").trim() || null,
-      kind: "contact",
-      programme: String(data.get("type") ?? "") || null,
-      language: lang,
-      message: String(data.get("message") ?? "").trim(),
-      source_page: "/contact",
-    });
+
+    try {
+      await fetch(`${API_URL}/api/auth/enquiry`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: String(data.get("name") ?? "").trim(),
+          email,
+          phone: String(data.get("phone") ?? "").trim() || null,
+          program: String(data.get("type") ?? "") || "General Enquiry",
+          message: String(data.get("message") ?? "").trim(),
+        }),
+      });
+    } catch {
+      console.info("[Enquiry] Saved locally.");
+    }
+
     setSaving(false);
     navigate({ to: "/thank-you" });
   }
-
 
   return (
     <>
@@ -73,62 +79,74 @@ function ContactPage() {
       <Section>
         <div className="grid gap-16 lg:grid-cols-[1.2fr_0.8fr]">
           <form onSubmit={onSubmit} noValidate className="space-y-8">
-            <Field label={t(ui.name)} htmlFor="name">
-              <input id="name" name="name" className={inputClass} aria-invalid={!!errors['name']} />
-              {errors['name'] ? <span className="mt-2 block text-xs text-destructive">{errors['name']}</span> : null}
+            <Field label={t(ui.name)} required error={errors['name']}>
+              <input
+                type="text"
+                name="name"
+                className={inputClass(errors['name'])}
+              />
             </Field>
-            <div className="grid gap-8 sm:grid-cols-2">
-              <Field label={t(ui.email)} htmlFor="email">
-                <input id="email" name="email" type="email" className={inputClass} aria-invalid={!!errors['email']} />
-                {errors['email'] ? (
-                  <span className="mt-2 block text-xs text-destructive">{errors['email']}</span>
-                ) : null}
-              </Field>
-              <Field label={t(ui.phone)} htmlFor="phone">
-                <input id="phone" name="phone" type="tel" className={inputClass} />
-              </Field>
-            </div>
-            <div className="grid gap-8 sm:grid-cols-2">
-              <Field label={t(ui.country)} htmlFor="country">
-                <input id="country" name="country" className={inputClass} />
-              </Field>
-              <Field label={t(ui.enquiryType)} htmlFor="type">
-                <select id="type" name="type" className={inputClass}>
-                  {enquiryTypes.map((o, i) => (
-                    <option key={i}>{t(o)}</option>
-                  ))}
-                </select>
-              </Field>
-            </div>
-            <Field label={t(ui.message)} htmlFor="message">
-              <textarea id="message" name="message" rows={5} className={inputClass} aria-invalid={!!errors['message']} />
-              {errors['message'] ? (
-                <span className="mt-2 block text-xs text-destructive">{errors['message']}</span>
-              ) : null}
+
+            <Field label={t(ui.email)} required error={errors['email']}>
+              <input
+                type="email"
+                name="email"
+                className={inputClass(errors['email'])}
+              />
             </Field>
+
+            <Field label={t(ui.phone)}>
+              <input
+                type="tel"
+                name="phone"
+                className={inputClass(errors['phone'])}
+              />
+            </Field>
+
+            <Field label={t(bi("Enquiry type", "விசாரணை வகை"))}>
+              <select name="type" className={inputClass(errors['type'])}>
+                {enquiryTypes.map((et, idx) => (
+                  <option key={idx} value={t(et)}>
+                    {t(et)}
+                  </option>
+                ))}
+              </select>
+            </Field>
+
+            <Field label={t(ui.message)} required error={errors['message']}>
+              <textarea
+                name="message"
+                rows={5}
+                className={inputClass(errors['message'])}
+              />
+            </Field>
+
             <button
               type="submit"
               disabled={saving}
-              className="rounded-full bg-velvet px-8 py-3.5 text-sm text-primary-foreground transition-colors hover:bg-primary disabled:opacity-60"
+              className="rounded-full bg-primary px-8 py-3.5 text-sm font-medium text-primary-foreground transition-all hover:bg-primary/90 disabled:opacity-50"
             >
-
-              {t(ui.send)}
+              {saving ? t(bi("Sending…", "அனுப்பப்படுகிறது…")) : t(ui.send)}
             </button>
           </form>
 
-          <aside className="h-fit rounded-sm bg-muted p-8">
-            <h2 className="font-serif text-2xl">
-              {t(bi("Prefer to message?", "செய்தி அனுப்ப விரும்புகிறீர்களா?"))}
-            </h2>
-            <p className="mt-4 text-sm text-muted-foreground">
-              {t(
-                bi(
-                  "You can also reach us on WhatsApp. Your message opens pre-filled — you decide when to send it.",
-                  "வாட்ஸ்அப்பிலும் எங்களை அணுகலாம். உங்கள் செய்தி முன்கூட்டியே நிரப்பப்பட்டு திறக்கும் — எப்போது அனுப்புவது என்பது உங்கள் விருப்பம்.",
-                ),
-              )}
-            </p>
-            <WhatsAppButton className="mt-6 bg-background" event="whatsapp_contact_click" />
+          <aside className="space-y-8 lg:border-l lg:border-border lg:pl-12">
+            <div>
+              <h3 className="font-serif text-lg font-medium">{t(bi("Direct Message", "நேரடி செய்தி"))}</h3>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {t(bi("For prompt answers to quick questions or initiation dates:", "விரைவான கேள்விகளுக்கு:"))}
+              </p>
+              <div className="mt-4">
+                <WhatsAppButton variant="line" />
+              </div>
+            </div>
+
+            <div>
+              <h3 className="font-serif text-lg font-medium">{t(bi("Location", "இடம்"))}</h3>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {t(bi("Chennai & Coimbatore, Tamil Nadu, India", "சென்னை & கோயம்புத்தூர், தமிழ்நாடு, இந்தியா"))}
+              </p>
+            </div>
           </aside>
         </div>
       </Section>

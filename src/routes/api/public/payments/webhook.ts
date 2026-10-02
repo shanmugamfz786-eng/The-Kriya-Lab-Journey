@@ -32,17 +32,6 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
                 provider: "stripe",
                 paymentRef: session["id"],
               });
-              const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-              await supabaseAdmin.from("enquiries").insert({
-                name: session["customer_details"]?.name ?? "Online purchase",
-                email: session["customer_details"]?.email ?? null,
-                phone: session["customer_details"]?.phone ?? null,
-                kind: "purchase",
-                programme: session["metadata"]?.program ?? null,
-                message: `Card payment received: ${session["amount_total"] != null ? `₹${(session["amount_total"] / 100).toLocaleString("en-IN")}` : ""} (session ${session["id"]})`,
-                source_page: "/buy",
-                status: "paid",
-              });
             }
           }
         } catch {

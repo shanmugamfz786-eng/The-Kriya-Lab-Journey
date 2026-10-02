@@ -1,10 +1,10 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { PageHero, Section } from "@/components/Primitives";
 import { getMyPrograms, linkMyPurchases, type StudentProgram } from "@/lib/student.functions";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth-store";
 import { bi, useLang } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/my-programs")({
@@ -30,6 +30,7 @@ function MyProgramsPage() {
   const { t, lang } = useLang();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { logout } = useAuth();
   const fetchPrograms = useServerFn(getMyPrograms);
   const linkFn = useServerFn(linkMyPurchases);
 
@@ -45,7 +46,7 @@ function MyProgramsPage() {
   async function signOut() {
     await qc.cancelQueries();
     qc.clear();
-    await supabase.auth.signOut();
+    logout();
     navigate({ to: "/auth", replace: true });
   }
 
@@ -66,7 +67,7 @@ function MyProgramsPage() {
           <button
             type="button"
             onClick={signOut}
-            className="ml-auto rounded-full border border-border px-6 py-2.5 text-xs transition-colors hover:border-primary hover:text-primary"
+            className="ml-auto rounded-full border border-border px-6 py-2.5 text-xs transition-colors hover:border-primary hover:text-primary cursor-pointer"
           >
             {t(bi("Sign out", "வெளியேறு"))}
           </button>

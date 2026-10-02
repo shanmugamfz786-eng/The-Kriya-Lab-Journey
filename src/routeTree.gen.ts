@@ -12,9 +12,11 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AboutRouteImport } from './routes/about'
+import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BuyRouteImport } from './routes/buy'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as DisclaimerRouteImport } from './routes/disclaimer'
 import { Route as EnrollRouteImport } from './routes/enroll'
 import { Route as EventsRouteImport } from './routes/events'
@@ -32,10 +34,21 @@ import { Route as TestimonialsRouteImport } from './routes/testimonials'
 import { Route as ThankYouRouteImport } from './routes/thank-you'
 import { Route as TheKriyaLabRouteImport } from './routes/the-kriya-lab'
 import { Route as AuthenticatedMyProgramsRouteImport } from './routes/_authenticated/my-programs'
+import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as AdminProgramsRouteImport } from './routes/admin/programs'
+import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
+import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as JournalIndexRouteImport } from './routes/journal/index'
 import { Route as JournalSlugRouteImport } from './routes/journal/$slug'
 import { Route as ProgramsIndexRouteImport } from './routes/programs/index'
-import { Route as ProgramsSlugRouteImport } from './routes/programs/$slug'
+import { Route as ProgramsIdRouteImport } from './routes/programs/$id'
+import { Route as AdminEventsIndexRouteImport } from './routes/admin/events/index'
+import { Route as AdminEventsAddRouteImport } from './routes/admin/events/add'
+import { Route as AdminEventsFutureRouteImport } from './routes/admin/events/future'
+import { Route as AdminEventsPastRouteImport } from './routes/admin/events/past'
+import { Route as AdminProgramsAddRouteImport } from './routes/admin/programs/add'
+import { Route as AdminProgramsOfflineRouteImport } from './routes/admin/programs/offline'
+import { Route as AdminProgramsOnlineRouteImport } from './routes/admin/programs/online'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
 const IndexRoute = IndexRouteImport.update({
@@ -52,6 +65,11 @@ const AboutRoute = AboutRouteImport.update({
   path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRouteRoute = AdminRouteRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -65,6 +83,11 @@ const BuyRoute = BuyRouteImport.update({
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DisclaimerRoute = DisclaimerRouteImport.update({
@@ -152,6 +175,26 @@ const AuthenticatedMyProgramsRoute = AuthenticatedMyProgramsRouteImport.update({
   path: '/my-programs',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminProgramsRoute = AdminProgramsRouteImport.update({
+  id: '/programs',
+  path: '/programs',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminSettingsRoute = AdminSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminUsersRoute = AdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const JournalIndexRoute = JournalIndexRouteImport.update({
   id: '/journal/',
   path: '/journal/',
@@ -167,10 +210,45 @@ const ProgramsIndexRoute = ProgramsIndexRouteImport.update({
   path: '/programs/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProgramsSlugRoute = ProgramsSlugRouteImport.update({
-  id: '/programs/$slug',
-  path: '/programs/$slug',
+const ProgramsIdRoute = ProgramsIdRouteImport.update({
+  id: '/programs/$id',
+  path: '/programs/$id',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminEventsIndexRoute = AdminEventsIndexRouteImport.update({
+  id: '/events/',
+  path: '/events/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminEventsAddRoute = AdminEventsAddRouteImport.update({
+  id: '/events/add',
+  path: '/events/add',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminEventsFutureRoute = AdminEventsFutureRouteImport.update({
+  id: '/events/future',
+  path: '/events/future',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminEventsPastRoute = AdminEventsPastRouteImport.update({
+  id: '/events/past',
+  path: '/events/past',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminProgramsAddRoute = AdminProgramsAddRouteImport.update({
+  id: '/add',
+  path: '/add',
+  getParentRoute: () => AdminProgramsRoute,
+} as any)
+const AdminProgramsOfflineRoute = AdminProgramsOfflineRouteImport.update({
+  id: '/offline',
+  path: '/offline',
+  getParentRoute: () => AdminProgramsRoute,
+} as any)
+const AdminProgramsOnlineRoute = AdminProgramsOnlineRouteImport.update({
+  id: '/online',
+  path: '/online',
+  getParentRoute: () => AdminProgramsRoute,
 } as any)
 const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
@@ -181,10 +259,12 @@ const ApiPublicPaymentsWebhookRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteRouteWithChildren
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
   '/buy': typeof BuyRoute
   '/contact': typeof ContactRoute
+  '/dashboard': typeof DashboardRoute
   '/disclaimer': typeof DisclaimerRoute
   '/enroll': typeof EnrollRoute
   '/events': typeof EventsRoute
@@ -202,10 +282,21 @@ export interface FileRoutesByFullPath {
   '/thank-you': typeof ThankYouRoute
   '/the-kriya-lab': typeof TheKriyaLabRoute
   '/my-programs': typeof AuthenticatedMyProgramsRoute
+  '/admin/programs': typeof AdminProgramsRouteWithChildren
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/users': typeof AdminUsersRoute
   '/journal/$slug': typeof JournalSlugRoute
-  '/programs/$slug': typeof ProgramsSlugRoute
+  '/programs/$id': typeof ProgramsIdRoute
+  '/admin/': typeof AdminIndexRoute
   '/journal/': typeof JournalIndexRoute
   '/programs/': typeof ProgramsIndexRoute
+  '/admin/events/add': typeof AdminEventsAddRoute
+  '/admin/events/future': typeof AdminEventsFutureRoute
+  '/admin/events/past': typeof AdminEventsPastRoute
+  '/admin/programs/add': typeof AdminProgramsAddRoute
+  '/admin/programs/offline': typeof AdminProgramsOfflineRoute
+  '/admin/programs/online': typeof AdminProgramsOnlineRoute
+  '/admin/events/': typeof AdminEventsIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesByTo {
@@ -214,6 +305,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/buy': typeof BuyRoute
   '/contact': typeof ContactRoute
+  '/dashboard': typeof DashboardRoute
   '/disclaimer': typeof DisclaimerRoute
   '/enroll': typeof EnrollRoute
   '/events': typeof EventsRoute
@@ -231,20 +323,33 @@ export interface FileRoutesByTo {
   '/thank-you': typeof ThankYouRoute
   '/the-kriya-lab': typeof TheKriyaLabRoute
   '/my-programs': typeof AuthenticatedMyProgramsRoute
+  '/admin/programs': typeof AdminProgramsRouteWithChildren
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/users': typeof AdminUsersRoute
   '/journal/$slug': typeof JournalSlugRoute
-  '/programs/$slug': typeof ProgramsSlugRoute
+  '/programs/$id': typeof ProgramsIdRoute
+  '/admin': typeof AdminIndexRoute
   '/journal': typeof JournalIndexRoute
   '/programs': typeof ProgramsIndexRoute
+  '/admin/events/add': typeof AdminEventsAddRoute
+  '/admin/events/future': typeof AdminEventsFutureRoute
+  '/admin/events/past': typeof AdminEventsPastRoute
+  '/admin/programs/add': typeof AdminProgramsAddRoute
+  '/admin/programs/offline': typeof AdminProgramsOfflineRoute
+  '/admin/programs/online': typeof AdminProgramsOnlineRoute
+  '/admin/events': typeof AdminEventsIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/admin': typeof AdminRouteRouteWithChildren
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
   '/buy': typeof BuyRoute
   '/contact': typeof ContactRoute
+  '/dashboard': typeof DashboardRoute
   '/disclaimer': typeof DisclaimerRoute
   '/enroll': typeof EnrollRoute
   '/events': typeof EventsRoute
@@ -262,20 +367,33 @@ export interface FileRoutesById {
   '/thank-you': typeof ThankYouRoute
   '/the-kriya-lab': typeof TheKriyaLabRoute
   '/_authenticated/my-programs': typeof AuthenticatedMyProgramsRoute
+  '/admin/programs': typeof AdminProgramsRouteWithChildren
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/users': typeof AdminUsersRoute
   '/journal/$slug': typeof JournalSlugRoute
-  '/programs/$slug': typeof ProgramsSlugRoute
+  '/programs/$id': typeof ProgramsIdRoute
+  '/admin/': typeof AdminIndexRoute
   '/journal/': typeof JournalIndexRoute
   '/programs/': typeof ProgramsIndexRoute
+  '/admin/events/add': typeof AdminEventsAddRoute
+  '/admin/events/future': typeof AdminEventsFutureRoute
+  '/admin/events/past': typeof AdminEventsPastRoute
+  '/admin/programs/add': typeof AdminProgramsAddRoute
+  '/admin/programs/offline': typeof AdminProgramsOfflineRoute
+  '/admin/programs/online': typeof AdminProgramsOnlineRoute
+  '/admin/events/': typeof AdminEventsIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/about'
     | '/auth'
     | '/buy'
     | '/contact'
+    | '/dashboard'
     | '/disclaimer'
     | '/enroll'
     | '/events'
@@ -293,10 +411,21 @@ export interface FileRouteTypes {
     | '/thank-you'
     | '/the-kriya-lab'
     | '/my-programs'
+    | '/admin/programs'
+    | '/admin/settings'
+    | '/admin/users'
     | '/journal/$slug'
-    | '/programs/$slug'
+    | '/programs/$id'
+    | '/admin/'
     | '/journal/'
     | '/programs/'
+    | '/admin/events/add'
+    | '/admin/events/future'
+    | '/admin/events/past'
+    | '/admin/programs/add'
+    | '/admin/programs/offline'
+    | '/admin/programs/online'
+    | '/admin/events/'
     | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -305,6 +434,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/buy'
     | '/contact'
+    | '/dashboard'
     | '/disclaimer'
     | '/enroll'
     | '/events'
@@ -322,19 +452,32 @@ export interface FileRouteTypes {
     | '/thank-you'
     | '/the-kriya-lab'
     | '/my-programs'
+    | '/admin/programs'
+    | '/admin/settings'
+    | '/admin/users'
     | '/journal/$slug'
-    | '/programs/$slug'
+    | '/programs/$id'
+    | '/admin'
     | '/journal'
     | '/programs'
+    | '/admin/events/add'
+    | '/admin/events/future'
+    | '/admin/events/past'
+    | '/admin/programs/add'
+    | '/admin/programs/offline'
+    | '/admin/programs/online'
+    | '/admin/events'
     | '/api/public/payments/webhook'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/admin'
     | '/about'
     | '/auth'
     | '/buy'
     | '/contact'
+    | '/dashboard'
     | '/disclaimer'
     | '/enroll'
     | '/events'
@@ -352,20 +495,33 @@ export interface FileRouteTypes {
     | '/thank-you'
     | '/the-kriya-lab'
     | '/_authenticated/my-programs'
+    | '/admin/programs'
+    | '/admin/settings'
+    | '/admin/users'
     | '/journal/$slug'
-    | '/programs/$slug'
+    | '/programs/$id'
+    | '/admin/'
     | '/journal/'
     | '/programs/'
+    | '/admin/events/add'
+    | '/admin/events/future'
+    | '/admin/events/past'
+    | '/admin/programs/add'
+    | '/admin/programs/offline'
+    | '/admin/programs/online'
+    | '/admin/events/'
     | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AdminRouteRoute: typeof AdminRouteRouteWithChildren
   AboutRoute: typeof AboutRoute
   AuthRoute: typeof AuthRoute
   BuyRoute: typeof BuyRoute
   ContactRoute: typeof ContactRoute
+  DashboardRoute: typeof DashboardRoute
   DisclaimerRoute: typeof DisclaimerRoute
   EnrollRoute: typeof EnrollRoute
   EventsRoute: typeof EventsRoute
@@ -383,7 +539,7 @@ export interface RootRouteChildren {
   ThankYouRoute: typeof ThankYouRoute
   TheKriyaLabRoute: typeof TheKriyaLabRoute
   JournalSlugRoute: typeof JournalSlugRoute
-  ProgramsSlugRoute: typeof ProgramsSlugRoute
+  ProgramsIdRoute: typeof ProgramsIdRoute
   JournalIndexRoute: typeof JournalIndexRoute
   ProgramsIndexRoute: typeof ProgramsIndexRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
@@ -412,6 +568,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -431,6 +594,13 @@ declare module '@tanstack/react-router' {
       path: '/contact'
       fullPath: '/contact'
       preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/disclaimer': {
@@ -552,6 +722,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMyProgramsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/programs': {
+      id: '/admin/programs'
+      path: '/programs'
+      fullPath: '/admin/programs'
+      preLoaderRoute: typeof AdminProgramsRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/settings': {
+      id: '/admin/settings'
+      path: '/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AdminSettingsRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/users': {
+      id: '/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/journal/': {
       id: '/journal/'
       path: '/journal'
@@ -573,12 +771,61 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProgramsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/programs/$slug': {
-      id: '/programs/$slug'
-      path: '/programs/$slug'
-      fullPath: '/programs/$slug'
-      preLoaderRoute: typeof ProgramsSlugRouteImport
+    '/programs/$id': {
+      id: '/programs/$id'
+      path: '/programs/$id'
+      fullPath: '/programs/$id'
+      preLoaderRoute: typeof ProgramsIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/events/': {
+      id: '/admin/events/'
+      path: '/events'
+      fullPath: '/admin/events/'
+      preLoaderRoute: typeof AdminEventsIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/events/add': {
+      id: '/admin/events/add'
+      path: '/events/add'
+      fullPath: '/admin/events/add'
+      preLoaderRoute: typeof AdminEventsAddRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/events/future': {
+      id: '/admin/events/future'
+      path: '/events/future'
+      fullPath: '/admin/events/future'
+      preLoaderRoute: typeof AdminEventsFutureRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/events/past': {
+      id: '/admin/events/past'
+      path: '/events/past'
+      fullPath: '/admin/events/past'
+      preLoaderRoute: typeof AdminEventsPastRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/programs/add': {
+      id: '/admin/programs/add'
+      path: '/add'
+      fullPath: '/admin/programs/add'
+      preLoaderRoute: typeof AdminProgramsAddRouteImport
+      parentRoute: typeof AdminProgramsRoute
+    }
+    '/admin/programs/offline': {
+      id: '/admin/programs/offline'
+      path: '/offline'
+      fullPath: '/admin/programs/offline'
+      preLoaderRoute: typeof AdminProgramsOfflineRouteImport
+      parentRoute: typeof AdminProgramsRoute
+    }
+    '/admin/programs/online': {
+      id: '/admin/programs/online'
+      path: '/online'
+      fullPath: '/admin/programs/online'
+      preLoaderRoute: typeof AdminProgramsOnlineRouteImport
+      parentRoute: typeof AdminProgramsRoute
     }
     '/api/public/payments/webhook': {
       id: '/api/public/payments/webhook'
@@ -601,13 +848,57 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface AdminProgramsRouteChildren {
+  AdminProgramsAddRoute: typeof AdminProgramsAddRoute
+  AdminProgramsOfflineRoute: typeof AdminProgramsOfflineRoute
+  AdminProgramsOnlineRoute: typeof AdminProgramsOnlineRoute
+}
+
+const AdminProgramsRouteChildren: AdminProgramsRouteChildren = {
+  AdminProgramsAddRoute: AdminProgramsAddRoute,
+  AdminProgramsOfflineRoute: AdminProgramsOfflineRoute,
+  AdminProgramsOnlineRoute: AdminProgramsOnlineRoute,
+}
+
+const AdminProgramsRouteWithChildren = AdminProgramsRoute._addFileChildren(
+  AdminProgramsRouteChildren,
+)
+
+interface AdminRouteRouteChildren {
+  AdminProgramsRoute: typeof AdminProgramsRouteWithChildren
+  AdminSettingsRoute: typeof AdminSettingsRoute
+  AdminUsersRoute: typeof AdminUsersRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+  AdminEventsAddRoute: typeof AdminEventsAddRoute
+  AdminEventsFutureRoute: typeof AdminEventsFutureRoute
+  AdminEventsPastRoute: typeof AdminEventsPastRoute
+  AdminEventsIndexRoute: typeof AdminEventsIndexRoute
+}
+
+const AdminRouteRouteChildren: AdminRouteRouteChildren = {
+  AdminProgramsRoute: AdminProgramsRouteWithChildren,
+  AdminSettingsRoute: AdminSettingsRoute,
+  AdminUsersRoute: AdminUsersRoute,
+  AdminIndexRoute: AdminIndexRoute,
+  AdminEventsAddRoute: AdminEventsAddRoute,
+  AdminEventsFutureRoute: AdminEventsFutureRoute,
+  AdminEventsPastRoute: AdminEventsPastRoute,
+  AdminEventsIndexRoute: AdminEventsIndexRoute,
+}
+
+const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
+  AdminRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AdminRouteRoute: AdminRouteRouteWithChildren,
   AboutRoute: AboutRoute,
   AuthRoute: AuthRoute,
   BuyRoute: BuyRoute,
   ContactRoute: ContactRoute,
+  DashboardRoute: DashboardRoute,
   DisclaimerRoute: DisclaimerRoute,
   EnrollRoute: EnrollRoute,
   EventsRoute: EventsRoute,
@@ -625,7 +916,7 @@ const rootRouteChildren: RootRouteChildren = {
   ThankYouRoute: ThankYouRoute,
   TheKriyaLabRoute: TheKriyaLabRoute,
   JournalSlugRoute: JournalSlugRoute,
-  ProgramsSlugRoute: ProgramsSlugRoute,
+  ProgramsIdRoute: ProgramsIdRoute,
   JournalIndexRoute: JournalIndexRoute,
   ProgramsIndexRoute: ProgramsIndexRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
