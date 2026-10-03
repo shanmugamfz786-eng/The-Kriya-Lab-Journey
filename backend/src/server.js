@@ -45,9 +45,13 @@ app.use("/api/events", eventsRoutes);
 // Programs Routes
 app.use("/api/programs", programsRoutes);
 
-// Start server and initialize DB connection
-app.listen(PORT, async () => {
-  console.log(`🚀 [THE KRIYA LAB BACKEND] Express Server running on: http://localhost:${PORT}`);
-  console.log(`🌐 Configured for Standalone Domain Hosting`);
-  await initDb();
-});
+// Start server and initialize DB connection (only if not running in Vercel)
+if (process.env.VERCEL !== "1") {
+  app.listen(PORT, async () => {
+    console.log(`🚀 [THE KRIYA LAB BACKEND] Express Server running on: http://localhost:${PORT}`);
+    console.log(`🌐 Configured for Standalone Domain Hosting`);
+    await initDb();
+  });
+}
+
+export default app;
