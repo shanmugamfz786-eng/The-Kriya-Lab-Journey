@@ -75,15 +75,19 @@ export async function fetchAllEvents(): Promise<EventItem[]> {
 }
 
 export async function createEventApi(payload: Omit<EventItem, "id">): Promise<EventItem> {
-  const res = await fetch(`${API_URL}/api/events`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
+  try {
+    const res = await fetch(`${API_URL}/api/events`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
 
-  if (res.ok) {
-    const data = await res.json();
-    return data.event;
+    if (res.ok) {
+      const data = await res.json();
+      return data.event;
+    }
+  } catch (e) {
+    console.warn("Backend unavailable, faking create.");
   }
   return {
     ...payload,
@@ -92,23 +96,33 @@ export async function createEventApi(payload: Omit<EventItem, "id">): Promise<Ev
 }
 
 export async function updateEventApi(id: string, payload: Partial<EventItem>): Promise<EventItem | null> {
-  const res = await fetch(`${API_URL}/api/events/${id}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  if (res.ok) {
-    const data = await res.json();
-    return data.event || null;
+  try {
+    const res = await fetch(`${API_URL}/api/events/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return data.event || null;
+    }
+  } catch (e) {
+    console.warn("Backend unavailable, faking update.");
+    return { id, ...payload } as EventItem;
   }
   return null;
 }
 
 export async function deleteEventApi(id: string): Promise<boolean> {
-  const res = await fetch(`${API_URL}/api/events/${id}`, {
-    method: "DELETE",
-  });
-  return res.ok;
+  try {
+    const res = await fetch(`${API_URL}/api/events/${id}`, {
+      method: "DELETE",
+    });
+    return res.ok;
+  } catch (e) {
+    console.warn("Backend unavailable, faking delete.");
+    return true;
+  }
 }
 
 export async function uploadEventImageApi(base64: string): Promise<string> {

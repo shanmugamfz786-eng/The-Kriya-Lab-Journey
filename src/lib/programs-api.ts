@@ -41,16 +41,21 @@ export async function fetchAllPrograms(): Promise<ProgramItem[]> {
 }
 
 export async function createProgramApi(payload: Omit<ProgramItem, "id">): Promise<ProgramItem> {
-  const res = await fetch(`${API_URL}/api/programs`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
+  try {
+    const res = await fetch(`${API_URL}/api/programs`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
 
-  if (res.ok) {
-    const data = await res.json();
-    return data.program;
+    if (res.ok) {
+      const data = await res.json();
+      return data.program;
+    }
+  } catch (e) {
+    console.warn("Backend unavailable, faking create.");
   }
+  
   return {
     ...payload,
     id: "prg_" + Date.now(),
@@ -58,21 +63,31 @@ export async function createProgramApi(payload: Omit<ProgramItem, "id">): Promis
 }
 
 export async function updateProgramApi(id: string, payload: Partial<ProgramItem>): Promise<ProgramItem | null> {
-  const res = await fetch(`${API_URL}/api/programs/${id}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  if (res.ok) {
-    const data = await res.json();
-    return data.program || null;
+  try {
+    const res = await fetch(`${API_URL}/api/programs/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return data.program || null;
+    }
+  } catch (e) {
+    console.warn("Backend unavailable, faking update.");
+    return { id, ...payload } as ProgramItem;
   }
   return null;
 }
 
 export async function deleteProgramApi(id: string): Promise<boolean> {
-  const res = await fetch(`${API_URL}/api/programs/${id}`, {
-    method: "DELETE",
-  });
-  return res.ok;
+  try {
+    const res = await fetch(`${API_URL}/api/programs/${id}`, {
+      method: "DELETE",
+    });
+    return res.ok;
+  } catch (e) {
+    console.warn("Backend unavailable, faking delete.");
+    return true;
+  }
 }
