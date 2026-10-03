@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { X, Upload, Image as ImageIcon, Sparkles, Languages, Globe } from "lucide-react";
 import { updateProgramApi, type ProgramItem } from "@/lib/programs-api";
 import { uploadEventImageApi } from "@/lib/events-api";
@@ -38,6 +38,19 @@ export function EditProgramModal({ program, onClose, onUpdated }: EditProgramMod
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+
+  const [usdRate, setUsdRate] = useState<number>(0.0119);
+
+  useEffect(() => {
+    fetch("https://open.er-api.com/v6/latest/INR")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.rates && data.rates.USD) {
+          setUsdRate(data.rates.USD);
+        }
+      })
+      .catch((err) => console.error("Could not fetch exchange rate:", err));
+  }, []);
 
   const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -244,7 +257,17 @@ export function EditProgramModal({ program, onClose, onUpdated }: EditProgramMod
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">Price (INR) *</label>
-                  <input type="text" required placeholder="Enter price in INR..." value={formPriceInr} onChange={(e) => setFormPriceInr(e.target.value)} className="w-full rounded-xl border border-gray-300 bg-gray-50 px-3 py-2.5 text-sm text-gray-900 focus:border-[#334d84] focus:outline-none" />
+                  <input type="text" required placeholder="Enter price in INR..." value={formPriceInr} onChange={(e) => {
+                    const val = e.target.value;
+                    setFormPriceInr(val);
+                    const cleanVal = val.replace(/,/g, '');
+                    const parsed = parseFloat(cleanVal);
+                    if (!isNaN(parsed) && parsed >= 0) {
+                      setFormPriceUsd((parsed * usdRate).toFixed(2));
+                    } else if (val === "") {
+                      setFormPriceUsd("");
+                    }
+                  }} className="w-full rounded-xl border border-gray-300 bg-gray-50 px-3 py-2.5 text-sm text-gray-900 focus:border-[#334d84] focus:outline-none" />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">Price (USD) *</label>

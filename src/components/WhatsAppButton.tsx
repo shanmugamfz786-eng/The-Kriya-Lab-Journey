@@ -45,6 +45,9 @@ export function WhatsAppButton({
 
 export function FloatingWhatsApp() {
   const { lang, t } = useLang();
+  // Safe check for window since this runs on client
+  const isPortal = typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
+  
   return (
     <a
       href={whatsappLink(defaultMessage(lang))}
@@ -52,7 +55,10 @@ export function FloatingWhatsApp() {
       rel="noopener noreferrer"
       onClick={() => trackWhatsApp("whatsapp_floating_click", lang)}
       aria-label={t(settings.whatsappLabel)}
-      className="fixed bottom-5 right-5 z-40 inline-flex items-center gap-2 rounded-full bg-velvet px-4 py-3 text-sm text-primary-foreground shadow-lift transition-colors hover:bg-primary sm:px-5"
+      className={cn(
+        "fixed right-4 z-40 inline-flex items-center gap-2 rounded-full bg-velvet px-4 py-3 text-sm text-primary-foreground shadow-lift transition-colors hover:bg-primary sm:px-5 xl:bottom-5 xl:right-5",
+        !isPortal ? "bottom-[5.5rem]" : "bottom-5"
+      )}
     >
       <MessageCircle className="size-5" aria-hidden="true" />
       <span className="hidden sm:inline">{t(settings.whatsappLabel)}</span>

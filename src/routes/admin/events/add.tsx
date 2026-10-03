@@ -322,13 +322,12 @@ function AdminAddEventPage() {
                   Event Date *
                 </label>
                 <div className="relative">
-                  <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
                   <input
                     type="date"
                     required
                     value={formEventDate}
                     onChange={(e) => setFormEventDate(e.target.value)}
-                    className="w-full rounded-xl border border-gray-300 bg-[#f8f9fa] pl-10 pr-4 py-3 text-xs text-gray-900 focus:border-[#334d84] focus:bg-white focus:outline-none transition-colors"
+                    className="w-full rounded-xl border border-gray-300 bg-[#f8f9fa] px-4 py-3 text-xs text-gray-900 focus:border-[#334d84] focus:bg-white focus:outline-none transition-colors"
                   />
                 </div>
               </div>

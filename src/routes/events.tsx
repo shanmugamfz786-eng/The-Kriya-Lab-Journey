@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { PageHero, Section } from "@/components/Primitives";
+import { Section } from "@/components/Primitives";
 import { listPublicEvents, type PublicEvent } from "@/lib/events.functions";
 import { bi, useLang } from "@/lib/i18n";
 import { Search } from "lucide-react";
@@ -68,26 +68,15 @@ function EventsPage() {
 
   return (
     <>
-      <PageHero
-        eyebrow={t(bi("Gatherings", "சந்திப்புகள்"))}
-        title={t(bi("Events", "நிகழ்வுகள்"))}
-        intro={t(
-          bi(
-            "Retreats, initiations and satsangs. Each event moves to Past Events once its date has passed.",
-            "பயிற்சி முகாம்கள், தீட்சைகள் மற்றும் சத்சங்கங்கள். நிகழ்வின் தேதி கடந்தவுடன் அது கடந்த நிகழ்வுகளுக்கு மாறும்.",
-          ),
-        )}
-      />
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 mb-4">
         <div className="relative max-w-md mx-auto">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-gray-400" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-muted-foreground" />
           <input
             type="text"
             placeholder={t(bi("Search events by title or location...", "நிகழ்வுகளை தேடுக..."))}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full rounded-full border border-gray-300 bg-white py-3 pl-12 pr-6 text-sm text-gray-900 shadow-sm focus:border-[#522938] focus:outline-none focus:ring-1 focus:ring-[#522938] transition-shadow"
+            className="w-full rounded-full border border-border bg-background py-3 pl-12 pr-6 text-sm text-foreground shadow-sm focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold transition-all"
           />
         </div>
       </div>

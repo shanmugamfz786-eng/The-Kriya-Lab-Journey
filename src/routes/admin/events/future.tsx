@@ -43,7 +43,7 @@ function AdminFutureEventsPage() {
   today.setHours(0, 0, 0, 0);
 
   const futureEvents = events.filter((e) => {
-    const d = new Date(e.event_date);
+    const d = new Date(e.event_date || "");
     if (!isNaN(d.getTime())) return d >= today;
     return e.event_type === "future";
   });

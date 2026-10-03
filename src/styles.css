@@ -129,6 +129,7 @@
   html {
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
   }
 
   body {
@@ -137,6 +138,7 @@
     font-family: var(--font-sans);
     font-size: 1.0125rem;
     line-height: 1.75;
+    overflow-x: hidden;
   }
 
   h1,

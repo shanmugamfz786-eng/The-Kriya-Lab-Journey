@@ -1,12 +1,13 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import heroImage from "@/assets/hero-breath.jpg";
 import heroVideo from "@/assets/Hero-sections.mp4";
 import { home, koshas, settings, ui } from "@/content/site";
 import { bi, useLang } from "@/lib/i18n";
 import { CTARow, Eyebrow, Section } from "@/components/Primitives";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth-store";
 
 export const Route = createFileRoute("/")({
   staticData: { sitemap: true },
@@ -31,6 +32,18 @@ export const Route = createFileRoute("/")({
 function Index() {
   const { t, lang } = useLang();
   const [active, setActive] = useState(0);
+  const { user, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      if (user.role === "admin") {
+        navigate({ to: "/admin", replace: true });
+      } else {
+        navigate({ to: "/dashboard", replace: true });
+      }
+    }
+  }, [isAuthenticated, user, navigate]);
 
   return (
     <>
@@ -82,7 +95,7 @@ function Index() {
       </section>
 
       {/* Long-form intro */}
-      <Section>
+      <Section id="why-we-practise">
         <div className="grid gap-14 lg:grid-cols-[0.9fr_1.1fr]">
           <div>
             <Eyebrow>{t(bi("Why we practise", "நாம் ஏன் பயிற்சி செய்கிறோம்"))}</Eyebrow>

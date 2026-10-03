@@ -138,7 +138,7 @@ function LanguageSwitcher({ className, isTransparent }: { className?: string; is
           lang === "en"
             ? isTransparent
               ? "text-gold"
-              : "text-primary font-semibold"
+              : "text-primary"
             : isTransparent
               ? "text-white/60 hover:text-white"
               : "text-muted-foreground hover:text-foreground",
@@ -158,7 +158,7 @@ function LanguageSwitcher({ className, isTransparent }: { className?: string; is
           lang === "ta"
             ? isTransparent
               ? "text-gold"
-              : "text-primary font-semibold"
+              : "text-primary"
             : isTransparent
               ? "text-white/60 hover:text-white"
               : "text-muted-foreground hover:text-foreground",
@@ -197,11 +197,9 @@ function AccountLink({
             className,
           )}
         >
-          <img
-            src={user.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"}
-            alt={user.full_name}
-            className="h-6 w-6 rounded-full object-cover ring-1 ring-gold/50"
-          />
+          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gold/20 text-gold">
+            <User className="size-3.5" />
+          </div>
           <span className="text-xs font-semibold max-w-[100px] truncate">
             {user.full_name.split(" ")[0]}
           </span>
@@ -318,7 +316,17 @@ export function Header() {
   // Handle scroll trigger for navbar transition
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 30);
+      // Find the 'Why we practise' section by ID
+      const whyWePractiseSection = document.getElementById("why-we-practise");
+      
+      if (whyWePractiseSection) {
+        // Change to solid when the 'Why we practise' section touches the navbar (80px from top)
+        const rect = whyWePractiseSection.getBoundingClientRect();
+        setScrolled(rect.top <= 80);
+      } else {
+        // Fallback for other pages
+        setScrolled(window.scrollY > 30);
+      }
     };
     handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -385,7 +393,7 @@ export function Header() {
                     "tracking-wide transition-colors font-medium hover:text-gold whitespace-nowrap",
                     lang === "ta" ? "text-[0.74rem] 2xl:text-[0.78rem]" : "text-[0.78rem] 2xl:text-[0.82rem]",
                     isTransparent
-                      ? "text-white/85 [&.active]:text-gold font-light"
+                      ? "text-white/85 [&.active]:text-gold"
                       : "text-foreground/80 [&.active]:text-primary",
                   )}
                 >
@@ -411,8 +419,8 @@ export function Header() {
             </button>
           </div>
 
-          {/* Right Controls */}
-          <div className={cn("hidden items-center sm:flex", lang === "ta" ? "gap-2 xl:gap-2.5" : "gap-2.5 xl:gap-3.5")}>
+          {/* Right Controls (Desktop) */}
+          <div className={cn("hidden items-center xl:flex", lang === "ta" ? "gap-2 xl:gap-2.5" : "gap-2.5 xl:gap-3.5")}>
             <LanguageSwitcher isTransparent={isTransparent} />
             <AccountLink isTransparent={isTransparent} />
             <WhatsAppButton
@@ -434,35 +442,40 @@ export function Header() {
             </Link>
           </div>
 
-          {/* Mobile Menu Hamburger */}
-          <button
-            type="button"
-            className={cn(
-              "flex items-center gap-2 rounded-lg p-2 xl:hidden transition-colors",
-              isTransparent ? "text-white bg-white/10" : "text-foreground bg-secondary",
-            )}
-            aria-label="Open Menu"
-            onClick={() => setOpen(true)}
-          >
-            <Menu className="size-6 text-gold" />
-          </button>
+          {/* Mobile Right Controls */}
+          <div className="flex items-center gap-4 xl:hidden">
+            <AccountLink isTransparent={isTransparent} />
+            
+            {/* Mobile Menu Hamburger */}
+            <button
+              type="button"
+              className={cn(
+                "flex items-center gap-2 rounded-lg p-2 transition-colors",
+                isTransparent ? "text-white bg-white/10" : "text-foreground bg-secondary",
+              )}
+              aria-label="Open Menu"
+              onClick={() => setOpen(true)}
+            >
+              <Menu className="size-6 text-gold" />
+            </button>
+          </div>
         </div>
       </header>
 
       {/* 🌟 Luxury Full Slide Drawer (Option B) 🌟 */}
       {open && (
-        <div className="fixed inset-0 z-50 flex justify-end animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-[100] flex justify-end animate-in fade-in duration-300">
           {/* Dark Backdrop */}
           <div
-            className="fixed inset-0 bg-black/75 backdrop-blur-md transition-opacity"
+            className="fixed inset-0 bg-black/75 backdrop-blur-md transition-opacity touch-none"
             onClick={() => setOpen(false)}
             aria-hidden="true"
           />
 
           {/* Slide-over Content Panel */}
-          <div className="relative z-50 flex h-full w-full max-w-2xl flex-col bg-velvet-deep text-[oklch(0.96_0.01_300)] shadow-2xl border-l border-gold/20 overflow-y-auto">
+          <div className="relative z-[100] flex h-full w-full max-w-full sm:max-w-sm flex-col bg-velvet-deep text-[oklch(0.96_0.01_300)] shadow-2xl border-l border-gold/20">
             {/* Drawer Top Header */}
-            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/10 bg-velvet-deep/95 px-6 py-5 backdrop-blur-lg">
+            <div className="flex-shrink-0 flex items-center justify-between border-b border-white/10 bg-velvet-deep/95 px-4 sm:px-6 py-4 sm:py-5 backdrop-blur-lg">
               <div>
                 <span className="font-serif text-xl tracking-[0.2em] text-white">
                   {settings.brand}
@@ -486,7 +499,7 @@ export function Header() {
             </div>
 
             {/* Categorized Navigation Columns */}
-            <div className="flex-1 space-y-10 px-6 py-8 sm:px-10">
+            <div className="flex-1 overflow-y-auto overscroll-contain space-y-8 px-4 py-6 sm:px-6">
               {navigationGroups.map((group, idx) => {
                 const Icon = group.icon;
                 return (
@@ -523,23 +536,7 @@ export function Header() {
               })}
             </div>
 
-            {/* Drawer Bottom Actions */}
-            <div className="sticky bottom-0 border-t border-white/10 bg-velvet-deep/95 p-6 backdrop-blur-lg sm:px-10">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <AccountLink isTransparent={true} onClick={() => setOpen(false)} />
-                <WhatsAppButton
-                  variant="line"
-                  className="border-gold/40 text-white hover:border-gold hover:text-gold hover:bg-white/5"
-                />
-                <Link
-                  to="/programs"
-                  onClick={() => setOpen(false)}
-                  className="rounded-full bg-gold px-6 py-3 text-center text-sm font-medium text-velvet-deep transition-all hover:bg-gold/90 shadow-md"
-                >
-                  {t(ui.begin)}
-                </Link>
-              </div>
-            </div>
+
           </div>
         </div>
       )}

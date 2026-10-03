@@ -6,6 +6,7 @@ import {
   useRouter,
   HeadContent,
   Scripts,
+  ErrorComponentProps
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 
@@ -16,6 +17,8 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { FloatingWhatsApp } from "@/components/WhatsAppButton";
 import { ScrollObserver } from "@/components/ScrollObserver";
+import { MobileBottomNav } from "@/components/MobileBottomNav";
+import { cn } from "@/lib/utils";
 
 import notFoundIllustration from "@/assets/images/not-found-illustion.png";
 import { Home, Compass, MessageCircle, ArrowLeft } from "lucide-react";
@@ -83,11 +86,11 @@ function NotFoundComponent() {
   );
 }
 
-function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+function ErrorComponent({ error, reset }: ErrorComponentProps) {
   console.error(error);
   const router = useRouter();
   useEffect(() => {
-    reportLovableError(error, { boundary: "tanstack_root_error_component" });
+    reportLovableError(error as Error, { boundary: "tanstack_root_error_component" });
   }, [error]);
 
   return (
@@ -178,7 +181,8 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
   const pathname = router.state.location.pathname;
-  const isPortal = pathname.startsWith("/admin") || pathname.startsWith("/dashboard");
+  const isPortal = pathname.startsWith("/admin");
+  const hideFooter = ["/programs", "/events", "/dashboard", "/profile"].some(path => pathname.startsWith(path));
 
   if (isPortal) {
     return (
@@ -194,15 +198,16 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
         <ScrollObserver />
-        <div className="flex min-h-screen flex-col">
+        <div className={cn("flex min-h-screen flex-col", !isPortal ? "pb-[4.25rem] xl:pb-0" : "")}>
           <Header />
           <main className="flex-1 flex flex-col">
             {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
             <Outlet />
           </main>
-          <Footer />
+          {!hideFooter && <Footer />}
         </div>
         <FloatingWhatsApp />
+        {!isPortal && <MobileBottomNav />}
       </LanguageProvider>
     </QueryClientProvider>
   );

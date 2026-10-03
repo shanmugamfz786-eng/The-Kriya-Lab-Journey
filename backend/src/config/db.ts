@@ -15,7 +15,7 @@ export function getDbPool() {
       user: process.env.TIDB_USER || "root",
       password: process.env.TIDB_PASSWORD || "",
       database: process.env.TIDB_DATABASE || "the_kriya_lab",
-      ssl: isSsl ? { minVersion: "TLSv1.2", rejectUnauthorized: true } : false,
+      ssl: isSsl ? { minVersion: "TLSv1.2", rejectUnauthorized: true } : undefined,
       waitForConnections: true,
       connectionLimit: 10,
       queueLimit: 0,
@@ -40,7 +40,7 @@ export async function initDb() {
       port: Number(process.env.TIDB_PORT) || 4000,
       user: process.env.TIDB_USER || "root",
       password: process.env.TIDB_PASSWORD || "",
-      ssl: isSsl ? { minVersion: "TLSv1.2", rejectUnauthorized: true } : false,
+      ssl: isSsl ? { minVersion: "TLSv1.2", rejectUnauthorized: true } : undefined,
     });
 
     await initConn.query(`CREATE DATABASE IF NOT EXISTS \`${dbName}\`;`);

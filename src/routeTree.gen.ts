@@ -26,6 +26,7 @@ import { Route as JourneyRouteImport } from './routes/journey'
 import { Route as KriyaYogaRouteImport } from './routes/kriya-yoga'
 import { Route as LineageRouteImport } from './routes/lineage'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as ScienceOfKriyaYogaRouteImport } from './routes/science-of-kriya-yoga'
 import { Route as SiddhaTraditionRouteImport } from './routes/siddha-tradition'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
@@ -133,6 +134,11 @@ const LineageRoute = LineageRouteImport.update({
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ScienceOfKriyaYogaRoute = ScienceOfKriyaYogaRouteImport.update({
@@ -274,6 +280,7 @@ export interface FileRoutesByFullPath {
   '/kriya-yoga': typeof KriyaYogaRoute
   '/lineage': typeof LineageRoute
   '/privacy': typeof PrivacyRoute
+  '/profile': typeof ProfileRoute
   '/science-of-kriya-yoga': typeof ScienceOfKriyaYogaRoute
   '/siddha-tradition': typeof SiddhaTraditionRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -315,6 +322,7 @@ export interface FileRoutesByTo {
   '/kriya-yoga': typeof KriyaYogaRoute
   '/lineage': typeof LineageRoute
   '/privacy': typeof PrivacyRoute
+  '/profile': typeof ProfileRoute
   '/science-of-kriya-yoga': typeof ScienceOfKriyaYogaRoute
   '/siddha-tradition': typeof SiddhaTraditionRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -359,6 +367,7 @@ export interface FileRoutesById {
   '/kriya-yoga': typeof KriyaYogaRoute
   '/lineage': typeof LineageRoute
   '/privacy': typeof PrivacyRoute
+  '/profile': typeof ProfileRoute
   '/science-of-kriya-yoga': typeof ScienceOfKriyaYogaRoute
   '/siddha-tradition': typeof SiddhaTraditionRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -403,6 +412,7 @@ export interface FileRouteTypes {
     | '/kriya-yoga'
     | '/lineage'
     | '/privacy'
+    | '/profile'
     | '/science-of-kriya-yoga'
     | '/siddha-tradition'
     | '/sitemap.xml'
@@ -444,6 +454,7 @@ export interface FileRouteTypes {
     | '/kriya-yoga'
     | '/lineage'
     | '/privacy'
+    | '/profile'
     | '/science-of-kriya-yoga'
     | '/siddha-tradition'
     | '/sitemap.xml'
@@ -487,6 +498,7 @@ export interface FileRouteTypes {
     | '/kriya-yoga'
     | '/lineage'
     | '/privacy'
+    | '/profile'
     | '/science-of-kriya-yoga'
     | '/siddha-tradition'
     | '/sitemap.xml'
@@ -531,6 +543,7 @@ export interface RootRouteChildren {
   KriyaYogaRoute: typeof KriyaYogaRoute
   LineageRoute: typeof LineageRoute
   PrivacyRoute: typeof PrivacyRoute
+  ProfileRoute: typeof ProfileRoute
   ScienceOfKriyaYogaRoute: typeof ScienceOfKriyaYogaRoute
   SiddhaTraditionRoute: typeof SiddhaTraditionRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
@@ -664,6 +677,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy'
       fullPath: '/privacy'
       preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/science-of-kriya-yoga': {
@@ -908,6 +928,7 @@ const rootRouteChildren: RootRouteChildren = {
   KriyaYogaRoute: KriyaYogaRoute,
   LineageRoute: LineageRoute,
   PrivacyRoute: PrivacyRoute,
+  ProfileRoute: ProfileRoute,
   ScienceOfKriyaYogaRoute: ScienceOfKriyaYogaRoute,
   SiddhaTraditionRoute: SiddhaTraditionRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,

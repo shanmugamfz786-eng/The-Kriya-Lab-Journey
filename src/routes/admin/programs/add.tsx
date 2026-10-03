@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   Calendar,
   MapPin,
@@ -59,6 +59,19 @@ function AdminAddProgramPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isTranslating, setIsTranslating] = useState(false);
+
+  const [usdRate, setUsdRate] = useState<number>(0.0119); // Fallback ~84 INR
+
+  useEffect(() => {
+    fetch("https://open.er-api.com/v6/latest/INR")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.rates && data.rates.USD) {
+          setUsdRate(data.rates.USD);
+        }
+      })
+      .catch((err) => console.error("Could not fetch exchange rate:", err));
+  }, []);
 
   const translate = async (text: string) => {
     if (!text.trim()) return "";
@@ -472,13 +485,12 @@ function AdminAddProgramPage() {
                   Schedule (Date) *
                 </label>
                 <div className="relative">
-                  <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
                   <input
                     type="date"
                     required
                     value={formSchedule}
                     onChange={(e) => setFormSchedule(e.target.value)}
-                    className="w-full rounded-xl border border-gray-300 bg-[#f8f9fa] pl-10 pr-4 py-3 text-xs text-gray-900 focus:border-[#334d84] focus:bg-white focus:outline-none transition-colors"
+                    className="w-full rounded-xl border border-gray-300 bg-[#f8f9fa] px-4 py-3 text-xs text-gray-900 focus:border-[#334d84] focus:bg-white focus:outline-none transition-colors"
                   />
                 </div>
               </div>
@@ -514,9 +526,10 @@ function AdminAddProgramPage() {
                     onChange={(e) => {
                       const val = e.target.value;
                       setFormPriceInr(val);
-                      const parsed = parseFloat(val);
+                      const cleanVal = val.replace(/,/g, '');
+                      const parsed = parseFloat(cleanVal);
                       if (!isNaN(parsed) && parsed >= 0) {
-                        setFormPriceUsd((parsed / 84).toFixed(2));
+                        setFormPriceUsd((parsed * usdRate).toFixed(2));
                       } else if (val === "") {
                         setFormPriceUsd("");
                       }
