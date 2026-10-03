@@ -35,7 +35,16 @@ export async function fetchAllPrograms(): Promise<ProgramItem[]> {
       }
     }
   } catch (err) {
-    console.warn("Backend programs fetch failed", err);
+    console.warn("Backend programs fetch failed, falling back to localStorage", err);
+  }
+  
+  if (typeof window !== "undefined") {
+    const local = localStorage.getItem("mock_programs");
+    if (local) {
+      try {
+        return JSON.parse(local);
+      } catch (e) {}
+    }
   }
   return INITIAL_PROGRAMS;
 }
@@ -53,13 +62,21 @@ export async function createProgramApi(payload: Omit<ProgramItem, "id">): Promis
       return data.program;
     }
   } catch (e) {
-    console.warn("Backend unavailable, faking create.");
+    console.warn("Backend unavailable, faking create and saving to localStorage.");
   }
   
-  return {
+  const newProgram = {
     ...payload,
     id: "prg_" + Date.now(),
   };
+
+  if (typeof window !== "undefined") {
+    const local = localStorage.getItem("mock_programs");
+    const current = local ? JSON.parse(local) : INITIAL_PROGRAMS;
+    localStorage.setItem("mock_programs", JSON.stringify([...current, newProgram]));
+  }
+
+  return newProgram;
 }
 
 export async function updateProgramApi(id: string, payload: Partial<ProgramItem>): Promise<ProgramItem | null> {
@@ -74,8 +91,17 @@ export async function updateProgramApi(id: string, payload: Partial<ProgramItem>
       return data.program || null;
     }
   } catch (e) {
-    console.warn("Backend unavailable, faking update.");
-    return { id, ...payload } as ProgramItem;
+    console.warn("Backend unavailable, faking update and saving to localStorage.");
+    const updatedProgram = { id, ...payload } as ProgramItem;
+    if (typeof window !== "undefined") {
+      const local = localStorage.getItem("mock_programs");
+      if (local) {
+        let current = JSON.parse(local) as ProgramItem[];
+        current = current.map(p => p.id === id ? { ...p, ...payload } : p);
+        localStorage.setItem("mock_programs", JSON.stringify(current));
+      }
+    }
+    return updatedProgram;
   }
   return null;
 }
@@ -87,7 +113,15 @@ export async function deleteProgramApi(id: string): Promise<boolean> {
     });
     return res.ok;
   } catch (e) {
-    console.warn("Backend unavailable, faking delete.");
+    console.warn("Backend unavailable, faking delete and saving to localStorage.");
+    if (typeof window !== "undefined") {
+      const local = localStorage.getItem("mock_programs");
+      if (local) {
+        let current = JSON.parse(local) as ProgramItem[];
+        current = current.filter(p => p.id !== id);
+        localStorage.setItem("mock_programs", JSON.stringify(current));
+      }
+    }
     return true;
   }
 }
