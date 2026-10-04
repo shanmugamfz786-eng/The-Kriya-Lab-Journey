@@ -126,96 +126,27 @@ function ProgramCard({ program: p, lang }: { program: ProgramItem; lang: "en" | 
   const location = (ta ? p.location_ta : p.location_en) || p.location_en;
   const language = (ta ? p.language_ta : p.language_en) || p.language_en;
 
-  const rows: [Bi, string][] = [
-    [bi("Language", "மொழி"), language || ""],
-    [bi("Level", "நிலை"), p.level],
-    [bi("Duration", "கால அளவு"), p.duration || ""],
-    [bi("Instructor", "ஆசிரியர்"), instructor],
-    [bi("Schedule", "அட்டவணை"), p.schedule_date || ""],
-    [bi("Location", "இடம்"), location],
-    [bi("Enrolment status", "பதிவு நிலை"), p.enrolment_status],
-  ];
-
-  const message = programMessage(title, lang);
-
   return (
     <article className="rounded-2xl border border-border overflow-hidden bg-background shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full group">
       {p.image_url && (
-        <div className="w-full h-48 sm:h-64 bg-gray-50 flex items-center justify-center overflow-hidden border-b border-border">
-          <img src={p.image_url} alt={title} className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105" />
+        <div className="w-full h-48 sm:h-56 bg-gray-50 flex items-center justify-center overflow-hidden border-b border-border">
+          <img src={p.image_url} alt={title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
         </div>
       )}
       <div className="p-6 flex flex-col flex-1">
-        <h2 className="font-serif text-2xl leading-snug text-gray-900 group-hover:text-[#522938] transition-colors">{title}</h2>
-        <p className="mt-4 text-base leading-relaxed text-muted-foreground whitespace-pre-line">{description}</p>
-
-        <dl className="mt-7 grid grid-cols-2 gap-y-5 gap-x-3 text-sm">
-          {rows.map(([k, v], i) => (
-            v && (
-              <div key={i}>
-                <dt className="tracking-widest text-muted-foreground uppercase text-xs">{t(k)}</dt>
-                <dd className="mt-1 font-semibold text-gray-800">{v}</dd>
-              </div>
-            )
-          ))}
-        </dl>
-
-        {/* Price Section */}
-        <div className="mt-6 p-4 rounded-xl bg-gray-50/50 border border-gray-100 flex items-center justify-between">
-          <div>
-            <div className="text-xs tracking-widest text-muted-foreground uppercase mb-1">{t(bi("Price", "விலை"))}</div>
-            <div className="font-bold text-lg text-gray-900">
-              {currency === "INR" && (p.price_inr ? `₹ ${p.price_inr}` : "—")}
-              {currency === "USD" && (p.price_usd ? `$ ${p.price_usd}` : "—")}
-            </div>
-          </div>
-          <div className="flex bg-white rounded-lg border border-gray-200 p-0.5 shadow-xs">
-            <button
-              onClick={() => setCurrency("INR")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
-                currency === "INR" ? "bg-[#522938] text-white shadow-sm" : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              <IndianRupee className="size-3.5" />
-              INR
-            </button>
-            <button
-              onClick={() => setCurrency("USD")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
-                currency === "USD" ? "bg-[#522938] text-white shadow-sm" : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              <DollarSign className="size-3.5" />
-              USD
-            </button>
-          </div>
-        </div>
-
-        <div className="mt-auto pt-8 flex flex-wrap items-center gap-3">
+        <h2 className="font-serif text-2xl leading-snug text-gray-900 group-hover:text-[#522938] transition-colors line-clamp-2">{title}</h2>
+        
+        <div className="mt-auto pt-6">
           <Link
             to="/programs/$id"
             params={{ id: String(p.id) }}
-            className="rounded-full border border-gray-300 bg-transparent px-6 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+            className="inline-flex w-full items-center justify-center rounded-full bg-[#334d84] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#253861] hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300"
           >
-            {t(bi("Learn More", "மேலும் அறிய"))}
+            {ta ? "மேலும் காண்க" : "View Details"}
           </Link>
-          
-          <Link 
-            to="/buy"
-            className="rounded-full bg-[#522938] px-8 py-2.5 text-sm font-medium text-white hover:bg-[#3f1f2b] transition-colors shadow-sm text-center inline-flex items-center justify-center"
-          >
-            {t(bi("Enroll", "பதிவு செய்"))}
-          </Link>
-
-          <WhatsAppButton 
-            event="whatsapp_program_enquiry" 
-            variant="ghost" 
-            message={message} 
-            label={t(bi("Enquire on WhatsApp", "வாட்ஸ்அப்பில் விசாரிக்கவும்"))}
-            className="px-2" 
-          />
         </div>
       </div>
     </article>
   );
+
 }
