@@ -428,18 +428,6 @@ export function Header() {
               label=""
               className={cn("px-1", isTransparent && "text-white hover:text-white hover:bg-white/10")}
             />
-            <Link
-              to="/programs"
-              className={cn(
-                "rounded-full font-medium transition-all shadow-xs whitespace-nowrap flex-shrink-0",
-                lang === "ta" ? "px-3 py-1.5 text-[0.70rem] 2xl:text-[0.75rem]" : "px-4 py-1.5 sm:px-5 sm:py-2 text-[0.75rem] sm:text-[0.80rem]",
-                isTransparent
-                  ? "bg-gold text-velvet-deep hover:bg-gold/90 hover:shadow-md"
-                  : "bg-velvet text-primary-foreground hover:bg-primary",
-              )}
-            >
-              {t(ui.begin)}
-            </Link>
           </div>
 
           {/* Mobile Right Controls */}
