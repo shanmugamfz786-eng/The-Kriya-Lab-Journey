@@ -16,6 +16,7 @@ import { useEffect, useState } from "react";
 import { settings, ui } from "@/content/site";
 import { bi, useLang } from "@/lib/i18n";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
+import { GlobalSearch } from "@/components/GlobalSearch";
 import { useAuth } from "@/lib/auth-store";
 import { cn } from "@/lib/utils";
 
@@ -232,17 +233,19 @@ function AccountLink({
                   <LayoutDashboard className="size-4 text-gold" />
                   <span>User Dashboard</span>
                 </Link>
-                <Link
-                  to="/admin"
-                  onClick={() => {
-                    setDropdownOpen(false);
-                    onClick?.();
-                  }}
-                  className="flex items-center gap-2.5 px-4 py-2 text-white/90 hover:bg-white/10 hover:text-gold transition-colors"
-                >
-                  <ShieldCheck className="size-4 text-gold" />
-                  <span>Admin Panel</span>
-                </Link>
+                {user.role === "admin" && (
+                  <Link
+                    to="/admin"
+                    onClick={() => {
+                      setDropdownOpen(false);
+                      onClick?.();
+                    }}
+                    className="flex items-center gap-2.5 px-4 py-2 text-white/90 hover:bg-white/10 hover:text-gold transition-colors"
+                  >
+                    <ShieldCheck className="size-4 text-gold" />
+                    <span>Admin Panel</span>
+                  </Link>
+                )}
                 <Link
                   to="/my-programs"
                   onClick={() => {
@@ -420,6 +423,7 @@ export function Header() {
 
           {/* Right Controls (Desktop) */}
           <div className={cn("hidden items-center xl:flex", lang === "ta" ? "gap-2 xl:gap-2.5" : "gap-2.5 xl:gap-3.5")}>
+            <GlobalSearch isTransparent={isTransparent} />
             <LanguageSwitcher isTransparent={isTransparent} />
             <AccountLink isTransparent={isTransparent} />
             <WhatsAppButton
