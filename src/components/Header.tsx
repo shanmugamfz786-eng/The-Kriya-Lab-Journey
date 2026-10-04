@@ -355,7 +355,7 @@ export function Header() {
       >
         <div
           className={cn(
-            "mx-auto flex h-16 sm:h-20 w-full items-center justify-between px-4 sm:px-5 lg:px-6 transition-all max-w-[1560px]",
+            "mx-auto flex h-20 w-full items-center justify-between px-4 sm:px-5 lg:px-6 transition-all max-w-[1560px]",
           )}
         >
           {/* Brand Logo */}
@@ -366,8 +366,8 @@ export function Header() {
           >
             <span
               className={cn(
-                "font-serif tracking-[0.15em] transition-colors whitespace-nowrap",
-                lang === "ta" ? "text-sm sm:text-base lg:text-lg" : "text-base sm:text-lg lg:text-xl",
+                "font-serif tracking-[0.18em] transition-colors whitespace-nowrap",
+                lang === "ta" ? "text-base sm:text-lg lg:text-xl" : "text-lg sm:text-xl lg:text-2xl",
                 isTransparent ? "text-white" : "text-foreground",
               )}
             >
@@ -394,7 +394,7 @@ export function Header() {
                   to={item.to}
                   className={cn(
                     "tracking-wide transition-colors font-medium hover:text-gold whitespace-nowrap",
-                    lang === "ta" ? "text-[0.70rem] 2xl:text-[0.75rem]" : "text-[0.75rem] 2xl:text-[0.78rem]",
+                    lang === "ta" ? "text-[0.74rem] 2xl:text-[0.78rem]" : "text-[0.78rem] 2xl:text-[0.82rem]",
                     isTransparent
                       ? "text-white/85 [&.active]:text-gold"
                       : "text-foreground/80 [&.active]:text-primary",

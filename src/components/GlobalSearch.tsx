@@ -74,28 +74,19 @@ export function GlobalSearch({ isTransparent }: { isTransparent?: boolean }) {
     <div ref={wrapperRef} className="relative hidden xl:block mr-2">
       <div 
         className={cn(
-          "flex items-center rounded-full transition-all duration-300 ease-out overflow-hidden",
+          "flex items-center rounded-full border transition-all duration-300 w-48 xl:w-56 2xl:w-64 px-3.5 py-1.5",
           isTransparent 
-            ? "bg-white/10 text-white hover:bg-white/20" 
-            : "bg-secondary/50 text-foreground hover:bg-secondary",
-          isOpen || query ? "ring-1 ring-gold/50 w-56 2xl:w-64 px-3 py-1.5 border border-white/20" : "w-8 h-8 2xl:w-9 2xl:h-9 px-0 justify-center cursor-pointer border border-transparent"
+            ? "border-white/20 bg-white/10 text-white hover:bg-white/20" 
+            : "border-border bg-secondary/50 text-foreground hover:bg-secondary",
+          isOpen ? "ring-2 ring-gold/50 border-transparent" : ""
         )}
-        onClick={() => {
-          if (!isOpen) {
-            setIsOpen(true);
-            setTimeout(() => document.getElementById("global-search-input")?.focus(), 50);
-          }
-        }}
       >
-        <Search className={cn("size-3.5 2xl:size-4 shrink-0 transition-opacity", (isOpen || query) ? "mr-2 opacity-70" : "opacity-100")} />
+        <Search className="size-4 shrink-0 mr-2 opacity-70" />
         <input
           id="global-search-input"
           type="text"
           placeholder={t(bi("Search...", "தேடுக..."))}
-          className={cn(
-            "bg-transparent border-none outline-none text-xs font-medium placeholder:text-current placeholder:opacity-60 transition-all duration-300",
-            (isOpen || query) ? "w-full opacity-100" : "w-0 opacity-0"
-          )}
+          className="bg-transparent border-none outline-none text-sm font-medium placeholder:text-current placeholder:opacity-60 w-full"
           value={query}
           onChange={(e) => {
             setQuery(e.target.value);
