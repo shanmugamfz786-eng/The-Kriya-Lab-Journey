@@ -6,6 +6,7 @@ import { ui } from "@/content/site";
 import { programMessage } from "@/lib/whatsapp";
 import { listPublicPrograms } from "@/lib/programs.functions";
 import { type ProgramItem } from "@/lib/programs-api";
+import { ProgramCard } from "@/components/ProgramCard";
 
 export const Route = createFileRoute("/programs/$id")({
   staticData: { sitemap: true },
@@ -13,7 +14,7 @@ export const Route = createFileRoute("/programs/$id")({
     const all = await listPublicPrograms();
     const program = all.find((p) => String(p.id) === params.id);
     if (!program) throw notFound();
-    return { program };
+    return { program, allPrograms: all };
   },
   head: ({ loaderData }) => {
     const program = loaderData?.program as ProgramItem | undefined;
@@ -32,8 +33,12 @@ export const Route = createFileRoute("/programs/$id")({
 });
 
 function ProgramPage() {
-  const { program } = Route.useLoaderData();
+  const { program, allPrograms } = Route.useLoaderData();
   const { t, lang } = useLang();
+  
+  const recentPrograms = allPrograms
+    .filter(p => p.id !== program.id)
+    .slice(0, 5);
   
   const ta = lang === "ta";
   const title = (ta ? program.title_ta : program.title_en) || program.title_en;
@@ -109,6 +114,30 @@ function ProgramPage() {
           </aside>
         </div>
       </Section>
+
+      {recentPrograms.length > 0 && (
+        <Section tone="muted">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="font-serif text-2xl sm:text-3xl">
+              {t(bi("Recent Programs", "சமீபத்திய பயிற்சிகள்"))}
+            </h2>
+            <Link
+              to="/programs"
+              className="text-sm font-semibold text-[#334d84] hover:text-[#253861] transition-colors"
+            >
+              {t(bi("View All", "அனைத்தையும் காண்க"))} &rarr;
+            </Link>
+          </div>
+          
+          <div className="flex overflow-x-auto gap-6 pb-6 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-gray-300">
+            {recentPrograms.map((p) => (
+              <div key={p.id} className="min-w-[280px] sm:min-w-[320px] max-w-[320px] snap-start shrink-0">
+                <ProgramCard program={p} lang={lang} />
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
     </>
   );
 }
