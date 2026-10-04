@@ -18,6 +18,7 @@ import { Footer } from "@/components/Footer";
 import { FloatingWhatsApp } from "@/components/WhatsAppButton";
 import { ScrollObserver } from "@/components/ScrollObserver";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
+import { DesktopSideNav } from "@/components/DesktopSideNav";
 import { cn } from "@/lib/utils";
 
 import notFoundIllustration from "@/assets/images/not-found-illustion.png";
@@ -198,7 +199,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
         <ScrollObserver />
-        <div className={cn("flex min-h-screen flex-col", !isPortal ? "pb-[4.25rem] xl:pb-0" : "")}>
+        <div className={cn("flex min-h-screen flex-col", !isPortal ? "pb-[4.25rem] xl:pb-0" : "", hideFooter ? "xl:pl-[5rem]" : "")}>
           <Header />
           <main className="flex-1 flex flex-col">
             {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
@@ -208,6 +209,7 @@ function RootComponent() {
         </div>
         <FloatingWhatsApp />
         {!isPortal && <MobileBottomNav />}
+        {!isPortal && hideFooter && <DesktopSideNav />}
       </LanguageProvider>
     </QueryClientProvider>
   );
