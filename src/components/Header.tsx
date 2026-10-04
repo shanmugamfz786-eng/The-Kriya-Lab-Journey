@@ -108,11 +108,10 @@ const navigationGroups = [
 
 /** Fast-access links on the primary desktop header */
 const primaryHeaderNav = [
-  { label: bi("Kriya Yoga", "கிரியா யோகம்"), to: "/kriya-yoga" },
-  { label: bi("Science of Kriya Yoga", "யோக அறிவியல்"), to: "/science-of-kriya-yoga" },
-  { label: bi("The Kriya Lab", "தி கிரியா லேப்"), to: "/the-kriya-lab" },
-  { label: bi("Guru Lineage", "குரு பரம்பரை"), to: "/lineage" },
-  { label: bi("About the Teacher", "ஆசிரியர் பற்றி"), to: "/about" },
+  { label: bi("Home", "முகப்பு"), to: "/" },
+  { label: bi("Programs", "பயிற்சிகள்"), to: "/programs" },
+  { label: bi("Events", "நிகழ்வுகள்"), to: "/events" },
+  { label: bi("My Programs", "என் சாதனைகள்"), to: "/dashboard" },
 ];
 
 function LanguageSwitcher({ className, isTransparent }: { className?: string; isTransparent?: boolean }) {
