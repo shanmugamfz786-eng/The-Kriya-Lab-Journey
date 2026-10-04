@@ -36,8 +36,6 @@ const filters = [
 function ProgramsPage() {
   const { t, lang } = useLang();
   const [filter, setFilter] = useState<(typeof filters)[number]["key"]>("all");
-  const [searchTerm, setSearchTerm] = useState("");
-
   const fetchPrograms = useServerFn(listPublicPrograms);
   const { data } = useQuery({
     queryKey: ["programs"],
@@ -46,22 +44,7 @@ function ProgramsPage() {
 
   const rows = data ?? [];
 
-  const searchedRows = rows.filter((p) => {
-    const titleEn = p.title_en?.toLowerCase() || "";
-    const titleTa = p.title_ta?.toLowerCase() || "";
-    const locEn = p.location_en?.toLowerCase() || "";
-    const locTa = p.location_ta?.toLowerCase() || "";
-    const search = searchTerm.toLowerCase();
-
-    return (
-      titleEn.includes(search) ||
-      titleTa.includes(search) ||
-      locEn.includes(search) ||
-      locTa.includes(search)
-    );
-  });
-
-  const filteredRows = searchedRows.filter((p) => {
+  const filteredRows = rows.filter((p) => {
     if (filter === "all") return true;
     return p.program_type === filter;
   });
@@ -70,17 +53,6 @@ function ProgramsPage() {
     <>      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 mb-4">
         
         <div className="flex w-full flex-col gap-5">
-          <div className="relative w-full max-w-[320px]">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder={t(bi("Search programs...", "பயிற்சிகளை தேடுக..."))}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full rounded-full border border-border bg-background py-2.5 pl-12 pr-6 text-sm text-foreground shadow-sm focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold transition-all"
-            />
-          </div>
-
           {/* Category Filters Bottom */}
           <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-none">
             {filters.map((f) => (
