@@ -7,6 +7,12 @@ import { listPublicEvents, type PublicEvent } from "@/lib/events.functions";
 import { bi, useLang } from "@/lib/i18n";
 import { Search } from "lucide-react";
 
+const filters = [
+  { key: "all", label: bi("All Events", "அனைத்து நிகழ்வுகள்") },
+  { key: "future", label: bi("Upcoming", "வரவிருக்கும் நிகழ்வுகள்") },
+  { key: "past", label: bi("Past", "கடந்த நிகழ்வுகள்") },
+] as const;
+
 export const Route = createFileRoute("/events")({
   staticData: { sitemap: true },
   head: () => ({
@@ -41,9 +47,11 @@ function EventsPage() {
 
   const [searchTerm, setSearchTerm] = useState("");
 
+  const [filter, setFilter] = useState<(typeof filters)[number]["key"]>("future");
+
   const rows = data ?? [];
   
-  const filteredRows = rows.filter(
+  const searchedRows = rows.filter(
     (e) =>
       e.title_en.toLowerCase().includes(searchTerm.toLowerCase()) ||
       e.title_ta.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -54,54 +62,63 @@ function EventsPage() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const future = filteredRows.filter((r) => {
+  const filteredRows = searchedRows.filter((r) => {
+    if (filter === "all") return true;
+    
+    let isFuture = r.event_type === "future";
     const d = new Date(r.event_date);
-    if (!isNaN(d.getTime())) return d >= today;
-    return r.event_type === "future";
-  });
-  
-  const past = filteredRows.filter((r) => {
-    const d = new Date(r.event_date);
-    if (!isNaN(d.getTime())) return d < today;
-    return r.event_type === "past";
+    if (!isNaN(d.getTime())) {
+      isFuture = d >= today;
+    }
+    
+    if (filter === "future") return isFuture;
+    if (filter === "past") return !isFuture;
+    return true;
   });
 
   return (
     <>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 mb-4">
-        <div className="relative max-w-md mx-auto">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder={t(bi("Search events by title or location...", "நிகழ்வுகளை தேடுக..."))}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full rounded-full border border-border bg-background py-3 pl-12 pr-6 text-sm text-foreground shadow-sm focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold transition-all"
-          />
+        <div className="flex w-full flex-col gap-5">
+          <div className="relative w-full max-w-[320px]">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder={t(bi("Search events by title or location...", "நிகழ்வுகளை தேடுக..."))}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full rounded-full border border-border bg-background py-2.5 pl-12 pr-6 text-sm text-foreground shadow-sm focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold transition-all"
+            />
+          </div>
+
+          {/* Category Filters Bottom */}
+          <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-none">
+            {filters.map((f) => (
+              <button
+                key={f.key}
+                type="button"
+                onClick={() => setFilter(f.key)}
+                aria-pressed={filter === f.key}
+                className={`rounded-full border px-6 py-2 text-sm font-medium transition-all ${
+                  filter === f.key
+                    ? "border-gold bg-gold text-velvet-deep shadow-md scale-105"
+                    : "border-border text-muted-foreground hover:border-gold hover:text-gold hover:bg-gold/5"
+                }`}
+              >
+                {t(f.label)}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
       <Section>
-        <h2 className="font-serif text-3xl">{t(bi("Future Events", "வரவிருக்கும் நிகழ்வுகள்"))}</h2>
-        <div className="mt-8 grid gap-6 md:grid-cols-3">
-          {future.length > 0 ? (
-            future.map((e) => <EventCard key={e.id} event={e} lang={lang} />)
+        <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {filteredRows.length > 0 ? (
+            filteredRows.map((e) => <EventCard key={e.id} event={e} lang={lang} />)
           ) : (
-            <p className="text-sm text-muted-foreground">
-              {t(bi("No upcoming events at the moment.", "தற்போது வரவிருக்கும் நிகழ்வுகள் ஏதுமில்லை."))}
-            </p>
-          )}
-        </div>
-      </Section>
-
-      <Section tone="muted">
-        <h2 className="font-serif text-3xl">{t(bi("Past Events", "கடந்த நிகழ்வுகள்"))}</h2>
-        <div className="mt-8 grid gap-6 md:grid-cols-3">
-          {past.length > 0 ? (
-            past.map((e) => <EventCard key={e.id} event={e} lang={lang} />)
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              {t(bi("No past events yet.", "இதுவரை கடந்த நிகழ்வுகள் இல்லை."))}
+            <p className="text-sm text-muted-foreground text-center col-span-full">
+              {t(bi("No events found.", "நிகழ்வுகள் ஏதுமில்லை."))}
             </p>
           )}
         </div>
