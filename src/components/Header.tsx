@@ -386,6 +386,7 @@ export function Header() {
 
           {/* Desktop Primary Nav + Menu Trigger (5 key items + Explore All) */}
           <div className="hidden xl:flex items-center gap-3 2xl:gap-5">
+            <GlobalSearch isTransparent={isTransparent} />
             <nav className={cn("flex items-center", lang === "ta" ? "gap-2 xl:gap-2.5 2xl:gap-4" : "gap-2.5 xl:gap-3.5 2xl:gap-4.5")} aria-label="Primary">
               {primaryHeaderNav.map((item) => (
                 <Link
@@ -423,7 +424,6 @@ export function Header() {
 
           {/* Right Controls (Desktop) */}
           <div className={cn("hidden items-center xl:flex", lang === "ta" ? "gap-2 xl:gap-2.5" : "gap-2.5 xl:gap-3.5")}>
-            <GlobalSearch isTransparent={isTransparent} />
             <LanguageSwitcher isTransparent={isTransparent} />
             <AccountLink isTransparent={isTransparent} />
             <WhatsAppButton

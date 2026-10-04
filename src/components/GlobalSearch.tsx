@@ -71,22 +71,31 @@ export function GlobalSearch({ isTransparent }: { isTransparent?: boolean }) {
   const hasResults = filteredPrograms.length > 0 || filteredEvents.length > 0;
 
   return (
-    <div ref={wrapperRef} className="relative hidden md:block mr-2">
+    <div ref={wrapperRef} className="relative hidden xl:block mr-2">
       <div 
         className={cn(
-          "flex items-center rounded-full border transition-all",
+          "flex items-center rounded-full transition-all duration-300 ease-out overflow-hidden",
           isTransparent 
-            ? "border-white/20 bg-white/10 text-white" 
-            : "border-border bg-secondary/50 text-foreground",
-          isOpen ? "ring-2 ring-gold/50 w-64 px-3 py-1.5" : "w-44 px-3 py-1.5 cursor-pointer hover:w-48"
+            ? "bg-white/10 text-white hover:bg-white/20" 
+            : "bg-secondary/50 text-foreground hover:bg-secondary",
+          isOpen || query ? "ring-1 ring-gold/50 w-56 2xl:w-64 px-3 py-1.5 border border-white/20" : "w-8 h-8 2xl:w-9 2xl:h-9 px-0 justify-center cursor-pointer border border-transparent"
         )}
-        onClick={() => !isOpen && setIsOpen(true)}
+        onClick={() => {
+          if (!isOpen) {
+            setIsOpen(true);
+            setTimeout(() => document.getElementById("global-search-input")?.focus(), 50);
+          }
+        }}
       >
-        <Search className="size-4 mr-2 shrink-0 opacity-70" />
+        <Search className={cn("size-3.5 2xl:size-4 shrink-0 transition-opacity", (isOpen || query) ? "mr-2 opacity-70" : "opacity-100")} />
         <input
+          id="global-search-input"
           type="text"
           placeholder={t(bi("Search...", "தேடுக..."))}
-          className="bg-transparent border-none outline-none w-full text-xs font-medium placeholder:text-current placeholder:opacity-60"
+          className={cn(
+            "bg-transparent border-none outline-none text-xs font-medium placeholder:text-current placeholder:opacity-60 transition-all duration-300",
+            (isOpen || query) ? "w-full opacity-100" : "w-0 opacity-0"
+          )}
           value={query}
           onChange={(e) => {
             setQuery(e.target.value);
