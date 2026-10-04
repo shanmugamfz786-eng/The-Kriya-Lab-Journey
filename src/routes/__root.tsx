@@ -199,7 +199,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
         <ScrollObserver />
-        <div className={cn("flex min-h-screen flex-col", !isPortal ? "pb-[4.25rem] xl:pb-0" : "", hideFooter ? "xl:pl-[5rem]" : "")}>
+        <div className={cn("flex min-h-screen flex-col", !isPortal ? "pb-[4.25rem] md:pb-0" : "", hideFooter ? "md:pl-[5rem]" : "")}>
           <Header />
           <main className="flex-1 flex flex-col">
             {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}

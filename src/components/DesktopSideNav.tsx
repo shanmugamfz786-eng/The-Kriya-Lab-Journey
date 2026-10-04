@@ -38,7 +38,7 @@ export function DesktopSideNav() {
   ];
 
   return (
-    <div className="hidden xl:flex fixed top-0 left-0 z-40 h-full w-[5rem] flex-col border-r border-border bg-background pt-[5rem]">
+    <div className="hidden md:flex fixed top-0 left-0 z-40 h-full w-[5rem] flex-col border-r border-border bg-background pt-[5rem]">
       <div className="flex flex-1 flex-col items-center gap-8 py-8">
         {navItems.map((item, idx) => {
           const Icon = item.icon;
