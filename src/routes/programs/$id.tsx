@@ -10,7 +10,7 @@ import { type ProgramItem } from "@/lib/programs-api";
 import { ProgramCard } from "@/components/ProgramCard";
 import { CollectEnquiryModal } from "@/components/CollectEnquiryModal";
 import { useAuth } from "@/lib/auth-store";
-import { enrollProgram } from "@/lib/enrollment-store";
+import { enrollProgram, useEnrollments } from "@/lib/enrollment-store";
 import { showAlert } from "@/lib/alert";
 
 export const Route = createFileRoute("/programs/$id")({
@@ -41,6 +41,8 @@ function ProgramPage() {
   const { program, allPrograms } = Route.useLoaderData();
   const { t, lang } = useLang();
   const { isAuthenticated, user } = useAuth();
+  const { enrolledIds } = useEnrollments(user?.id);
+  const isEnrolled = enrolledIds.includes(program.id);
   const [isCollectModalOpen, setCollectModalOpen] = useState(false);
   
   const recentPrograms = allPrograms
@@ -112,20 +114,29 @@ function ProgramPage() {
               <h2 className="font-serif text-2xl">{t(ui.begin)}</h2>
               <PlaceholderNote />
             <div className="mt-6 flex flex-col gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  if (isAuthenticated && user) {
-                    enrollProgram(user.id, program.id);
-                    showAlert.success(ta ? "வெற்றிகரமாக பதிவு செய்யப்பட்டது!" : "Successfully Collected!", ta ? "உங்கள் பயிற்சி பக்கத்தில் சேர்க்கப்பட்டுள்ளது." : "Added to your learning dashboard.", 2500);
-                  } else {
-                    setCollectModalOpen(true);
-                  }
-                }}
-                className="rounded-full bg-velvet px-6 py-3 text-center text-sm font-medium text-primary-foreground transition-colors hover:bg-primary shadow-sm"
-              >
-                {t(bi("Collect", "சேகரிக்க"))}
-              </button>
+              {isEnrolled ? (
+                <div className="rounded-full bg-green-50 border border-green-200 px-6 py-3 text-center text-sm font-medium text-green-700 flex items-center justify-center gap-2 shadow-sm">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                  </svg>
+                  {t(bi("Already Collected", "ஏற்கனவே சேர்க்கப்பட்டது"))}
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (isAuthenticated && user) {
+                      enrollProgram(user.id, program.id);
+                      showAlert.success(ta ? "வெற்றிகரமாக பதிவு செய்யப்பட்டது!" : "Successfully Collected!", ta ? "உங்கள் பயிற்சி பக்கத்தில் சேர்க்கப்பட்டுள்ளது." : "Added to your learning dashboard.", 2500);
+                    } else {
+                      setCollectModalOpen(true);
+                    }
+                  }}
+                  className="rounded-full bg-velvet px-6 py-3 text-center text-sm font-medium text-primary-foreground transition-colors hover:bg-primary shadow-sm"
+                >
+                  {t(bi("Collect", "சேகரிக்க"))}
+                </button>
+              )}
 
               <WhatsAppButton
                 event="whatsapp_program_enquiry"
