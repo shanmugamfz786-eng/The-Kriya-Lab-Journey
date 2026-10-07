@@ -73,7 +73,7 @@ export const INITIAL_EVENTS: EventItem[] = [
 
 export async function fetchAllEvents(): Promise<EventItem[]> {
   try {
-    const res = await fetch(`${API_URL}/api/events`);
+    const res = await fetch(`${API_URL}/api/events`, { cache: "no-store" });
     if (res.ok) {
       const data = await res.json();
       if (data.success && Array.isArray(data.events) && data.events.length > 0) {

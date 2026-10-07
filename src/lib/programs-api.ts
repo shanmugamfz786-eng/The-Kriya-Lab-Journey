@@ -108,7 +108,7 @@ export const INITIAL_PROGRAMS: ProgramItem[] = [
 
 export async function fetchAllPrograms(): Promise<ProgramItem[]> {
   try {
-    const res = await fetch(`${API_URL}/api/programs`);
+    const res = await fetch(`${API_URL}/api/programs`, { cache: "no-store" });
     if (res.ok) {
       const data = await res.json();
       if (data.success && Array.isArray(data.programs)) {

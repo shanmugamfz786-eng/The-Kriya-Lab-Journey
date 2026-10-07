@@ -15,7 +15,7 @@ export async function register(req, res) {
 
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
-    const userId = "KL-USR-" + randomUUID().substring(0, 8).toUpperCase();
+    let userId = "KL_" + Date.now().toString().slice(-4); // Fallback
 
     try {
       const db = getDbPool();
@@ -23,6 +23,18 @@ export async function register(req, res) {
       if (existing && existing.length > 0) {
         return res.status(400).json({ success: false, message: "An account with this email already exists" });
       }
+
+      // Generate sequential KL_001 ID
+      const [maxResult] = await db.query("SELECT id FROM users WHERE id LIKE 'KL_%' ORDER BY id DESC LIMIT 1");
+      let nextIdNumber = 1;
+      if (maxResult && maxResult.length > 0) {
+        const lastId = maxResult[0].id;
+        const match = lastId.match(/KL_(\d+)/);
+        if (match && match[1]) {
+          nextIdNumber = parseInt(match[1], 10) + 1;
+        }
+      }
+      userId = `KL_${nextIdNumber.toString().padStart(3, '0')}`;
 
       const assignedRole = email.toLowerCase().includes("admin") ? "admin" : "student";
       await db.query(
