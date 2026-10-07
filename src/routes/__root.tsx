@@ -18,6 +18,7 @@ import { Footer } from "@/components/Footer";
 import { FloatingWhatsApp } from "@/components/WhatsAppButton";
 import { ScrollObserver } from "@/components/ScrollObserver";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
+import { useAuth } from "@/lib/auth-store";
 import { cn } from "@/lib/utils";
 
 import notFoundIllustration from "@/assets/images/not-found-illustion.png";
@@ -180,9 +181,10 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
   const pathname = router.state.location.pathname;
   const isPortal = pathname.startsWith("/admin");
-  const hideFooter = ["/programs", "/events", "/dashboard", "/profile"].some(path => pathname.startsWith(path));
+  const hideFooter = ["/programs", "/events", "/profile"].some(path => pathname.startsWith(path));
 
   if (isPortal) {
     return (
@@ -194,20 +196,26 @@ function RootComponent() {
     );
   }
 
+  const hideMobileFooter = !isAuthenticated;
+
   return (
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
         <ScrollObserver />
-        <div className={cn("flex min-h-screen flex-col", !isPortal ? "pb-[4.25rem] md:pb-0" : "")}>
+        <div className={cn("flex min-h-screen flex-col", (!isPortal && !hideMobileFooter) ? "pb-[4.25rem] md:pb-0" : "")}>
           <Header />
           <main className="flex-1 flex flex-col">
             {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
             <Outlet />
           </main>
-          {!hideFooter && <Footer />}
+          {!hideFooter && (
+            <div className={cn(hideMobileFooter && "hidden md:block")}>
+              <Footer />
+            </div>
+          )}
         </div>
         <FloatingWhatsApp />
-        {!isPortal && <MobileBottomNav />}
+        {!isPortal && !hideMobileFooter && <MobileBottomNav />}
       </LanguageProvider>
     </QueryClientProvider>
   );

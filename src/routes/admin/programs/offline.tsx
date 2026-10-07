@@ -122,7 +122,6 @@ function AdminOfflineProgramsPage() {
                 {filtered.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="p-12 text-center text-gray-400 space-y-3">
-                      <Sparkles className="size-8 mx-auto text-gray-300" />
                       <p className="text-sm font-medium">No offline programs scheduled.</p>
                       <Link
                         to="/admin/programs/add"

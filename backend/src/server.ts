@@ -5,16 +5,17 @@ import { initDb } from "./config/db.js";
 import authRoutes from "./routes/auth.routes.js";
 import eventsRoutes from "./routes/events.routes.js";
 import programsRoutes from "./routes/programs.routes.js";
+import usersRoutes from "./routes/users.routes.js";
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Configure CORS for standalone domain hosting
+// Configure CORS for Vercel Frontend
 app.use(
   cors({
-    origin: ["http://localhost:8080", "http://localhost:3000", process.env.FRONTEND_URL || "*"],
+    origin: true,
     credentials: true,
   })
 );
@@ -44,6 +45,9 @@ app.use("/api/events", eventsRoutes);
 
 // Programs Routes
 app.use("/api/programs", programsRoutes);
+
+// Users Routes
+app.use("/api/users", usersRoutes);
 
 // Start server and initialize DB connection (only if not running in Vercel)
 if (process.env.VERCEL !== "1") {

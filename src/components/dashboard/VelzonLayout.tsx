@@ -97,8 +97,11 @@ export function VelzonLayout({ children }: VelzonLayoutProps) {
           <button
             type="button"
             onClick={() => {
-              setSidebarOpen(!sidebarOpen);
-              setMobileMenuOpen(!mobileMenuOpen);
+              if (window.innerWidth < 1024) {
+                setMobileMenuOpen(!mobileMenuOpen);
+              } else {
+                setSidebarOpen(!sidebarOpen);
+              }
             }}
             className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
             aria-label="Toggle Sidebar"

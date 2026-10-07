@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Users,
   Search,
@@ -16,6 +16,7 @@ import {
 
 import { showAlert } from "@/lib/alert";
 import { cn } from "@/lib/utils";
+import { fetchAllUsers, deleteUserApi, type SeekerItem } from "@/lib/users-api";
 
 export const Route = createFileRoute("/admin/users")({
   staticData: { sitemap: false },
@@ -23,84 +24,16 @@ export const Route = createFileRoute("/admin/users")({
   component: AdminUsersPage,
 });
 
-interface SeekerItem {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  program: string;
-  date: string;
-  status: "Pending Review" | "Approved" | "Initiated";
-  experience: string;
-  location?: string;
-  motivation?: string;
-}
-
-const INITIAL_SEEKERS: SeekerItem[] = [
-  {
-    id: "ENQ-1094",
-    name: "Sathish Kumar",
-    email: "sathish.k@gmail.com",
-    phone: "+91 98401 23456",
-    program: "1st Kriya Online Initiation",
-    date: "Today, 10:45 AM",
-    status: "Pending Review",
-    experience: "Practicing Pranayama for 2 years",
-    location: "Chennai, India",
-    motivation: "Seeking direct transmission from Babaji lineage to deepen daily sadhana.",
-  },
-  {
-    id: "ENQ-1093",
-    name: "Ananya Iyer",
-    email: "ananya.iyer@outlook.com",
-    phone: "+91 94440 98765",
-    program: "Weekend Intensive Workshop",
-    date: "Yesterday, 04:15 PM",
-    status: "Approved",
-    experience: "Completed Hatha Yoga TTC",
-    location: "Bengaluru, India",
-    motivation: "Want to integrate sacred spine pranayama with regular asana practice.",
-  },
-  {
-    id: "ENQ-1092",
-    name: "David Miller",
-    email: "david.m@california.org",
-    phone: "+1 (415) 555-0192",
-    program: "Higher Kriya Mentorship",
-    date: "Sep 16, 09:30 PM",
-    status: "Approved",
-    experience: "Self-Realization Fellowship Student",
-    location: "San Francisco, USA",
-    motivation: "Practicing 1st Kriya for 4 years, now ready for advanced diksha.",
-  },
-  {
-    id: "ENQ-1091",
-    name: "Meenakshi Sundaram",
-    email: "meenakshi.s@tcs.com",
-    phone: "+91 98840 11223",
-    program: "1st Kriya Online Initiation",
-    date: "Sep 15, 02:10 PM",
-    status: "Initiated",
-    experience: "Beginner seeker seeking spiritual path",
-    location: "Coimbatore, India",
-    motivation: "Inspired after reading about Siddha tradition & Lahiri Mahasaya.",
-  },
-  {
-    id: "ENQ-1090",
-    name: "Karthik Raghavan",
-    email: "karthik.r@zoho.com",
-    phone: "+91 97909 44556",
-    program: "Weekend Intensive Workshop",
-    date: "Sep 14, 11:20 AM",
-    status: "Pending Review",
-    experience: "Read Autobiography of a Yogi",
-    location: "Madurai, India",
-    motivation: "Looking for genuine master guidance for internal energy awakening.",
-  },
-];
-
 function AdminUsersPage() {
-  const [seekers, setSeekers] = useState<SeekerItem[]>(INITIAL_SEEKERS);
+  const [seekers, setSeekers] = useState<SeekerItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchAllUsers().then((data) => {
+      setSeekers(data);
+      setIsLoading(false);
+    });
+  }, []);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedSeeker, setSelectedSeeker] = useState<SeekerItem | null>(null);
@@ -127,13 +60,18 @@ function AdminUsersPage() {
   const handleDelete = async (seeker: SeekerItem) => {
     const result = await showAlert.confirm(
       "Delete Application?",
-      `Are you sure you want to remove application for "${seeker.name}"?`,
+      `Are you sure you want to permanently delete account for "${seeker.name}"? This removes their dashboard access.`,
       "Yes, delete"
     );
 
     if (result.isConfirmed) {
-      setSeekers((prev) => prev.filter((s) => s.id !== seeker.id));
-      showAlert.success("Deleted", "Seeker application deleted successfully.", 1200);
+      try {
+        await deleteUserApi(seeker.id);
+        setSeekers((prev) => prev.filter((s) => s.id !== seeker.id));
+        showAlert.success("Deleted", "User account deleted successfully.", 1200);
+      } catch (e: any) {
+        showAlert.error("Delete Failed", e.message || "Failed to delete user account.");
+      }
     }
   };
 
@@ -224,7 +162,13 @@ function AdminUsersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 font-normal">
-                {filtered.length === 0 ? (
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={7} className="p-8 text-center text-gray-400">
+                      Loading users...
+                    </td>
+                  </tr>
+                ) : filtered.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="p-8 text-center text-gray-400">
                       No seeker applications found matching criteria.

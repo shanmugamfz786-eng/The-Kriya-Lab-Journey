@@ -7,8 +7,7 @@ import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { bi, useLang, type Bi } from "@/lib/i18n";
 import { programMessage } from "@/lib/whatsapp";
 import { Search, IndianRupee, DollarSign } from "lucide-react";
-import { listPublicPrograms } from "@/lib/programs.functions";
-import { type ProgramItem } from "@/lib/programs-api";
+import { fetchAllPrograms, type ProgramItem } from "@/lib/programs-api";
 import { ProgramCard } from "@/components/ProgramCard";
 
 export const Route = createFileRoute("/programs/")({
@@ -36,10 +35,9 @@ const filters = [
 function ProgramsPage() {
   const { t, lang } = useLang();
   const [filter, setFilter] = useState<(typeof filters)[number]["key"]>("all");
-  const fetchPrograms = useServerFn(listPublicPrograms);
   const { data } = useQuery({
     queryKey: ["programs"],
-    queryFn: () => fetchPrograms() as Promise<ProgramItem[]>,
+    queryFn: () => fetchAllPrograms(),
   });
 
   const rows = data ?? [];

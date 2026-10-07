@@ -1,4 +1,4 @@
-import { Link, useLocation } from "@tanstack/react-router";
+import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import {
   Menu,
   X,
@@ -107,12 +107,20 @@ const navigationGroups = [
   },
 ];
 
-/** Fast-access links on the primary desktop header */
-const primaryHeaderNav = [
+/** Fast-access links for logged in users */
+const loggedInNav = [
   { label: bi("Home", "முகப்பு"), to: "/" },
   { label: bi("Programs", "பயிற்சிகள்"), to: "/programs" },
   { label: bi("Events", "நிகழ்வுகள்"), to: "/events" },
   { label: bi("My Programs", "என் சாதனைகள்"), to: "/dashboard" },
+];
+
+/** Fast-access links for public users */
+const loggedOutNav = [
+  { label: bi("Kriya Yoga", "கிரியா யோகம்"), to: "/kriya-yoga" },
+  { label: bi("Science of Kriya Yoga", "கிரியா யோக அறிவியல்"), to: "/science-of-kriya-yoga" },
+  { label: bi("The Kriya Lab", "தி கிரியா லேப்"), to: "/the-kriya-lab" },
+  { label: bi("Siddha Tradition", "சித்தர் மரபு"), to: "/siddha-tradition" },
 ];
 
 function LanguageSwitcher({ className, isTransparent }: { className?: string; isTransparent?: boolean }) {
@@ -298,6 +306,8 @@ function AccountLink({
 
 export function Header() {
   const { t, lang } = useLang();
+  const { isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
@@ -340,114 +350,136 @@ export function Header() {
     setOpen(false);
   }, [location.pathname]);
 
-  const isTransparent = isHome && !scrolled && !open;
+  const isTransparent = isHome && !scrolled && !open && !isAuthenticated;
 
   return (
     <>
       <header
         className={cn(
-          "top-0 z-40 transition-all duration-300",
+          "top-0 z-40 transition-all duration-500 w-full",
           isHome ? "fixed inset-x-0" : "sticky",
           isTransparent
-            ? "border-b border-white/10 bg-gradient-to-b from-black/85 via-black/40 to-transparent backdrop-blur-xs text-white"
-            : "border-b border-border/60 bg-background/90 backdrop-blur-xl text-foreground shadow-xs",
+            ? "border-b border-white/10 bg-black/10 backdrop-blur-md text-white"
+            : "border-b border-border/40 bg-background/90 backdrop-blur-xl text-foreground shadow-sm",
         )}
       >
-        <div
-          className={cn(
-            "mx-auto flex h-20 w-full items-center justify-between px-4 sm:px-5 lg:px-6 transition-all max-w-[1560px]",
-          )}
-        >
-          {/* Brand Logo */}
+        <div className="mx-auto flex h-20 w-full max-w-[1560px] items-center justify-between px-4 sm:px-6 lg:px-8 transition-all">
+          
+          {/* Left: Brand Logo */}
           <Link
             to="/"
-            className="group flex flex-shrink-0 flex-col justify-center leading-none min-w-max mr-2 sm:mr-3"
+            className="group flex flex-shrink-0 items-center gap-3 min-w-max"
             onClick={() => setOpen(false)}
           >
-            <span
-              className={cn(
-                "font-serif tracking-[0.18em] transition-colors whitespace-nowrap",
-                lang === "ta" ? "text-base sm:text-lg lg:text-xl" : "text-lg sm:text-xl lg:text-2xl",
-                isTransparent ? "text-white" : "text-foreground",
-              )}
-            >
-              {settings.brand}
-            </span>
-            <span
-              className={cn(
-                "mt-0.5 block transition-colors whitespace-nowrap",
-                lang === "ta" ? "text-[0.50rem] sm:text-[0.56rem] tracking-[0.14em]" : "text-[0.50rem] sm:text-[0.56rem] tracking-[0.24em]",
-                isTransparent ? "text-gold/90" : "text-muted-foreground",
-              )}
-            >
-              {t(settings.tagline).toUpperCase()}
-            </span>
+            <div className="flex flex-col justify-center leading-none">
+              <span
+                className={cn(
+                  "font-serif tracking-[0.1em] transition-colors whitespace-nowrap",
+                  lang === "ta" ? "text-base lg:text-lg" : "text-xl lg:text-2xl font-medium",
+                  isTransparent ? "text-white" : "text-foreground",
+                )}
+              >
+                {settings.brand}
+              </span>
+            </div>
           </Link>
 
-          {/* Desktop Primary Nav + Menu Trigger (5 key items + Explore All) */}
-          <div className="hidden xl:flex items-center gap-3 2xl:gap-5">
-            <GlobalSearch isTransparent={isTransparent} />
-            <nav className={cn("flex items-center", lang === "ta" ? "gap-2 xl:gap-2.5 2xl:gap-4" : "gap-2.5 xl:gap-3.5 2xl:gap-4.5")} aria-label="Primary">
-              {primaryHeaderNav.map((item) => (
+          {/* Center: Primary Navigation (Desktop) */}
+          <nav className="hidden lg:flex flex-1 justify-center items-center gap-4 xl:gap-6 mx-2" aria-label="Primary">
+            {(isAuthenticated ? loggedInNav : loggedOutNav)
+              .map((item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                activeOptions={item.to === "/" ? { exact: true } : undefined}
+                className={cn(
+                  "text-[0.85rem] xl:text-[0.92rem] whitespace-nowrap tracking-wide font-medium transition-all hover:-translate-y-0.5",
+                  isTransparent
+                    ? "text-white/80 hover:text-gold [&.active]:text-gold [&.active]:font-semibold"
+                    : "text-muted-foreground hover:text-foreground [&.active]:text-black [&.active]:font-bold",
+                )}
+              >
+                {t(item.label)}
+              </Link>
+            ))}
+          </nav>
+
+          {/* Right: Tools & Actions */}
+          <div className="flex items-center gap-2 sm:gap-4 pl-4 border-l border-white/10 shrink-0">
+            {/* Search */}
+            <div className="hidden sm:block">
+              <GlobalSearch isTransparent={isTransparent} />
+            </div>
+
+            {/* Language Switcher */}
+            <div className="hidden md:block">
+              <LanguageSwitcher isTransparent={isTransparent} />
+            </div>
+
+            {/* Account (Desktop) */}
+            <div className="hidden sm:block">
+              <AccountLink isTransparent={isTransparent} />
+            </div>
+
+            {/* Mobile Actions (Register / Dashboard) */}
+            <div className="block sm:hidden">
+              {!isAuthenticated ? (
+                location.pathname === "/auth" ? (
+                  <Link
+                    to="/auth"
+                    search={{ mode: "signin" }}
+                    className={cn(
+                      "text-[0.7rem] font-semibold px-3 py-1.5 rounded-full transition-all uppercase tracking-wider",
+                      isTransparent
+                        ? "bg-gold text-[#1a140b] hover:bg-gold/90 shadow-[0_0_10px_rgba(212,175,55,0.3)]"
+                        : "bg-[#d4af37] text-white hover:bg-[#c5a030] shadow-md"
+                    )}
+                  >
+                    {t(bi("Sign in", "உள்நுழை"))}
+                  </Link>
+                ) : (
+                  <Link
+                    to="/auth"
+                    search={{ mode: "signup" }}
+                    className={cn(
+                      "text-[0.7rem] font-semibold px-3 py-1.5 rounded-full transition-all uppercase tracking-wider",
+                      isTransparent
+                        ? "bg-gold text-[#1a140b] hover:bg-gold/90 shadow-[0_0_10px_rgba(212,175,55,0.3)]"
+                        : "bg-[#d4af37] text-white hover:bg-[#c5a030] shadow-md"
+                    )}
+                  >
+                    {t(bi("Sign up", "பதிவு செய்"))}
+                  </Link>
+                )
+              ) : (
                 <Link
-                  key={item.to}
-                  to={item.to}
+                  to="/dashboard"
                   className={cn(
-                    "tracking-wide transition-colors font-medium hover:text-gold whitespace-nowrap",
-                    lang === "ta" ? "text-[0.74rem] 2xl:text-[0.78rem]" : "text-[0.78rem] 2xl:text-[0.82rem]",
+                    "flex items-center justify-center size-8 rounded-full transition-all border",
                     isTransparent
-                      ? "text-white/85 [&.active]:text-gold"
-                      : "text-foreground/80 [&.active]:text-primary",
+                      ? "bg-white/10 text-gold border-gold/30 hover:bg-white/20"
+                      : "bg-secondary text-primary border-border hover:bg-secondary/80"
                   )}
                 >
-                  {t(item.label)}
+                  <User className="size-4" />
                 </Link>
-              ))}
-            </nav>
+              )}
+            </div>
 
-            {/* Explore All / Menu Button (Option B) */}
+            {/* Hamburger / Menu Trigger */}
             <button
               type="button"
               onClick={() => setOpen(true)}
               className={cn(
-                "flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[0.75rem] font-medium tracking-wide transition-all hover:scale-105 whitespace-nowrap",
+                "flex items-center gap-2 rounded-full px-3 py-1.5 transition-all hover:scale-105 border",
                 isTransparent
-                  ? "border-gold/40 bg-white/10 text-white hover:border-gold hover:bg-gold/20"
-                  : "border-border bg-secondary/80 text-foreground hover:border-primary/40 hover:bg-secondary",
+                  ? "bg-white/10 text-white border-white/20 hover:bg-gold hover:text-velvet-deep hover:border-gold"
+                  : "bg-secondary text-foreground border-border hover:bg-primary hover:text-primary-foreground",
               )}
               aria-label="Open Explore Menu"
             >
-              <Menu className="size-3 text-gold" />
-              <span>{t(bi("Explore All", "அனைத்தும்"))}</span>
-            </button>
-          </div>
-
-          {/* Right Controls (Desktop) */}
-          <div className={cn("hidden items-center xl:flex", lang === "ta" ? "gap-2 xl:gap-2.5" : "gap-2.5 xl:gap-3.5")}>
-            <LanguageSwitcher isTransparent={isTransparent} />
-            <AccountLink isTransparent={isTransparent} />
-            <WhatsAppButton
-              variant="ghost"
-              label=""
-              className={cn("px-1", isTransparent && "text-white hover:text-white hover:bg-white/10")}
-            />
-          </div>
-
-          {/* Mobile Right Controls */}
-          <div className="flex items-center gap-4 xl:hidden">
-            <AccountLink isTransparent={isTransparent} />
-            
-            {/* Mobile Menu Hamburger */}
-            <button
-              type="button"
-              className={cn(
-                "flex items-center gap-2 rounded-lg p-2 transition-colors",
-                isTransparent ? "text-white bg-white/10" : "text-foreground bg-secondary",
-              )}
-              aria-label="Open Menu"
-              onClick={() => setOpen(true)}
-            >
-              <Menu className="size-6 text-gold" />
+              <Menu className="size-4" />
+              <span className="text-xs font-semibold hidden sm:inline-block uppercase tracking-wider">{t(bi("Menu", "மெனு"))}</span>
             </button>
           </div>
         </div>
@@ -507,11 +539,12 @@ export function Header() {
                         <Link
                           key={item.to}
                           to={item.to}
+                          activeOptions={item.to === "/" ? { exact: true } : undefined}
                           onClick={() => setOpen(false)}
-                          className="group flex items-start justify-between rounded-xl p-3 transition-all hover:bg-white/5"
+                          className="group flex items-start justify-between rounded-xl p-3 transition-all hover:bg-white/5 [&.active]:bg-white/10"
                         >
                           <div className="space-y-0.5">
-                            <span className="font-serif text-lg text-white group-hover:text-gold transition-colors">
+                            <span className="font-serif text-lg text-white group-hover:text-gold group-[.active]:text-gold group-[.active]:font-bold transition-colors">
                               {t(item.label)}
                             </span>
                             <p className="text-xs text-[oklch(0.8_0.02_300)] font-light leading-relaxed">
@@ -525,8 +558,26 @@ export function Header() {
                   </div>
                 );
               })}
+              
+              {isAuthenticated && (
+                <div className="pt-4 mt-4 border-t border-gold/20">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOpen(false);
+                      logout();
+                      navigate({ to: "/", replace: true });
+                    }}
+                    className="flex w-full items-center justify-between rounded-xl p-3 text-rose-400 transition-all hover:bg-rose-500/10 hover:text-rose-300"
+                  >
+                    <div className="flex items-center gap-3">
+                      <LogOut className="size-5" />
+                      <span className="font-serif text-lg">{t(bi("Sign Out", "வெளியேறு"))}</span>
+                    </div>
+                  </button>
+                </div>
+              )}
             </div>
-
 
           </div>
         </div>

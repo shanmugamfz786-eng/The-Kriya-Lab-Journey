@@ -15,7 +15,7 @@ export async function register(req, res) {
 
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
-    const userId = randomUUID();
+    const userId = "KL-USR-" + randomUUID().substring(0, 8).toUpperCase();
 
     try {
       const db = getDbPool();
@@ -154,7 +154,7 @@ export async function me(req, res) {
 export async function createEnquiry(req, res) {
   try {
     const { name, email, phone, country, program, message } = req.body;
-    const enquiryId = "ENQ-" + Date.now().toString().slice(-6);
+    const enquiryId = "KL-" + Date.now().toString().slice(-6);
 
     try {
       const db = getDbPool();

@@ -38,8 +38,8 @@ function AdminDashboardPage() {
   const stats = [
     {
       title: "TOTAL SEEKER ENQUIRIES",
-      value: "1,428",
-      change: "+22.5%",
+      value: "0",
+      change: "0%",
       subText: "this month",
       icon: Users,
       iconColor: "text-[#334d84]",
@@ -48,8 +48,8 @@ function AdminDashboardPage() {
     },
     {
       title: "INITIATED STUDENTS",
-      value: "842",
-      change: "+12.1%",
+      value: "0",
+      change: "0%",
       subText: "active sadhakas",
       icon: ShieldCheck,
       iconColor: "text-[#0ab39c]",
@@ -58,8 +58,8 @@ function AdminDashboardPage() {
     },
     {
       title: "UPCOMING WORKSHOPS",
-      value: String(futureEvents.length || 2),
-      change: "+8.3%",
+      value: String(futureEvents.length || 0),
+      change: "0%",
       subText: "scheduled dikshas",
       icon: Calendar,
       iconColor: "text-[#f7b84b]",
@@ -67,10 +67,10 @@ function AdminDashboardPage() {
       href: "/admin/events/future",
     },
     {
-      title: "TIDB CLOUD DATABASE",
-      value: "Connected",
-      change: "SSL Active",
-      subText: "24ms latency",
+      title: "TOTAL REVENUE",
+      value: "0 Rs",
+      change: "0%",
+      subText: "this month",
       icon: Database,
       iconColor: "text-[#299cdb]",
       iconBg: "bg-[#299cdb]/10",
@@ -78,40 +78,7 @@ function AdminDashboardPage() {
     },
   ];
 
-  const recentInquiries = [
-    {
-      id: "ENQ-1094",
-      name: "Sathish Kumar",
-      email: "sathish.k@gmail.com",
-      program: "1st Kriya Online Initiation",
-      date: "Today, 10:45 AM",
-      status: "Pending Review",
-    },
-    {
-      id: "ENQ-1093",
-      name: "Ananya Iyer",
-      email: "ananya.iyer@outlook.com",
-      program: "Weekend Intensive Workshop",
-      date: "Yesterday, 04:15 PM",
-      status: "Approved",
-    },
-    {
-      id: "ENQ-1092",
-      name: "David Miller",
-      email: "david.m@california.org",
-      program: "Higher Kriya Mentorship",
-      date: "Sep 16, 09:30 PM",
-      status: "Approved",
-    },
-    {
-      id: "ENQ-1091",
-      name: "Meenakshi Sundaram",
-      email: "meenakshi.s@tcs.com",
-      program: "1st Kriya Online Initiation",
-      date: "Sep 15, 02:10 PM",
-      status: "Initiated",
-    },
-  ];
+  const recentInquiries: any[] = [];
 
   return (
     <>
@@ -204,7 +171,13 @@ function AdminDashboardPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 font-normal">
-                  {recentInquiries.map((item) => (
+                  {recentInquiries.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="p-8 text-center text-gray-400">
+                        No recent enquiries found.
+                      </td>
+                    </tr>
+                  ) : recentInquiries.map((item) => (
                     <tr key={item.id} className="hover:bg-gray-50/80 transition-colors">
                       <td className="p-3.5 pl-5 font-semibold text-gray-700">{item.id}</td>
                       <td className="p-3.5">

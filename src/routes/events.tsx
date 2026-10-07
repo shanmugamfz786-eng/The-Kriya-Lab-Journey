@@ -3,9 +3,10 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Section } from "@/components/Primitives";
-import { listPublicEvents, type PublicEvent } from "@/lib/events.functions";
+import { fetchAllEvents, type EventItem } from "@/lib/events-api";
 import { bi, useLang } from "@/lib/i18n";
 import { Search } from "lucide-react";
+import { CollectEnquiryModal } from "@/components/CollectEnquiryModal";
 
 const filters = [
   { key: "all", label: bi("All Events", "அனைத்து நிகழ்வுகள்") },
@@ -39,10 +40,9 @@ export const Route = createFileRoute("/events")({
 
 function EventsPage() {
   const { t, lang } = useLang();
-  const fetchEvents = useServerFn(listPublicEvents);
   const { data } = useQuery({
     queryKey: ["events"],
-    queryFn: () => fetchEvents() as Promise<PublicEvent[]>,
+    queryFn: () => fetchAllEvents(),
   });
 
   const [filter, setFilter] = useState<(typeof filters)[number]["key"]>("future");
@@ -107,6 +107,7 @@ function EventsPage() {
 
 function EventCard({ event, lang }: { event: PublicEvent; lang: "en" | "ta" }) {
   const ta = lang === "ta";
+  const [isCollectModalOpen, setCollectModalOpen] = useState(false);
   const title = (ta ? event.title_ta : event.title_en) || event.title_en;
   const description = (ta ? event.description_ta : event.description_en) || event.description_en;
   const venue = (ta ? event.venue_ta : event.venue_en) || event.venue_en;
@@ -133,17 +134,22 @@ function EventCard({ event, lang }: { event: PublicEvent; lang: "en" | "ta" }) {
         
         {event.google_form_link && (
           <div className="mt-auto pt-6">
-            <a 
-              href={event.google_form_link}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button 
+              type="button"
+              onClick={() => setCollectModalOpen(true)}
               className="inline-flex w-full items-center justify-center rounded-full bg-[#522938] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#41212d] hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300"
             >
-              {ta ? "பதிவு செய்ய" : "Register Now"}
-            </a>
+              {ta ? "சேகரிக்க" : "Collect"}
+            </button>
           </div>
         )}
       </div>
+      
+      <CollectEnquiryModal 
+        isOpen={isCollectModalOpen} 
+        onClose={() => setCollectModalOpen(false)} 
+        programName={`Event: ${title}`} 
+      />
     </article>
   );
 }

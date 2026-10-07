@@ -8,8 +8,9 @@ import { useAuth } from "@/lib/auth-store";
 
 export const Route = createFileRoute("/auth")({
   staticData: { sitemap: false },
-  validateSearch: (search: Record<string, unknown>): { redirect?: string | undefined } => ({
+  validateSearch: (search: Record<string, unknown>): { redirect?: string | undefined; mode?: "signin" | "signup" | undefined } => ({
     redirect: typeof search["redirect"] === "string" ? search["redirect"] : undefined,
+    mode: search["mode"] === "signup" ? "signup" : search["mode"] === "signin" ? "signin" : undefined,
   }),
   head: () => ({
     meta: [
@@ -29,11 +30,11 @@ export const Route = createFileRoute("/auth")({
 });
 
 function AuthPage() {
-  const { redirect: redirectPath } = Route.useSearch();
+  const { redirect: redirectPath, mode: initialMode } = Route.useSearch();
   const { t } = useLang();
   const navigate = useNavigate();
   const { login, register: registerUser, isAuthenticated, user } = useAuth();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [mode, setMode] = useState<"signin" | "signup">(initialMode || "signin");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -50,7 +51,7 @@ function AuthPage() {
       } else if (user.role === "admin") {
         navigate({ to: "/admin", replace: true });
       } else {
-        navigate({ to: "/dashboard", replace: true });
+        navigate({ to: "/", replace: true });
       }
     }
   }, [isAuthenticated, user, redirectPath, navigate]);
@@ -68,7 +69,7 @@ function AuthPage() {
         } else if (loggedUser.role === "admin") {
           navigate({ to: "/admin", replace: true });
         } else {
-          navigate({ to: "/dashboard", replace: true });
+          navigate({ to: "/", replace: true });
         }
       } else {
         const registeredUser = await registerUser(name, email, password);
@@ -77,7 +78,7 @@ function AuthPage() {
         } else if (registeredUser.role === "admin") {
           navigate({ to: "/admin", replace: true });
         } else {
-          navigate({ to: "/dashboard", replace: true });
+          navigate({ to: "/", replace: true });
         }
       }
     } catch (err) {
@@ -88,19 +89,19 @@ function AuthPage() {
   }
 
   return (
-    <div className="relative w-full flex-1 min-h-[calc(100vh-80px)] flex flex-col lg:flex-row bg-[#ede5f5] dark:bg-[#180a1c]">
+    <div className="relative w-full flex-1 min-h-[calc(100vh-80px)] flex flex-col lg:flex-row bg-background">
 
       {/* Left Column: Brand Velvet-Deep & Gold Form Sanctuary (Fills 100% height on mobile & 50% on desktop) */}
-      <div className="relative w-full lg:w-1/2 flex-1 min-h-full flex items-center justify-center bg-gradient-to-br from-[#150719] via-[#240d2d] to-[#100414] text-white px-6 py-10 sm:p-10 md:p-14 lg:p-16 z-10 overflow-hidden">
+      <div className="relative w-full lg:w-1/2 flex-1 min-h-full flex items-center justify-center bg-velvet-deep text-white px-6 py-10 sm:p-10 md:p-14 lg:p-16 z-10 overflow-hidden">
 
         {/* Ambient subtle glow */}
         <div className="pointer-events-none absolute -top-20 -left-20 w-80 h-80 bg-gold/10 rounded-full blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-20 -right-20 w-80 h-80 bg-purple-600/10 rounded-full blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 -right-20 w-80 h-80 bg-gold/5 rounded-full blur-3xl" />
 
         {/* Floating Geometric Rings and Squares with Slow Wave Animations (Left Side Only) */}
         <div className="absolute top-[8%] left-[7%] w-14 h-14 rounded-2xl border-[2px] border-gold/20 -rotate-12 animate-float-wave pointer-events-none" />
         <div className="absolute bottom-[8%] left-[5%] w-28 h-28 rounded-full border-[3px] border-gold/15 animate-float-wave-reverse pointer-events-none" />
-        <div className="absolute top-[12%] right-[10%] w-10 h-10 rounded-full border-[2px] border-purple-300/20 animate-float-slow pointer-events-none" />
+        <div className="absolute top-[12%] right-[10%] w-10 h-10 rounded-full border-[2px] border-gold/10 animate-float-slow pointer-events-none" />
         <div className="absolute bottom-[14%] right-[8%] w-9 h-9 rounded-xl border-[2px] border-gold/25 rotate-45 animate-float-slow-reverse pointer-events-none" />
 
         <div className="relative z-10 w-full max-w-md flex flex-col justify-center my-auto">
@@ -250,7 +251,7 @@ function AuthPage() {
       </div>
 
       {/* Right Column: Clean Yoga Illustration Sanctuary Area (No floating rings/squares) */}
-      <div className="relative hidden lg:flex w-1/2 min-h-full items-center justify-center p-8 xl:p-14 bg-[#ede5f5] dark:bg-[#180a1c] overflow-hidden">
+      <div className="relative hidden lg:flex w-1/2 min-h-full items-center justify-center p-8 xl:p-14 bg-background overflow-hidden">
         <img
           src={authAvatar}
           alt="Yoga & Meditation Sanctuary"

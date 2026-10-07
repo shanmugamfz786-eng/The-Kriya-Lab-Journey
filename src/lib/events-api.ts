@@ -16,6 +16,18 @@ export interface EventItem {
 
 export const API_URL = (import.meta.env["VITE_API_URL"] as string) || "http://localhost:5000";
 
+const today = new Date();
+const yesterday = new Date(today);
+yesterday.setDate(yesterday.getDate() - 1);
+const twoDaysAgo = new Date(today);
+twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+const tomorrow = new Date(today);
+tomorrow.setDate(tomorrow.getDate() + 1);
+const nextWeek = new Date(today);
+nextWeek.setDate(nextWeek.getDate() + 7);
+
+const formatDate = (date: Date) => date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
 export const INITIAL_EVENTS: EventItem[] = [
   {
     id: "evt_past_01",
@@ -24,7 +36,7 @@ export const INITIAL_EVENTS: EventItem[] = [
     image_url: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=600&auto=format&fit=crop&q=80",
     google_form_link: "https://forms.gle/samplePastForm1",
     event_type: "past",
-    event_date: "Aug 15, 2026",
+    event_date: formatDate(yesterday),
     location: "Mylapore Center, Chennai",
   },
   {
@@ -34,7 +46,7 @@ export const INITIAL_EVENTS: EventItem[] = [
     image_url: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=600&auto=format&fit=crop&q=80",
     google_form_link: "https://forms.gle/samplePastForm2",
     event_type: "past",
-    event_date: "Jul 20, 2026",
+    event_date: formatDate(twoDaysAgo),
     location: "Velliangiri Ashram, Coimbatore",
   },
   {
@@ -44,7 +56,7 @@ export const INITIAL_EVENTS: EventItem[] = [
     image_url: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=600&auto=format&fit=crop&q=80",
     google_form_link: "https://forms.gle/chennaiDiksha2026",
     event_type: "future",
-    event_date: "Oct 15, 2026 • 09:00 AM",
+    event_date: formatDate(tomorrow) + " • 09:00 AM",
     location: "The Kriya Lab Center, Chennai",
   },
   {
@@ -54,7 +66,7 @@ export const INITIAL_EVENTS: EventItem[] = [
     image_url: "https://images.unsplash.com/photo-1518611012118-696072aa579a?w=600&auto=format&fit=crop&q=80",
     google_form_link: "https://forms.gle/onlineBabajiSession",
     event_type: "future",
-    event_date: "Oct 22, 2026 • 07:00 PM IST",
+    event_date: formatDate(nextWeek) + " • 07:00 PM IST",
     location: "Zoom Cloud Webinar",
   },
 ];
@@ -69,7 +81,17 @@ export async function fetchAllEvents(): Promise<EventItem[]> {
       }
     }
   } catch (err) {
-    console.warn("Backend events fetch fallback to initial events", err);
+    console.warn("Backend events fetch fallback to localStorage", err);
+  }
+  
+  if (typeof window !== "undefined") {
+    const local = localStorage.getItem("mock_events");
+    if (local) {
+      try {
+        const parsed = JSON.parse(local);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch (e) {}
+    }
   }
   return INITIAL_EVENTS;
 }
@@ -87,12 +109,21 @@ export async function createEventApi(payload: Omit<EventItem, "id">): Promise<Ev
       return data.event;
     }
   } catch (e) {
-    console.warn("Backend unavailable, faking create.");
+    console.warn("Backend unavailable, faking create and saving to localStorage.");
   }
-  return {
+  
+  const newEvent = {
     ...payload,
     id: "evt_" + Date.now(),
   };
+
+  if (typeof window !== "undefined") {
+    const local = localStorage.getItem("mock_events");
+    const current = local ? JSON.parse(local) : INITIAL_EVENTS;
+    localStorage.setItem("mock_events", JSON.stringify([...current, newEvent]));
+  }
+
+  return newEvent;
 }
 
 export async function updateEventApi(id: string, payload: Partial<EventItem>): Promise<EventItem | null> {
@@ -107,8 +138,17 @@ export async function updateEventApi(id: string, payload: Partial<EventItem>): P
       return data.event || null;
     }
   } catch (e) {
-    console.warn("Backend unavailable, faking update.");
-    return { id, ...payload } as EventItem;
+    console.warn("Backend unavailable, faking update and saving to localStorage.");
+    const updatedEvent = { id, ...payload } as EventItem;
+    if (typeof window !== "undefined") {
+      const local = localStorage.getItem("mock_events");
+      if (local) {
+        let current = JSON.parse(local) as EventItem[];
+        current = current.map(ev => ev.id === id ? { ...ev, ...payload } : ev);
+        localStorage.setItem("mock_events", JSON.stringify(current));
+      }
+    }
+    return updatedEvent;
   }
   return null;
 }
@@ -120,7 +160,15 @@ export async function deleteEventApi(id: string): Promise<boolean> {
     });
     return res.ok;
   } catch (e) {
-    console.warn("Backend unavailable, faking delete.");
+    console.warn("Backend unavailable, faking delete from localStorage.");
+    if (typeof window !== "undefined") {
+      const local = localStorage.getItem("mock_events");
+      if (local) {
+        let current = JSON.parse(local) as EventItem[];
+        current = current.filter(ev => ev.id !== id);
+        localStorage.setItem("mock_events", JSON.stringify(current));
+      }
+    }
     return true;
   }
 }

@@ -1,4 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { useState } from "react";
 import { PageHero, PlaceholderNote, Section } from "@/components/Primitives";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { bi, useLang, type Bi } from "@/lib/i18n";
@@ -7,6 +8,7 @@ import { programMessage } from "@/lib/whatsapp";
 import { listPublicPrograms } from "@/lib/programs.functions";
 import { type ProgramItem } from "@/lib/programs-api";
 import { ProgramCard } from "@/components/ProgramCard";
+import { CollectEnquiryModal } from "@/components/CollectEnquiryModal";
 
 export const Route = createFileRoute("/programs/$id")({
   staticData: { sitemap: true },
@@ -35,6 +37,7 @@ export const Route = createFileRoute("/programs/$id")({
 function ProgramPage() {
   const { program, allPrograms } = Route.useLoaderData();
   const { t, lang } = useLang();
+  const [isCollectModalOpen, setCollectModalOpen] = useState(false);
   
   const recentPrograms = allPrograms
     .filter(p => p.id !== program.id)
@@ -61,6 +64,16 @@ function ProgramPage() {
 
   return (
     <>
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 mt-6">
+        <Link 
+          to="/programs" 
+          className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-gold transition-colors"
+        >
+          <span aria-hidden="true">&larr;</span> 
+          {ta ? "பயிற்சிகளுக்கு திரும்பு" : "Back to Programs"}
+        </Link>
+      </div>
+
       <PageHero
         eyebrow={t(bi("Initiation Program", "தீட்சை நிகழ்ச்சி"))}
         title={title}
@@ -95,14 +108,13 @@ function ProgramPage() {
               <h2 className="font-serif text-2xl">{t(ui.begin)}</h2>
               <PlaceholderNote />
             <div className="mt-6 flex flex-col gap-3">
-              <Link
-                to="/programs/$id"
-                params={{ id: String(program.id) }}
+              <button
+                type="button"
+                onClick={() => setCollectModalOpen(true)}
                 className="rounded-full bg-velvet px-6 py-3 text-center text-sm font-medium text-primary-foreground transition-colors hover:bg-primary shadow-sm"
-                onClick={(e) => e.preventDefault()}
               >
-                {t(ui.enroll)}
-              </Link>
+                {t(bi("Collect", "சேகரிக்க"))}
+              </button>
 
               <WhatsAppButton
                 event="whatsapp_program_enquiry"
@@ -114,6 +126,12 @@ function ProgramPage() {
           </aside>
         </div>
       </Section>
+      
+      <CollectEnquiryModal 
+        isOpen={isCollectModalOpen} 
+        onClose={() => setCollectModalOpen(false)} 
+        programName={title} 
+      />
 
       {recentPrograms.length > 0 && (
         <Section tone="muted">

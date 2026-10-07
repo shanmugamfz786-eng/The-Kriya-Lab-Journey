@@ -60,7 +60,7 @@ export function useAuth() {
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        throw new Error(data.message || "Invalid email or password");
+        throw new Error((data && data.message) ? data.message : "backend_offline");
       }
 
       if (data.success && data.user) {
@@ -69,7 +69,8 @@ export function useAuth() {
       }
       throw new Error(data.message || "Login failed");
     } catch (err: unknown) {
-      if (err instanceof Error && err.message !== "Failed to fetch") {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg !== "Failed to fetch" && msg !== "backend_offline") {
         throw err;
       }
 
@@ -100,7 +101,7 @@ export function useAuth() {
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        throw new Error(data.message || "Failed to create account");
+        throw new Error((data && data.message) ? data.message : "backend_offline");
       }
 
       if (data.success && data.user) {
@@ -109,7 +110,8 @@ export function useAuth() {
       }
       throw new Error(data.message || "Registration failed");
     } catch (err: unknown) {
-      if (err instanceof Error && err.message !== "Failed to fetch") {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg !== "Failed to fetch" && msg !== "backend_offline") {
         throw err;
       }
 

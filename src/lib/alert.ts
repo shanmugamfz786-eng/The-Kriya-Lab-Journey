@@ -4,8 +4,8 @@
  */
 export async function getSwal() {
   if (typeof window !== "undefined") {
-    const Swal = (await import("sweetalert2")).default;
-    return Swal;
+    const swalModule = await import("sweetalert2");
+    return swalModule.default || swalModule;
   }
   return null;
 }

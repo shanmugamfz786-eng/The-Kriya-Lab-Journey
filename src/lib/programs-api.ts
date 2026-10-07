@@ -23,7 +23,88 @@ export interface ProgramItem {
 
 export const API_URL = (import.meta.env["VITE_API_URL"] as string) || "http://localhost:5000";
 
-export const INITIAL_PROGRAMS: ProgramItem[] = [];
+export const INITIAL_PROGRAMS: ProgramItem[] = [
+  {
+    id: "prg_1",
+    title_en: "Inner Awakening Kriya",
+    description_en: "A comprehensive journey into the core of Kriya Yoga.",
+    instructor_en: "Swami Kriyanda",
+    location_en: "Zoom (Online)",
+    title_ta: "உள் விழிப்புணர்வு கிரியா",
+    description_ta: "கிரியா யோகத்தின் அடிப்படை பயணங்கள்.",
+    instructor_ta: "சுவாமி கிரியானந்தா",
+    location_ta: "ஜூம் (ஆன்லைன்)",
+    level: "beginner",
+    duration: "4 Weeks",
+    schedule_date: "2026-11-01T10:00:00Z",
+    enrolment_status: "enquire",
+    image_url: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=600&auto=format&fit=crop",
+    program_type: "online",
+    price_inr: "4999",
+    price_usd: "59",
+    created_at: new Date().toISOString()
+  },
+  {
+    id: "prg_2",
+    title_en: "Advanced Pranayama",
+    description_en: "Master your breath with advanced Siddha techniques.",
+    instructor_en: "Sadhguru Ram",
+    location_en: "Google Meet",
+    title_ta: "மேம்பட்ட பிராணாயாமம்",
+    description_ta: "சுவாசத்தை கட்டுப்படுத்தும் மேம்பட்ட முறை.",
+    instructor_ta: "சத்குரு ராம்",
+    location_ta: "கூகுள் மீட்",
+    level: "intermediate",
+    duration: "6 Weeks",
+    schedule_date: "2026-11-15T08:00:00Z",
+    enrolment_status: "almost full",
+    image_url: "https://images.unsplash.com/photo-1522845015757-50bce044e5da?q=80&w=600&auto=format&fit=crop",
+    program_type: "online",
+    price_inr: "7999",
+    price_usd: "99",
+    created_at: new Date().toISOString()
+  },
+  {
+    id: "prg_3",
+    title_en: "Himalayan Retreat",
+    description_en: "A deep immersive retreat in the Himalayas.",
+    instructor_en: "Sri Babaji",
+    location_en: "Rishikesh, India",
+    title_ta: "இமயமலை தியான முகாம்",
+    description_ta: "இமயமலையில் ஆழமான தியான பயிற்சி.",
+    instructor_ta: "ஸ்ரீ பாபாஜி",
+    location_ta: "ரிஷிகேஷ், இந்தியா",
+    level: "pro",
+    duration: "14 Days",
+    schedule_date: "2027-01-10T09:00:00Z",
+    enrolment_status: "full",
+    image_url: "https://images.unsplash.com/photo-1505228395891-9a51e7e86bf6?q=80&w=600&auto=format&fit=crop",
+    program_type: "offline",
+    price_inr: "25000",
+    price_usd: "350",
+    created_at: new Date().toISOString()
+  },
+  {
+    id: "prg_4",
+    title_en: "Foundation Weekend Workshop",
+    description_en: "A 2-day intensive introduction to the Kriya Lab methods.",
+    instructor_en: "Master Yogi",
+    location_en: "Chennai Center",
+    title_ta: "அடிப்படை யோக பட்டறை",
+    description_ta: "2 நாட்கள் தொடக்க நிலை பயிற்சி.",
+    instructor_ta: "மாஸ்டர் யோகி",
+    location_ta: "சென்னை மையம்",
+    level: "beginner",
+    duration: "2 Days",
+    schedule_date: "2026-12-05T10:00:00Z",
+    enrolment_status: "enquire",
+    image_url: "https://images.unsplash.com/photo-1552858725-2758b5fb1286?q=80&w=600&auto=format&fit=crop",
+    program_type: "offline",
+    price_inr: "1999",
+    price_usd: "25",
+    created_at: new Date().toISOString()
+  }
+];
 
 export async function fetchAllPrograms(): Promise<ProgramItem[]> {
   try {
@@ -42,7 +123,10 @@ export async function fetchAllPrograms(): Promise<ProgramItem[]> {
     const local = localStorage.getItem("mock_programs");
     if (local) {
       try {
-        return JSON.parse(local);
+        const parsed = JSON.parse(local);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
       } catch (e) {}
     }
   }
