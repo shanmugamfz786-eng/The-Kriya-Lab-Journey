@@ -189,6 +189,7 @@ function AccountLink({
 }) {
   const { t } = useLang();
   const { user, isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   if (isAuthenticated && user) {
@@ -273,6 +274,7 @@ function AccountLink({
                   onClick={() => {
                     setDropdownOpen(false);
                     logout();
+                    navigate({ to: "/", replace: true });
                     onClick?.();
                   }}
                   className="flex w-full items-center gap-2.5 px-4 py-2 text-xs text-rose-400 hover:bg-rose-500/10 transition-colors"
@@ -391,7 +393,7 @@ export function Header() {
               <Link
                 key={item.to}
                 to={item.to}
-                activeOptions={item.to === "/" ? { exact: true } : undefined}
+                activeOptions={{ exact: item.to === "/" }}
                 className={cn(
                   "text-[0.85rem] xl:text-[0.92rem] whitespace-nowrap tracking-wide font-medium transition-all hover:-translate-y-0.5",
                   isTransparent
@@ -539,7 +541,7 @@ export function Header() {
                         <Link
                           key={item.to}
                           to={item.to}
-                          activeOptions={item.to === "/" ? { exact: true } : undefined}
+                          activeOptions={{ exact: item.to === "/" }}
                           onClick={() => setOpen(false)}
                           className="group flex items-start justify-between rounded-xl p-3 transition-all hover:bg-white/5 [&.active]:bg-white/10"
                         >

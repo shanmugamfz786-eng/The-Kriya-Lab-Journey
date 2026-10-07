@@ -17,6 +17,7 @@ import {
 import { showAlert } from "@/lib/alert";
 import { cn } from "@/lib/utils";
 import { fetchAllUsers, deleteUserApi, type SeekerItem } from "@/lib/users-api";
+import { useEnrollments } from "@/lib/enrollment-store";
 
 export const Route = createFileRoute("/admin/users")({
   staticData: { sitemap: false },
@@ -35,27 +36,18 @@ function AdminUsersPage() {
     });
   }, []);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedSeeker, setSelectedSeeker] = useState<SeekerItem | null>(null);
+  const [viewingProgramsFor, setViewingProgramsFor] = useState<SeekerItem | null>(null);
 
   const filtered = seekers.filter((item) => {
-    const matchesSearch =
+    return (
       item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.phone.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.program.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.id.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesStatus = statusFilter === "all" || item.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
-
-  const handleStatusChange = async (id: string, newStatus: SeekerItem["status"]) => {
-    setSeekers((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, status: newStatus } : s))
+      item.id.toLowerCase().includes(searchTerm.toLowerCase())
     );
-    await showAlert.success("Status Updated", `Seeker marked as ${newStatus}.`, 1200);
-  };
+  });
 
   const handleDelete = async (seeker: SeekerItem) => {
     const result = await showAlert.confirm(
@@ -76,10 +68,10 @@ function AdminUsersPage() {
   };
 
   const handleExportCsv = () => {
-    const headers = ["Ref ID,Seeker Name,Email,Phone,Applied Program,Status,Date,Experience"];
+    const headers = ["Ref ID,Seeker Name,Email,Phone,Applied Program,Date,Experience"];
     const rows = filtered.map(
       (s) =>
-        `"${s.id}","${s.name}","${s.email}","${s.phone}","${s.program}","${s.status}","${s.date}","${s.experience}"`
+        `"${s.id}","${s.name}","${s.email}","${s.phone}","${s.program}","${s.date}","${s.experience}"`
     );
     const csvContent = "data:text/csv;charset=utf-8," + [headers, ...rows].join("\n");
     const encodedUri = encodeURI(csvContent);
@@ -130,20 +122,6 @@ function AdminUsersPage() {
               className="h-9 w-full rounded-lg border border-gray-200 pl-9 pr-3 text-xs text-gray-900 focus:border-[#334d84] focus:outline-none"
             />
           </div>
-
-          <div className="flex items-center gap-2">
-            <Filter className="size-4 text-gray-400" />
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-xs font-medium text-gray-700 focus:border-[#334d84] focus:outline-none"
-            >
-              <option value="all">All Statuses ({seekers.length})</option>
-              <option value="Pending Review">Pending Review</option>
-              <option value="Approved">Approved</option>
-              <option value="Initiated">Initiated</option>
-            </select>
-          </div>
         </div>
 
         {/* Seekers Table */}
@@ -156,7 +134,6 @@ function AdminUsersPage() {
                   <th className="p-3.5">Seeker Name</th>
                   <th className="p-3.5">Contact Info</th>
                   <th className="p-3.5">Applied Program</th>
-                  <th className="p-3.5">Status</th>
                   <th className="p-3.5">Date</th>
                   <th className="p-3.5 pr-5 text-right">Actions</th>
                 </tr>
@@ -164,13 +141,13 @@ function AdminUsersPage() {
               <tbody className="divide-y divide-gray-100 font-normal">
                 {isLoading ? (
                   <tr>
-                    <td colSpan={7} className="p-8 text-center text-gray-400">
+                    <td colSpan={6} className="p-8 text-center text-gray-400">
                       Loading users...
                     </td>
                   </tr>
                 ) : filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="p-8 text-center text-gray-400">
+                    <td colSpan={6} className="p-8 text-center text-gray-400">
                       No seeker applications found matching criteria.
                     </td>
                   </tr>
@@ -192,24 +169,15 @@ function AdminUsersPage() {
                           <span>{item.phone}</span>
                         </div>
                       </td>
-                      <td className="p-3.5 text-gray-700 font-medium">{item.program}</td>
                       <td className="p-3.5">
-                        <select
-                          value={item.status}
-                          onChange={(e) =>
-                            handleStatusChange(item.id, e.target.value as SeekerItem["status"])
-                          }
-                          className={cn(
-                            "rounded-md px-2 py-1 text-[0.7rem] font-semibold border-0 cursor-pointer focus:ring-1 focus:ring-[#334d84]",
-                            item.status === "Approved" && "bg-[#0ab39c]/15 text-[#0ab39c]",
-                            item.status === "Pending Review" && "bg-[#f7b84b]/20 text-[#b7791f]",
-                            item.status === "Initiated" && "bg-[#334d84]/15 text-[#334d84]",
-                          )}
+                        <button
+                          type="button"
+                          onClick={() => setViewingProgramsFor(item)}
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-[#334d84]/10 px-3 py-1.5 text-[0.72rem] font-bold text-[#334d84] hover:bg-[#334d84]/20 transition-colors shadow-sm"
                         >
-                          <option value="Pending Review">Pending Review</option>
-                          <option value="Approved">Approved</option>
-                          <option value="Initiated">Initiated</option>
-                        </select>
+                          <Eye className="size-3.5" />
+                          <span>View</span>
+                        </button>
                       </td>
                       <td className="p-3.5 text-gray-500">{item.date}</td>
                       <td className="p-3.5 pr-5 text-right">
@@ -314,17 +282,7 @@ function AdminUsersPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                  <span
-                    className={cn(
-                      "inline-flex items-center rounded-md px-2.5 py-1 text-xs font-semibold",
-                      selectedSeeker.status === "Approved" && "bg-[#0ab39c]/15 text-[#0ab39c]",
-                      selectedSeeker.status === "Pending Review" && "bg-[#f7b84b]/20 text-[#b7791f]",
-                      selectedSeeker.status === "Initiated" && "bg-[#334d84]/15 text-[#334d84]",
-                    )}
-                  >
-                    Status: {selectedSeeker.status}
-                  </span>
+                <div className="flex items-center justify-end pt-4 border-t border-gray-100">
 
                   <button
                     type="button"
@@ -338,7 +296,76 @@ function AdminUsersPage() {
             </div>
           </div>
         )}
+        
+        {viewingProgramsFor && (
+          <AdminUserProgramsModal 
+            seeker={viewingProgramsFor} 
+            onClose={() => setViewingProgramsFor(null)} 
+          />
+        )}
       </div>
     </>
+  );
+}
+
+function AdminUserProgramsModal({ seeker, onClose }: { seeker: SeekerItem, onClose: () => void }) {
+  const { enrolledPrograms, loading } = useEnrollments(seeker.id);
+  
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 font-['Poppins',sans-serif]">
+      <div className="relative w-full max-w-md rounded-2xl bg-white shadow-2xl overflow-hidden animate-in fade-in-50 zoom-in-95">
+        <div className="flex items-center justify-between border-b border-gray-100 bg-[#f8f9fa] px-6 py-4">
+          <div>
+            <h3 className="text-base font-bold text-gray-900">Collected Programs</h3>
+            <p className="text-xs text-gray-500">{seeker.name} ({seeker.id})</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-200 transition-colors"
+          >
+            <X className="size-5" />
+          </button>
+        </div>
+        
+        <div className="p-6 max-h-[60vh] overflow-y-auto">
+          {loading ? (
+            <p className="text-sm text-gray-500 text-center py-4 font-medium">Loading programs...</p>
+          ) : enrolledPrograms.length === 0 ? (
+            <p className="text-sm text-gray-500 text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+              This user hasn't collected any programs yet.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {enrolledPrograms.map((p) => (
+                <div key={p.id} className="flex items-center gap-4 rounded-xl border border-gray-100 p-3 bg-gray-50 hover:bg-gray-100/50 transition-colors">
+                  {p.image_url ? (
+                    <img src={p.image_url} alt={p.title_en} className="size-12 rounded-lg object-cover shadow-sm bg-white" />
+                  ) : (
+                    <div className="size-12 rounded-lg bg-gray-200 flex items-center justify-center shadow-sm">
+                      <Sparkles className="size-4 text-gray-400" />
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-gray-900 text-sm line-clamp-1">{p.title_en}</h4>
+                    <p className="text-xs text-gray-500 mt-0.5">{p.level} • {p.duration}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        
+        <div className="flex justify-end p-4 border-t border-gray-100 bg-[#f8f9fa]">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg bg-[#334d84] px-5 py-2 text-xs font-semibold text-white hover:bg-[#2b4273] shadow-sm transition-all active:scale-95"
+          >
+            Done
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
