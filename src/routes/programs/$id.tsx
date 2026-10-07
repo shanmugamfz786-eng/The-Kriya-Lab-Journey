@@ -9,6 +9,9 @@ import { listPublicPrograms } from "@/lib/programs.functions";
 import { type ProgramItem } from "@/lib/programs-api";
 import { ProgramCard } from "@/components/ProgramCard";
 import { CollectEnquiryModal } from "@/components/CollectEnquiryModal";
+import { useAuth } from "@/lib/auth-store";
+import { enrollProgram } from "@/lib/enrollment-store";
+import { showAlert } from "@/lib/alert";
 
 export const Route = createFileRoute("/programs/$id")({
   staticData: { sitemap: true },
@@ -37,6 +40,7 @@ export const Route = createFileRoute("/programs/$id")({
 function ProgramPage() {
   const { program, allPrograms } = Route.useLoaderData();
   const { t, lang } = useLang();
+  const { isAuthenticated, user } = useAuth();
   const [isCollectModalOpen, setCollectModalOpen] = useState(false);
   
   const recentPrograms = allPrograms
@@ -110,7 +114,14 @@ function ProgramPage() {
             <div className="mt-6 flex flex-col gap-3">
               <button
                 type="button"
-                onClick={() => setCollectModalOpen(true)}
+                onClick={() => {
+                  if (isAuthenticated && user) {
+                    enrollProgram(user.id, program.id);
+                    showAlert.success(ta ? "வெற்றிகரமாக பதிவு செய்யப்பட்டது!" : "Successfully Collected!", ta ? "உங்கள் பயிற்சி பக்கத்தில் சேர்க்கப்பட்டுள்ளது." : "Added to your learning dashboard.", 2500);
+                  } else {
+                    setCollectModalOpen(true);
+                  }
+                }}
                 className="rounded-full bg-velvet px-6 py-3 text-center text-sm font-medium text-primary-foreground transition-colors hover:bg-primary shadow-sm"
               >
                 {t(bi("Collect", "சேகரிக்க"))}
