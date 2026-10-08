@@ -293,6 +293,7 @@ function AccountLink({
   return (
     <Link
       to="/auth"
+      search={{ mode: "signup" }}
       onClick={onClick}
       className={cn(
         "inline-flex items-center gap-1.5 text-[0.82rem] tracking-wide transition-colors font-medium hover:text-gold",
@@ -301,7 +302,7 @@ function AccountLink({
       )}
     >
       <User className="size-3.5 text-gold/90" />
-      <span>{t(bi("Sign in", "உள்நுழை"))}</span>
+      <span>{t(bi("Sign In / Sign Up", "உள்நுழை / பதிவு செய்"))}</span>
     </Link>
   );
 }
