@@ -429,7 +429,7 @@ export function Header() {
               {!isAuthenticated ? (
                   <Link
                     to="/auth"
-                    search={{ mode: "signin" }}
+                    search={{ mode: "signup" }}
                     className={cn(
                       "text-[0.65rem] font-semibold px-3 py-1.5 rounded-full transition-all uppercase tracking-wider",
                       isTransparent
