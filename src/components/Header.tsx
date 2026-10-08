@@ -314,6 +314,7 @@ export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
   const isHome = location.pathname === "/";
+  const authMode = (location.search as any)?.mode || "signin";
 
   // Prevent background body scroll when full luxury menu drawer is open
   useEffect(() => {
@@ -426,20 +427,7 @@ export function Header() {
             {/* Mobile Actions (Register / Dashboard) */}
             <div className="block sm:hidden">
               {!isAuthenticated ? (
-                location.pathname === "/auth" ? (
-                  <Link
-                    to="/auth"
-                    search={{ mode: "signin" }}
-                    className={cn(
-                      "text-[0.7rem] font-semibold px-3 py-1.5 rounded-full transition-all uppercase tracking-wider",
-                      isTransparent
-                        ? "bg-gold text-[#1a140b] hover:bg-gold/90 shadow-[0_0_10px_rgba(212,175,55,0.3)]"
-                        : "bg-[#d4af37] text-white hover:bg-[#c5a030] shadow-md"
-                    )}
-                  >
-                    {t(bi("Sign in", "உள்நுழை"))}
-                  </Link>
-                ) : (
+                location.pathname === "/auth" && authMode === "signin" ? (
                   <Link
                     to="/auth"
                     search={{ mode: "signup" }}
@@ -451,6 +439,19 @@ export function Header() {
                     )}
                   >
                     {t(bi("Sign up", "பதிவு செய்"))}
+                  </Link>
+                ) : (
+                  <Link
+                    to="/auth"
+                    search={{ mode: "signin" }}
+                    className={cn(
+                      "text-[0.7rem] font-semibold px-3 py-1.5 rounded-full transition-all uppercase tracking-wider",
+                      isTransparent
+                        ? "bg-gold text-[#1a140b] hover:bg-gold/90 shadow-[0_0_10px_rgba(212,175,55,0.3)]"
+                        : "bg-[#d4af37] text-white hover:bg-[#c5a030] shadow-md"
+                    )}
+                  >
+                    {t(bi("Sign in", "உள்நுழை"))}
                   </Link>
                 )
               ) : (
