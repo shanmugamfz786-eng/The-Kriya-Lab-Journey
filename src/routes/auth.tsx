@@ -46,15 +46,13 @@ function AuthPage() {
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      if (redirectPath) {
-        navigate({ to: redirectPath as any, replace: true });
-      } else if (user.role === "admin") {
+      if (user.role === "admin") {
         navigate({ to: "/admin", replace: true });
       } else {
         navigate({ to: "/", replace: true });
       }
     }
-  }, [isAuthenticated, user, redirectPath, navigate]);
+  }, [isAuthenticated, user, navigate]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
