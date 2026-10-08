@@ -46,3 +46,33 @@ export async function deleteUser(req, res) {
     return res.status(500).json({ error: "Failed to delete user: " + err.message });
   }
 }
+
+/**
+ * Update user profile (name, avatar, etc.)
+ */
+export async function updateUser(req, res) {
+  try {
+    const db = getDbPool();
+    const { id } = req.params;
+    const { full_name, avatar } = req.body;
+
+    if (!id || !full_name) {
+      return res.status(400).json({ error: "User ID and Full Name are required" });
+    }
+
+    // Notice: we might not have an avatar column yet, so we should try-catch it or add it
+    try {
+      await db.query("ALTER TABLE users ADD COLUMN avatar VARCHAR(255)");
+    } catch (e) {}
+
+    await db.query(
+      "UPDATE users SET full_name = ?, avatar = ? WHERE id = ?",
+      [full_name, avatar || null, id]
+    );
+
+    return res.json({ success: true, message: "Profile updated successfully" });
+  } catch (err) {
+    console.error("[Update User Error]:", err);
+    return res.status(500).json({ error: "Failed to update user: " + err.message });
+  }
+}

@@ -20,6 +20,7 @@ import { ScrollObserver } from "@/components/ScrollObserver";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { useAuth } from "@/lib/auth-store";
 import { cn } from "@/lib/utils";
+import { GlobalUserSidebar } from "@/components/GlobalUserSidebar";
 
 import notFoundIllustration from "@/assets/images/not-found-illustion.png";
 import { Home, Compass, MessageCircle, ArrowLeft } from "lucide-react";
@@ -184,7 +185,8 @@ function RootComponent() {
   const { isAuthenticated } = useAuth();
   const pathname = router.state.location.pathname;
   const isPortal = pathname.startsWith("/admin");
-  const hideFooter = ["/programs", "/events", "/profile"].some(path => pathname.startsWith(path));
+  const isDashboard = pathname.startsWith("/dashboard");
+  const hideFooter = ["/programs", "/events", "/profile"].some(path => pathname.startsWith(path)) || isDashboard;
 
   if (isPortal) {
     return (
@@ -202,17 +204,23 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
         <ScrollObserver />
-        <div className={cn("flex min-h-screen flex-col", (!isPortal && !hideMobileFooter) ? "pb-[4.25rem] md:pb-0" : "")}>
-          <Header />
-          <main className="flex-1 flex flex-col">
-            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-            <Outlet />
-          </main>
-          {!hideFooter && (
-            <div className={cn(hideMobileFooter && "hidden md:block")}>
-              <Footer />
-            </div>
-          )}
+        <div className={cn("flex min-h-screen flex-col md:flex-row")}>
+          {isAuthenticated && !isPortal && <GlobalUserSidebar />}
+          
+          <div className={cn("flex-1 flex flex-col min-h-screen w-full md:w-auto", (!isPortal && !hideMobileFooter && !isDashboard) ? "pb-[4.25rem] md:pb-0" : "", (isAuthenticated && !isPortal) ? "md:pl-64" : "")}>
+            {(!isAuthenticated || (!isAuthenticated && !isDashboard)) && <Header />}
+            
+            <main className="flex-1 flex flex-col">
+              {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+              <Outlet />
+            </main>
+            
+            {!hideFooter && (
+              <div className={cn(hideMobileFooter && "hidden md:block")}>
+                <Footer />
+              </div>
+            )}
+          </div>
         </div>
         <FloatingWhatsApp />
         {!isPortal && !hideMobileFooter && <MobileBottomNav />}

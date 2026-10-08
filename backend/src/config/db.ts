@@ -138,6 +138,18 @@ export async function initDb() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
 
+    // Create Enrollments Table
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS enrollments (
+        id VARCHAR(64) PRIMARY KEY,
+        user_id VARCHAR(64) NOT NULL,
+        program_id VARCHAR(64) NOT NULL,
+        status VARCHAR(32) DEFAULT 'active',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY idx_user_program (user_id, program_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+
     // Add columns if table already exists (silently fail if they exist)
     try {
       await db.query("ALTER TABLE programs ADD COLUMN price_inr VARCHAR(64)");

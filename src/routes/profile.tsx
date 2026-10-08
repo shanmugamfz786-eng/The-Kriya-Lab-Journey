@@ -29,12 +29,29 @@ function ProfilePage() {
     }
   };
 
-  const handleSaveProfile = () => {
+  const handleSaveProfile = async () => {
     if (user) {
-      const updatedUser = { ...user, full_name: editName, avatar: editAvatar };
-      localStorage.setItem("the_kriya_lab_user", JSON.stringify(updatedUser));
-      window.dispatchEvent(new Event("kriya_auth_changed"));
-      setIsEditingProfile(false);
+      try {
+        const API_URL = import.meta.env['VITE_API_URL'] || "http://localhost:5000";
+        const res = await fetch(`${API_URL}/api/users/${user.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ full_name: editName, avatar: editAvatar }),
+        });
+        
+        const data = await res.json();
+        if (data.success) {
+          const updatedUser = { ...user, full_name: editName, avatar: editAvatar };
+          localStorage.setItem("the_kriya_lab_user", JSON.stringify(updatedUser));
+          window.dispatchEvent(new Event("kriya_auth_changed"));
+          setIsEditingProfile(false);
+        } else {
+          alert("Failed to update profile: " + data.error);
+        }
+      } catch (err) {
+        console.error(err);
+        alert("An error occurred while updating profile.");
+      }
     }
   };
 

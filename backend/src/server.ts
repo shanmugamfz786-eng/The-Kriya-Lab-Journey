@@ -6,6 +6,7 @@ import authRoutes from "./routes/auth.routes.js";
 import eventsRoutes from "./routes/events.routes.js";
 import programsRoutes from "./routes/programs.routes.js";
 import usersRoutes from "./routes/users.routes.js";
+import enrollRoutes from "./routes/enroll.routes.js";
 
 dotenv.config();
 
@@ -48,6 +49,9 @@ app.use("/api/programs", programsRoutes);
 
 // Users Routes
 app.use("/api/users", usersRoutes);
+
+// Enrollments Routes
+app.use("/api/enrollments", enrollRoutes);
 
 // Start server and initialize DB connection (only if not running in Vercel)
 if (process.env.VERCEL !== "1") {

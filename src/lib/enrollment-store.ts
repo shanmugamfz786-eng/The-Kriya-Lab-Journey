@@ -1,29 +1,28 @@
 import { useState, useEffect } from "react";
-import { ProgramItem, fetchAllPrograms } from "./programs-api";
+import { ProgramItem } from "./programs-api";
 
-const STORAGE_KEY = "kriya_enrolled_programs";
+const API_URL = import.meta.env['VITE_API_URL'] || "http://localhost:5000";
 
-export function getEnrolledProgramIds(userId: string): string[] {
-  if (typeof window === "undefined") return [];
+// Fetch from backend instead of local storage
+export async function enrollProgram(userId: string, programId: string) {
+  if (typeof window === "undefined" || !userId || !programId) return;
   try {
-    const raw = localStorage.getItem(`${STORAGE_KEY}_${userId}`);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-export function enrollProgram(userId: string, programId: string) {
-  if (typeof window === "undefined") return;
-  const current = getEnrolledProgramIds(userId);
-  if (!current.includes(programId)) {
-    localStorage.setItem(`${STORAGE_KEY}_${userId}`, JSON.stringify([...current, programId]));
-    window.dispatchEvent(new Event("kriya_enrollments_changed"));
+    const res = await fetch(`${API_URL}/api/enrollments`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, programId }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      window.dispatchEvent(new Event("kriya_enrollments_changed"));
+    }
+  } catch (err) {
+    console.error("Failed to enroll", err);
   }
 }
 
 export function useEnrollments(userId?: string) {
-  const [enrolledIds, setEnrolledIds] = useState<string[]>(() => userId ? getEnrolledProgramIds(userId) : []);
+  const [enrolledIds, setEnrolledIds] = useState<string[]>([]);
   const [enrolledPrograms, setEnrolledPrograms] = useState<ProgramItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -37,15 +36,20 @@ export function useEnrollments(userId?: string) {
 
     const loadData = async () => {
       setLoading(true);
-      const ids = getEnrolledProgramIds(userId);
-      setEnrolledIds(ids);
-      
-      if (ids.length > 0) {
-        const all = await fetchAllPrograms();
-        const matched = all.filter(p => ids.includes(p.id));
-        setEnrolledPrograms(matched);
-      } else {
+      try {
+        const res = await fetch(`${API_URL}/api/enrollments/${userId}`);
+        const data = await res.json();
+        if (data.success) {
+          setEnrolledPrograms(data.programs || []);
+          setEnrolledIds(data.programs ? data.programs.map((p: any) => p.id) : []);
+        } else {
+          setEnrolledPrograms([]);
+          setEnrolledIds([]);
+        }
+      } catch (err) {
+        console.error("Failed to fetch user enrollments", err);
         setEnrolledPrograms([]);
+        setEnrolledIds([]);
       }
       setLoading(false);
     };
