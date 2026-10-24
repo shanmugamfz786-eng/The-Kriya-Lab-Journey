@@ -4,7 +4,6 @@ import heroVideo from "@/assets/Hero-sections.mp4";
 import { home, koshas, settings, ui } from "@/content/site";
 import { bi, useLang } from "@/lib/i18n";
 import { CTARow, Eyebrow, Section } from "@/components/Primitives";
-import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-store";
@@ -215,9 +214,6 @@ function Index() {
               >
                 {t(ui.explore)}
               </Link>
-              <WhatsAppButton
-                className="border-[oklch(1_0_0_/_0.3)] text-[oklch(0.94_0.01_300)] hover:border-gold hover:text-gold"
-              />
             </div>
           </div>
         </div>

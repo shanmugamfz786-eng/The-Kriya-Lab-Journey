@@ -6,6 +6,7 @@ export interface AuthUser {
   email: string;
   role: "student" | "admin";
   avatar?: string;
+  phone?: string;
 }
 
 const API_URL = (import.meta.env["VITE_API_URL"] as string | undefined) || "http://localhost:5000";
@@ -81,7 +82,7 @@ export function useAuth() {
         id: "usr-" + Date.now(),
         full_name: prefix.replace(/[._]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
         email: email.toLowerCase(),
-        role: email.toLowerCase().includes("admin") ? "admin" : "student",
+        role: email.toLowerCase() === "admin@thekriyalab.com" ? "admin" : "student",
         avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80",
       };
 
@@ -120,7 +121,7 @@ export function useAuth() {
         id: "usr-" + Date.now(),
         full_name: name || "Seeker",
         email: email.toLowerCase(),
-        role: email.toLowerCase().includes("admin") ? "admin" : "student",
+        role: email.toLowerCase() === "admin@thekriyalab.com" ? "admin" : "student",
         avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80",
       };
 

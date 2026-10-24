@@ -7,16 +7,20 @@ export type PaidProgram = {
   priceId: string;
   label: string;
   amountInr: number;
+  amountUsd?: number;
 };
 
-// Keep in sync with src/content/site.ts purchasePrograms.
 export const PAID_PROGRAMS: PaidProgram[] = [
-  { slug: "live-online-group-english", priceId: "group_english_onetime", label: "Kriya Yoga Initiation — Live Online Group (English)", amountInr: 0 },
-  { slug: "live-online-individual", priceId: "individual_online_onetime", label: "Kriya Yoga Initiation — Individual Online (1-on-1)", amountInr: 0 },
-  { slug: "live-online-group-tamil", priceId: "group_tamil_onetime", label: "Kriya Yoga Initiation — Live Online Group (Tamil)", amountInr: 0 },
-  { slug: "in-person-initiation", priceId: "in_person_onetime", label: "Kriya Yoga Initiation — In-person (1-on-1)", amountInr: 0 },
-  { slug: "gift-a-friend", priceId: "gift_friend_onetime", label: "Kriya Yoga Initiation — Gift a Friend", amountInr: 0 },
-  { slug: "family-initiation", priceId: "family_initiation_onetime", label: "Kriya Yoga Initiation — Family Initiation", amountInr: 0 },
+  { slug: "prg_1", priceId: "prg_1", label: "Inner Awakening Kriya", amountInr: 4999, amountUsd: 59 },
+  { slug: "prg_2", priceId: "prg_2", label: "Advanced Pranayama", amountInr: 7999, amountUsd: 99 },
+  { slug: "prg_3", priceId: "prg_3", label: "Himalayan Retreat", amountInr: 25000, amountUsd: 350 },
+  { slug: "prg_4", priceId: "prg_4", label: "Foundation Weekend Workshop", amountInr: 1999, amountUsd: 29 },
+  { slug: "live-online-group-english", priceId: "group_english_onetime", label: "Kriya Yoga Initiation — Live Online Group (English)", amountInr: 0, amountUsd: 0 },
+  { slug: "live-online-individual", priceId: "individual_online_onetime", label: "Kriya Yoga Initiation — Individual Online (1-on-1)", amountInr: 0, amountUsd: 0 },
+  { slug: "live-online-group-tamil", priceId: "group_tamil_onetime", label: "Kriya Yoga Initiation — Live Online Group (Tamil)", amountInr: 0, amountUsd: 0 },
+  { slug: "in-person-initiation", priceId: "in_person_onetime", label: "Kriya Yoga Initiation — In-person (1-on-1)", amountInr: 0, amountUsd: 0 },
+  { slug: "gift-a-friend", priceId: "gift_friend_onetime", label: "Kriya Yoga Initiation — Gift a Friend", amountInr: 0, amountUsd: 0 },
+  { slug: "family-initiation", priceId: "family_initiation_onetime", label: "Kriya Yoga Initiation — Family Initiation", amountInr: 0, amountUsd: 0 },
 ];
 
 type CheckoutSessionResult = { clientSecret: string } | { error: string };
@@ -86,9 +90,23 @@ type RazorpayOrderResult =
   | { error: string };
 
 export const createRazorpayOrder = createServerFn({ method: "POST" })
-  .inputValidator((data: { programSlug: string; customerName?: string; customerEmail?: string }) => {
-    const program = PAID_PROGRAMS.find((p) => p.slug === data.programSlug);
-    if (!program) throw new Error("Unknown program");
+  .inputValidator((data: {
+    programSlug: string;
+    customerName?: string;
+    customerEmail?: string;
+    currency?: string;
+    amount?: number;
+  }) => {
+    let program = PAID_PROGRAMS.find((p) => p.slug === data.programSlug);
+    if (!program) {
+      program = {
+        slug: data.programSlug,
+        priceId: data.programSlug,
+        label: data.programSlug,
+        amountInr: 1999,
+        amountUsd: 29,
+      };
+    }
     if (data.customerEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.customerEmail)) {
       throw new Error("Invalid email");
     }
@@ -101,6 +119,14 @@ export const createRazorpayOrder = createServerFn({ method: "POST" })
       return { error: "Razorpay is not configured yet. Please use card payment." };
     }
     try {
+      const isUsd = data.currency === "USD";
+      const orderCurrency = isUsd ? "USD" : "INR";
+      const finalAmount = data.amount
+        ? Math.round(data.amount * 100)
+        : isUsd
+          ? (data.program.amountUsd || 59) * 100
+          : data.program.amountInr * 100;
+
       const res = await fetch("https://api.razorpay.com/v1/orders", {
         method: "POST",
         headers: {
@@ -108,13 +134,14 @@ export const createRazorpayOrder = createServerFn({ method: "POST" })
           Authorization: `Basic ${btoa(`${keyId}:${keySecret}`)}`,
         },
         body: JSON.stringify({
-          amount: data.program.amountInr * 100,
-          currency: "INR",
+          amount: finalAmount,
+          currency: orderCurrency,
           receipt: `${data.program.slug}-${Date.now()}`,
           notes: {
             program: data.program.slug,
             name: data.customerName ?? "",
             email: data.customerEmail ?? "",
+            currency: orderCurrency,
           },
         }),
       });
@@ -122,7 +149,7 @@ export const createRazorpayOrder = createServerFn({ method: "POST" })
       if (!res.ok || !json.id) {
         return { error: json.error?.description ?? "Razorpay order creation failed" };
       }
-      return { orderId: json.id, amount: json.amount ?? data.program.amountInr * 100, currency: json.currency ?? "INR", keyId };
+      return { orderId: json.id, amount: json.amount ?? finalAmount, currency: json.currency ?? orderCurrency, keyId };
     } catch {
       return { error: "Could not reach Razorpay. Please try card payment." };
     }

@@ -4,6 +4,8 @@ import { cn } from "@/lib/utils";
 import { useLang } from "@/lib/i18n";
 import { ui } from "@/content/site";
 
+import { ArrowLeft } from "lucide-react";
+
 export function Section({
   children,
   className,
@@ -38,20 +40,34 @@ export function PageHero({
   eyebrow,
   title,
   intro,
+  showBackToHome = true,
 }: {
   eyebrow?: string;
   title: string;
   intro?: string;
+  showBackToHome?: boolean;
 }) {
+  const { lang } = useLang();
+  const ta = lang === "ta";
+
   return (
-    <header className="bg-dawn px-5 pb-16 pt-20 lg:px-10 lg:pb-24 lg:pt-28">
+    <header className="bg-dawn px-5 pb-12 pt-8 sm:pb-16 sm:pt-12 lg:px-10 lg:pb-20 lg:pt-14">
       <div className="mx-auto max-w-7xl animate-rise">
+        {showBackToHome && (
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-gold transition-colors mb-3.5 group cursor-pointer"
+          >
+            <ArrowLeft className="size-3.5 text-gold transition-transform group-hover:-translate-x-1" />
+            <span>{ta ? "முகப்புக்கு திரும்பு" : "Back to Home"}</span>
+          </Link>
+        )}
         {eyebrow ? <Eyebrow>{eyebrow}</Eyebrow> : null}
-        <h1 className="mt-5 max-w-4xl whitespace-pre-line text-balance font-serif text-[clamp(2.4rem,6vw,4.5rem)] leading-[1.05]">
+        <h1 className="mt-3 max-w-4xl whitespace-pre-line text-balance font-serif text-[clamp(2.4rem,6vw,4.5rem)] leading-[1.05]">
           {title}
         </h1>
         {intro ? (
-          <p className="measure mt-7 whitespace-pre-line text-lg text-muted-foreground">{intro}</p>
+          <p className="measure mt-6 whitespace-pre-line text-lg text-muted-foreground">{intro}</p>
         ) : null}
       </div>
     </header>

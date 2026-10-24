@@ -11,6 +11,10 @@ import {
   ShieldCheck,
   LogOut,
   ChevronDown,
+  Settings,
+  Edit3,
+  KeyRound,
+  MessageSquare,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { settings, ui } from "@/content/site";
@@ -66,11 +70,6 @@ const navigationGroups = [
         label: bi("Upcoming Events", "நிகழ்வுகள் & பட்டறைகள்"),
         sub: bi("Live workshops, webinars & retreats", "பயிலரங்குகள் மற்றும் நேரலை அமர்வுகள்"),
         to: "/events",
-      },
-      {
-        label: bi("Buy / Enroll Online", "நேரடி முன்பதிவு"),
-        sub: bi("Instant seat confirmation & portal access", "உடனடி இட ஒதுக்கீடு மற்றும் அனுமதி"),
-        to: "/buy",
       },
     ],
   },
@@ -128,7 +127,7 @@ function LanguageSwitcher({ className, isTransparent }: { className?: string; is
   return (
     <div
       className={cn(
-        "flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs tracking-wider transition-all",
+        "flex items-center gap-1 rounded-full border px-2 py-0.5 text-[0.7rem] tracking-wider transition-all",
         isTransparent
           ? "border-white/20 bg-white/10 text-white backdrop-blur-sm"
           : "border-border bg-secondary/50 text-foreground",
@@ -142,7 +141,7 @@ function LanguageSwitcher({ className, isTransparent }: { className?: string; is
         onClick={() => setLang("en")}
         aria-pressed={lang === "en"}
         className={cn(
-          "px-1 font-medium transition-colors",
+          "px-0.5 font-medium transition-colors",
           lang === "en"
             ? isTransparent
               ? "text-gold"
@@ -162,7 +161,7 @@ function LanguageSwitcher({ className, isTransparent }: { className?: string; is
         onClick={() => setLang("ta")}
         aria-pressed={lang === "ta"}
         className={cn(
-          "px-1 font-medium transition-colors",
+          "px-0.5 font-medium transition-colors",
           lang === "ta"
             ? isTransparent
               ? "text-gold"
@@ -199,20 +198,24 @@ function AccountLink({
           type="button"
           onClick={() => setDropdownOpen(!dropdownOpen)}
           className={cn(
-            "flex items-center gap-2 rounded-full py-1 px-2 transition-all",
+            "flex items-center gap-1.5 rounded-full py-0.5 px-2 transition-all",
             isTransparent
               ? "bg-white/10 text-white hover:bg-white/20"
               : "bg-secondary/80 text-foreground hover:bg-secondary",
             className,
           )}
         >
-          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gold/20 text-gold">
-            <User className="size-3.5" />
+          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-gold/20 text-gold overflow-hidden shrink-0">
+            {user.avatar ? (
+              <img src={user.avatar} alt={user.full_name} className="w-full h-full object-cover" />
+            ) : (
+              <User className="size-3" />
+            )}
           </div>
-          <span className="text-xs font-semibold max-w-[100px] truncate">
+          <span className="text-[0.72rem] font-medium max-w-[90px] truncate">
             {user.full_name.split(" ")[0]}
           </span>
-          <ChevronDown className="size-3 opacity-70" />
+          <ChevronDown className="size-2.5 opacity-70" />
         </button>
 
         {dropdownOpen && (
@@ -221,13 +224,24 @@ function AccountLink({
               className="fixed inset-0 z-40"
               onClick={() => setDropdownOpen(false)}
             />
-            <div className="absolute right-0 top-full mt-2 z-50 w-56 rounded-xl border border-gold/20 bg-velvet-deep text-white py-2 shadow-2xl animate-in fade-in-50 zoom-in-95">
-              <div className="border-b border-white/10 px-4 py-2.5">
-                <p className="text-xs font-semibold text-white truncate">{user.full_name}</p>
-                <p className="text-[0.68rem] text-gold truncate">{user.email}</p>
-                <span className="mt-1 inline-block rounded-full bg-gold/20 px-2 py-0.5 text-[0.6rem] font-semibold text-gold uppercase tracking-wider">
-                  {user.role}
-                </span>
+            <div className="absolute right-0 top-full mt-2 z-50 w-60 rounded-xl border border-gold/20 bg-velvet-deep text-white py-2 shadow-2xl animate-in fade-in-50 zoom-in-95">
+              <div className="border-b border-white/10 px-4 py-2.5 flex items-center gap-3">
+                <div className="size-9 rounded-full bg-gold/20 border border-gold/40 flex items-center justify-center shrink-0 overflow-hidden text-gold font-bold text-sm">
+                  {user.avatar ? (
+                    <img src={user.avatar} alt={user.full_name} className="w-full h-full object-cover" />
+                  ) : (
+                    <span>{user.full_name?.charAt(0).toUpperCase() || "U"}</span>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-semibold text-white truncate">{user.full_name}</p>
+                  <p className="text-[0.68rem] text-gold truncate">{user.email}</p>
+                  {user.role === "admin" && (
+                    <span className="mt-0.5 inline-block rounded-full bg-gold/20 px-2 py-0.5 text-[0.6rem] font-semibold text-gold uppercase tracking-wider">
+                      Admin
+                    </span>
+                  )}
+                </div>
               </div>
 
               <div className="py-1 text-xs">
@@ -266,6 +280,50 @@ function AccountLink({
                   <Compass className="size-4 text-gold" />
                   <span>My Sadhana</span>
                 </Link>
+                <Link
+                  to="/profile"
+                  onClick={() => {
+                    setDropdownOpen(false);
+                    onClick?.();
+                  }}
+                  className="flex items-center gap-2.5 px-4 py-2 text-white/90 hover:bg-white/10 hover:text-gold transition-colors"
+                >
+                  <User className="size-4 text-gold" />
+                  <span>{t(bi("Personal Profile", "தனிப்பட்ட விவரங்கள்"))}</span>
+                </Link>
+                <Link
+                  to="/settings"
+                  onClick={() => {
+                    setDropdownOpen(false);
+                    onClick?.();
+                  }}
+                  className="flex items-center gap-2.5 px-4 py-2 text-white/90 hover:bg-white/10 hover:text-gold transition-colors"
+                >
+                  <Edit3 className="size-4 text-gold" />
+                  <span>{t(bi("Change Your Details", "விவரங்களை மாற்றவும்"))}</span>
+                </Link>
+                <Link
+                  to="/security"
+                  onClick={() => {
+                    setDropdownOpen(false);
+                    onClick?.();
+                  }}
+                  className="flex items-center gap-2.5 px-4 py-2 text-white/90 hover:bg-white/10 hover:text-gold transition-colors"
+                >
+                  <KeyRound className="size-4 text-gold" />
+                  <span>{t(bi("Security & Password", "பாதுகாப்பு & கடவுச்சொல்"))}</span>
+                </Link>
+                <Link
+                  to="/support"
+                  onClick={() => {
+                    setDropdownOpen(false);
+                    onClick?.();
+                  }}
+                  className="flex items-center gap-2.5 px-4 py-2 text-white/90 hover:bg-white/10 hover:text-gold transition-colors"
+                >
+                  <MessageSquare className="size-4 text-gold" />
+                  <span>{t(bi("Help & Inquiries", "உதவி & வினவல்கள்"))}</span>
+                </Link>
               </div>
 
               <div className="border-t border-white/10 pt-1">
@@ -296,12 +354,12 @@ function AccountLink({
       search={{ mode: "signup" }}
       onClick={onClick}
       className={cn(
-        "inline-flex items-center gap-1.5 text-[0.82rem] tracking-wide transition-colors font-medium hover:text-gold",
+        "inline-flex items-center gap-1 text-[0.75rem] tracking-wide transition-colors font-medium hover:text-gold",
         isTransparent ? "text-white/90 hover:text-gold" : "text-muted-foreground hover:text-foreground",
         className,
       )}
     >
-      <User className="size-3.5 text-gold/90" />
+      <User className="size-3 text-gold/90" />
       <span>{t(bi("Sign In / Sign Up", "உள்நுழை / பதிவு செய்"))}</span>
     </Link>
   );
@@ -336,9 +394,9 @@ export function Header() {
       const whyWePractiseSection = document.getElementById("why-we-practise");
       
       if (whyWePractiseSection) {
-        // Change to solid when the 'Why we practise' section touches the navbar (80px from top)
+        // Change to solid when the 'Why we practise' section touches the navbar (64px from top)
         const rect = whyWePractiseSection.getBoundingClientRect();
-        setScrolled(rect.top <= 80);
+        setScrolled(rect.top <= 64);
       } else {
         // Fallback for other pages
         setScrolled(window.scrollY > 30);
@@ -367,19 +425,21 @@ export function Header() {
             : "border-b border-border/40 bg-background/90 backdrop-blur-xl text-foreground shadow-sm",
         )}
       >
-        <div className="mx-auto flex h-20 w-full max-w-[1560px] items-center justify-between px-4 sm:px-6 lg:px-8 transition-all">
+        <div className="mx-auto flex h-14 lg:h-16 w-full max-w-[1440px] items-center justify-between px-4 sm:px-6 lg:px-8 transition-all">
           
           {/* Left: Brand Logo */}
           <Link
             to="/"
-            className="group flex flex-shrink-0 items-center gap-3 min-w-max"
+            className="group flex flex-shrink-0 items-center gap-2.5 min-w-max"
             onClick={() => setOpen(false)}
           >
             <div className="flex flex-col justify-center leading-none">
               <span
                 className={cn(
-                  "font-serif tracking-[0.1em] transition-colors whitespace-nowrap",
-                  lang === "ta" ? "text-base lg:text-lg" : "text-xl lg:text-2xl font-medium",
+                  "font-serif transition-colors whitespace-nowrap",
+                  lang === "ta" 
+                    ? "text-sm lg:text-base tracking-wide" 
+                    : "text-base lg:text-lg font-medium tracking-[0.12em]",
                   isTransparent ? "text-white" : "text-foreground",
                 )}
               >
@@ -389,7 +449,7 @@ export function Header() {
           </Link>
 
           {/* Center: Primary Navigation (Desktop) */}
-          <nav className="hidden lg:flex flex-1 justify-center items-center gap-4 xl:gap-6 mx-2" aria-label="Primary">
+          <nav className="hidden lg:flex flex-1 justify-center items-center gap-3.5 xl:gap-5 mx-2" aria-label="Primary">
             {(isAuthenticated ? loggedInNav : loggedOutNav)
               .map((item) => (
               <Link
@@ -397,7 +457,7 @@ export function Header() {
                 to={item.to}
                 activeOptions={{ exact: item.to === "/" }}
                 className={cn(
-                  "text-[0.85rem] xl:text-[0.92rem] whitespace-nowrap tracking-wide font-medium transition-all hover:-translate-y-0.5",
+                  "text-[0.78rem] xl:text-[0.82rem] whitespace-nowrap tracking-wide font-medium transition-all hover:-translate-y-0.5",
                   isTransparent
                     ? "text-white/80 hover:text-gold [&.active]:text-gold [&.active]:font-semibold"
                     : "text-muted-foreground hover:text-foreground [&.active]:text-black [&.active]:font-bold",
@@ -409,7 +469,7 @@ export function Header() {
           </nav>
 
           {/* Right: Tools & Actions */}
-          <div className="flex items-center gap-2 sm:gap-4 pl-4 border-l border-white/10 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-2.5 pl-3 lg:pl-4 border-l border-white/10 shrink-0">
             {/* Search */}
             <div className="hidden sm:block">
               <GlobalSearch isTransparent={isTransparent} />
@@ -460,15 +520,15 @@ export function Header() {
               type="button"
               onClick={() => setOpen(true)}
               className={cn(
-                "flex items-center gap-2 rounded-full px-3 py-1.5 transition-all hover:scale-105 border",
+                "flex items-center gap-1.5 rounded-full px-2.5 py-1 transition-all hover:scale-105 border",
                 isTransparent
                   ? "bg-white/10 text-white border-white/20 hover:bg-gold hover:text-velvet-deep hover:border-gold"
                   : "bg-secondary text-foreground border-border hover:bg-primary hover:text-primary-foreground",
               )}
               aria-label="Open Explore Menu"
             >
-              <Menu className="size-4" />
-              <span className="text-xs font-semibold hidden sm:inline-block uppercase tracking-wider">{t(bi("Menu", "மெனு"))}</span>
+              <Menu className="size-3.5" />
+              <span className="text-[0.7rem] font-medium hidden sm:inline-block uppercase tracking-wider">{t(bi("Menu", "மெனு"))}</span>
             </button>
           </div>
         </div>

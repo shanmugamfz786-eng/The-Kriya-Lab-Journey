@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { type ProgramItem } from "./programs-api";
+import { type ProgramItem, INITIAL_PROGRAMS } from "./programs-api";
 
 /** Public read of published programs. Safe for SSR/prerender. */
 export const listPublicPrograms = createServerFn({ method: "GET" }).handler(
@@ -10,13 +10,13 @@ export const listPublicPrograms = createServerFn({ method: "GET" }).handler(
       
       if (res.ok) {
         const data = await res.json();
-        if (data.success && Array.isArray(data.programs)) {
+        if (data.success && Array.isArray(data.programs) && data.programs.length > 0) {
           return data.programs as ProgramItem[];
         }
       }
     } catch (err) {
       console.warn("Failed to fetch programs for public site", err);
     }
-    return [];
+    return INITIAL_PROGRAMS;
   },
 );

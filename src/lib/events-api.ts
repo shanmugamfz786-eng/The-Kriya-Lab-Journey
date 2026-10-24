@@ -71,29 +71,60 @@ export const INITIAL_EVENTS: EventItem[] = [
   },
 ];
 
-export async function fetchAllEvents(): Promise<EventItem[]> {
-  try {
-    const res = await fetch(`${API_URL}/api/events`, { cache: "no-store" });
-    if (res.ok) {
-      const data = await res.json();
-      if (data.success && Array.isArray(data.events) && data.events.length > 0) {
-        return data.events;
-      }
-    }
-  } catch (err) {
-    console.warn("Backend events fetch fallback to localStorage", err);
-  }
-  
+/**
+ * Reads events directly from user's localStorage (0ms latency, zero backend server hits).
+ */
+export function getLocalEvents(): EventItem[] {
   if (typeof window !== "undefined") {
     const local = localStorage.getItem("mock_events");
     if (local) {
       try {
         const parsed = JSON.parse(local);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      } catch (e) {}
+      } catch {}
     }
+    // Initialize user's localStorage with INITIAL_EVENTS on first access
+    localStorage.setItem("mock_events", JSON.stringify(INITIAL_EVENTS));
   }
   return INITIAL_EVENTS;
+}
+
+/**
+ * 1-Time Background Sync: Fetches fresh events from TiDB Cloud Backend
+ * whenever user accesses the web page, and updates user's localStorage.
+ */
+export async function syncEventsFromBackend(): Promise<EventItem[]> {
+  try {
+    const res = await fetch(`${API_URL}/api/events`, { cache: "no-store" });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success && Array.isArray(data.events) && data.events.length > 0) {
+        if (typeof window !== "undefined") {
+          localStorage.setItem("mock_events", JSON.stringify(data.events));
+          window.dispatchEvent(new Event("kriya_events_updated"));
+        }
+        return data.events;
+      }
+    }
+  } catch (err) {
+    console.info("[Sync] Backend offline, serving events directly from localStorage.");
+  }
+  return getLocalEvents();
+}
+
+/**
+ * Fetches all events:
+ * By default, reads 100% from user's localStorage (instant easy access).
+ * Only contacts backend if forceRefresh is true or if localStorage is empty.
+ */
+export async function fetchAllEvents(forceRefresh: boolean = false): Promise<EventItem[]> {
+  if (!forceRefresh) {
+    const cached = getLocalEvents();
+    if (cached && cached.length > 0) {
+      return cached;
+    }
+  }
+  return syncEventsFromBackend();
 }
 
 export async function createEventApi(payload: Omit<EventItem, "id">): Promise<EventItem> {

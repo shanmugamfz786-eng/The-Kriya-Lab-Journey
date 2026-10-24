@@ -227,6 +227,8 @@ export type Program = {
   maxParticipants?: number;
   /** Per-person fee in INR. When set, the total is multiplied by the number of participants. */
   unitPriceInr?: number;
+  /** Per-person fee in USD for international participants. */
+  unitPriceUsd?: number;
   tags: ("beginner" | "online" | "in-person" | "english" | "tamil")[];
 };
 
@@ -365,58 +367,102 @@ export const programs: Program[] = [
   },
 ];
 
-export const faqs: { q: Bi; a: Bi }[] = [
+export const faqs: { q: Bi; a: Bi; category?: string }[] = [
   {
-    q: bi("What is Kriya Yoga?", "கிரியா யோகம் என்றால் என்ன?"),
+    q: bi("What is Kriya Yoga and how is it different from other yoga styles?", "கிரியா யோகம் என்றால் என்ன, அது பிற யோக முறைகளிலிருந்து எவ்வாறு வேறுபடுகிறது?"),
     a: bi(
-      "Kriya Yoga is a traditional yogic path centred on conscious breathing, inner observation and meditation. At The Kriya Lab it is approached experientially rather than as a belief system.",
-      "கிரியா யோகம் என்பது விழிப்புடன் கூடிய சுவாசம், உள்முக கவனிப்பு மற்றும் தியானத்தை மையமாகக் கொண்ட ஒரு பாரம்பரிய யோக வழி. தி கிரியா லேப்பில் இது நம்பிக்கை அமைப்பாக அல்லாமல் அனுபவ ரீதியாக அணுகப்படுகிறது.",
+      "Kriya Yoga is a direct, systematic spiritual science centred on conscious pranayama (breath control) and meditation along the spine and chakras. While Hatha yoga focuses primarily on physical postures, Kriya Yoga directly works on transforming the central nervous system, calming brain waves, and accelerating your inner evolution.",
+      "கிரியா யோகம் என்பது முதுகெலும்பு மற்றும் சக்கரங்களின் வழியாக பிராணாயாமம் மற்றும் தியானத்தை மையமாகக் கொண்ட ஒரு நேரடி ஆன்மிக அறிவியல். பிற ஆசனப் பயிற்சிகள் உடலை மையமாகக் கொண்டிருக்கும் போது, கிரியா யோகம் நரம்பு மண்டலம் மற்றும் மூளையின் அலைவரிசையை நேரடியாக மாற்றி விழிப்புணர்வை துரிதப்படுத்துகிறது."
     ),
+    category: "practice",
   },
   {
-    q: bi("Who can learn Kriya Yoga?", "கிரியா யோகத்தை யார் கற்கலாம்?"),
+    q: bi("Who can learn Kriya Yoga? Do I need prior experience?", "கிரியா யோகத்தை யார் கற்கலாம்? முந்தைய யோக அனுபவம் தேவையா?"),
     a: bi(
-      "Anyone sincerely interested in inner exploration may enquire. Suitability is discussed with the teacher before initiation.",
-      "உள்முக ஆய்வில் உண்மையான ஆர்வம் உள்ள எவரும் விசாரிக்கலாம். தீட்சைக்கு முன் தகுதி ஆசிரியருடன் பேசப்படும்.",
+      "Anyone with sincere longing for inner peace and truth can learn. You do not need any prior yoga or meditation experience, nor do you need to be physically flexible. The practices are taught systematically step-by-step from foundational breath mechanics.",
+      "உண்மையான ஆர்வமும் அமைதிக்கான வேட்கையும் கொண்ட எவரும் இதைக் கற்கலாம். முந்தைய யோக அனுபவமோ அல்லது உடல் வளைவுத்தன்மையோ தேவையில்லை. அடிப்படை சுவாச உத்திகளிலிருந்து படிப்படியாக மிக எளிமையாகக் கற்பிக்கப்படுகிறது."
     ),
+    category: "practice",
   },
   {
-    q: bi("Do I need previous yoga experience?", "முந்தைய யோக அனுபவம் தேவையா?"),
+    q: bi("Can people from any religion or faith practice Kriya Yoga?", "எந்த மதத்தினரும் கிரியா யோகம் பயிலலாமா?"),
     a: bi(
-      "No previous Yoga experience is Needed. Practice is introduced gradually.",
-      "முந்தைய அனுபவம் தேவையில்லை. பயிற்சி படிப்படியாக அறிமுகப்படுத்தப்படுகிறது.",
+      "Yes, completely. Kriya Yoga is not a religion, dogma, or sect. It is a universal scientific technique of inner observation through the breath. Sadhakas from all walks of life, faiths, and beliefs practice Kriya without having to alter their personal religious beliefs.",
+      "நிச்சயமாக. கிரியா யோகம் என்பது எந்த ஒரு மதமோ அல்லது வழிபாட்டு முறையோ அல்ல. இது சுவாசத்தின் வழியான ஒரு பொதுவான அறிவியல் முறை. எந்த மத நம்பிக்கையையும் மாற்றாமல் எவரும் தங்கள் ஆன்மிகத்தை ஆழப்படுத்த இதைப் பயிலலாம்."
     ),
+    category: "practice",
   },
   {
-    q: bi(
-      "Can people from different religious backgrounds practice Kriya Yoga?",
-      "வெவ்வேறு மத பின்னணியில் உள்ளவர்கள் கிரியா யோகம் பயிலலாமா?",
-    ),
+    q: bi("What happens during an initiation (Deeksha)?", "தீட்சை (Deeksha) அமர்வில் என்ன நிகழும்?"),
     a: bi(
-      "The practice is not tied to any single religious identity. It is offered as a method of inner observation.",
-      "இப்பயிற்சி எந்த ஒரு மத அடையாளத்துடனும் பிணைக்கப்படவில்லை. இது உள்முக கவனிப்பு முறையாக வழங்கப்படுகிறது.",
+      "Initiation is a sacred, direct transmission where the teacher instructs you in the precise mechanics of Kriya Pranayama, the path of breath along the sushumna nadi, and the inner meditation keys. You receive detailed personal corrections and authentic practice instructions.",
+      "தீட்சை என்பது ஆசிரியர் மூலம் கிரியா பிராணாயாமத்தின் நுட்பங்கள், சுழுமுனை நாடி வழியே சுவாசத்தை செலுத்தும் முறை மற்றும் தியான வழிகாட்டல்கள் நேரடியாகக் கற்பிக்கப்படும் ஒரு புனிதமான அமர்வாகும்."
     ),
+    category: "initiation",
   },
   {
-    q: bi("How often should I practice?", "எவ்வளவு அடிக்கடி பயிற்சி செய்ய வேண்டும்?"),
+    q: bi("How long do I need to practice each day?", "தினசரி எவ்வளவு நேரம் பயிற்சி செய்ய வேண்டும்?"),
     a: bi(
-      "Follow the duration and frequency recommended by your teacher. Do not practise beyond what has been advised.",
-      "உங்கள் ஆசிரியர் பரிந்துரைக்கும் கால அளவையும் அளவையும் பின்பற்றுங்கள். அறிவுறுத்தப்பட்டதற்கு மேல் பயிற்சி செய்ய வேண்டாம்.",
+      "For beginners, a disciplined 20 to 30 minutes in the morning and/or evening is sufficient to experience profound mental calm, increased focus, and inner energy. Consistency is far more valuable than hours of sporadic practice.",
+      "தொடக்க நிலையில் தினமும் காலை அல்லது மாலையில் 20 முதல் 30 நிமிடங்கள் ஒதுக்குவதே போதுமானது. எப்போதாவது நீண்ட நேரம் செய்வதை விட, தினமும் சீராக செய்யும் சிறிய பயிற்சியே மிகப்பெரிய மாற்றத்தைத் தரும்."
     ),
+    category: "practice",
   },
   {
-    q: bi("What is initiation?", "தீட்சை என்றால் என்ன?"),
+    q: bi("What is the difference between online webinars and offline retreats?", "ஆன்லைன் மற்றும் நேரடி முகாம்களுக்கு என்ன வித்தியாசம்?"),
     a: bi(
-      "Initiation is the session in which the practice is formally transmitted and explained by a teacher.",
-      "தீட்சை என்பது ஆசிரியரால் பயிற்சி முறையாக வழங்கப்பட்டு விளக்கப்படும் அமர்வு.",
+      "Online webinars offer interactive, live guided sessions and personal posture checks from the comfort of your home. Offline retreats are residential, deep immersions held in quiet ashram settings (like Coimbatore or Chennai) featuring satvik meals, silence, and intense group sadhana.",
+      "ஆன்லைன் வகுப்புகள் உங்கள் வீட்டிலிருந்தபடியே நேரலையில் கற்றுக்கொள்ள உதவுகின்றன. நேரடி முகாம்கள் அமைதியான ஆசிரம சூழலில் தங்கி, சாத்வீக உணவுடன் தீவிர தியானத்தில் ஆழமாக மூழ்குவதற்கு உதவுகின்றன."
     ),
+    category: "programs",
   },
   {
-    q: bi("How do I begin?", "நான் எப்படித் தொடங்குவது?"),
+    q: bi("How do I receive access after enrolling in a program?", "பதிவு செய்த பிறகு வகுப்பிற்கான அனுமதி எவ்வாறு கிடைக்கும்?"),
     a: bi(
-      "Send an enrollment request or an enquiry on WhatsApp, and a guide will respond with the next steps.",
-      "பதிவு கோரிக்கை அல்லது வாட்ஸ்அப் விசாரணையை அனுப்புங்கள்; அடுத்த படிகளுடன் பதிலளிக்கப்படும்.",
+      "Access is instantaneous. As soon as payment is confirmed, an invitation email with video classroom links is sent to your registered Gmail, and the program is immediately available on your Student Dashboard (/dashboard).",
+      "பதிவு செய்த உடனேயே உங்கள் மாணவர் கணக்கில் (/dashboard) பாடங்கள் செயல்படுத்தப்படும். மேலும் நேரலை வகுப்பு இணைப்புகள் உங்கள் ஜிமெயிலுக்கு உடனே அனுப்பப்படும்."
     ),
+    category: "programs",
+  },
+  {
+    q: bi("What if I miss a live online session due to an emergency?", "அவசர சூழலால் குறிப்பிட்ட நேரலை வகுப்பை தவறவிட்டால் என்ன செய்வது?"),
+    a: bi(
+      "We understand that life has emergencies. Your seat remains safe — simply let our guidance team know, and we will transfer your enrollment to the very next available live batch at zero extra charge.",
+      "அவசர காரணங்களால் வகுப்பில் பங்கேற்க முடியாவிட்டால், எங்கள் குழுவிற்கு தகவல் தெரிவிக்கவும்; அடுத்த நேரலை வகுப்பில் கூடுதல் கட்டணமின்றி நீங்கள் பங்கேற்கலாம்."
+    ),
+    category: "customer-help",
+  },
+  {
+    q: bi("Do you ship physical study materials, journals, or mats?", "புத்தகங்கள் மற்றும் சாதனா உபகரணங்கள் தபால் மூலம் அனுப்பப்படுமா?"),
+    a: bi(
+      "Yes. Physical sadhana journals, manuals, and mats are hand-inspected and shipped via trusted express couriers (Blue Dart, DTDC, Speed Post within India, and DHL Express internationally) with real-time tracking.",
+      "ஆம். புத்தகங்கள், சாதனா டைரிகள் மற்றும் தியான விரிப்புகள் கொரியர் மூலம் உங்கள் முகவரிக்கு 3 முதல் 5 வேலை நாட்களில் பாதுகாப்பாக அனுப்பப்படும்."
+    ),
+    category: "customer-help",
+  },
+  {
+    q: bi("What payment methods are supported, and are transactions secure?", "என்னென்ன கட்டண முறைகள் ஏற்கப்படுகின்றன? அவை பாதுகாப்பானவையா?"),
+    a: bi(
+      "We accept all major Credit/Debit Cards, UPI (Google Pay, PhonePe, Paytm), and Net Banking via PCI-DSS certified gateways (Stripe & Razorpay). All transactions are encrypted with 256-bit SSL, and we never store your card numbers or PINs.",
+      "அனைத்து கிரெடிட்/டெபிட் கார்டுகள், UPI (GPay, PhonePe) மற்றும் நெட் பேங்கிங் மூலம் கட்டணம் செலுத்தலாம். பரிவர்த்தனைகள் அனைத்தும் Stripe மற்றும் Razorpay மூலம் மிக பாதுகாப்பாக நிர்வகிக்கப்படுகின்றன."
+    ),
+    category: "customer-help",
+  },
+  {
+    q: bi("Can I practice if I have medical conditions like hypertension or asthma?", "இரத்த அழுத்தம் அல்லது ஆஸ்துமா போன்ற உடல் உபாதைகள் இருப்பவர்கள் பயிலலாமா?"),
+    a: bi(
+      "Yes, but you must inform your teacher before starting. Kriya breathing can be gently customized — breath retentions (kumbhaka) are softened or modified to keep the practice gentle and healing for your body.",
+      "நிச்சயமாகப் பயிலலாம். ஆனால் பயிற்சிக்கு முன் உங்கள் உடல்நிலையை ஆசிரியரிடம் தெரிவிக்க வேண்டும்; உங்கள் உடலுக்கு உகந்தவாறு சுவாசப் பயிற்சிகள் மென்மையாக மாற்றி அமைக்கப்படும்."
+    ),
+    category: "practice",
+  },
+  {
+    q: bi("How can I get guidance if I have questions during my daily practice?", "தினசரி பயிற்சியின் போது சந்தேகங்கள் ஏற்பட்டால் எப்படி தெளிவுபடுத்துவது?"),
+    a: bi(
+      "Students have ongoing access to review sessions, spiritual satsangs, and direct guidance. You can submit questions via your student portal or email hello@thekriyalab.com anytime.",
+      "மாணவர்கள் தங்கள் தினசரி சந்தேகங்களை மாணவர் தளம் வழியாகவோ அல்லது hello@thekriyalab.com என்ற மின்னஞ்சல் மூலமாகவோ கேட்டு ஆசிரியரிடமிருந்து தெளிவு பெறலாம்."
+    ),
+    category: "customer-help",
   },
 ];
 

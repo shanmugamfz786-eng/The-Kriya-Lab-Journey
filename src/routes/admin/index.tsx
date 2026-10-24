@@ -11,9 +11,16 @@ import {
   Layers,
   CheckCircle2,
   Clock,
+  CreditCard,
+  MessageSquare,
+  TrendingUp,
+  RotateCcw,
 } from "lucide-react";
 
 import { fetchAllEvents, type EventItem } from "@/lib/events-api";
+import { fetchAllUsers, type SeekerItem } from "@/lib/users-api";
+import { fetchAllOrders, type OrderItem } from "@/lib/orders-api";
+import { fetchAllEnquiries, type EnquiryItem } from "@/lib/enquiries-api";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/")({
@@ -24,32 +31,46 @@ export const Route = createFileRoute("/admin/")({
 
 function AdminDashboardPage() {
   const [events, setEvents] = useState<EventItem[]>([]);
+  const [users, setUsers] = useState<SeekerItem[]>([]);
+  const [orders, setOrders] = useState<OrderItem[]>([]);
+  const [enquiries, setEnquiries] = useState<EnquiryItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchAllEvents().then((data) => {
-      setEvents(data);
+    Promise.all([
+      fetchAllEvents(),
+      fetchAllUsers(),
+      fetchAllOrders(),
+      fetchAllEnquiries(),
+    ]).then(([eventsData, usersData, ordersData, enquiriesData]) => {
+      setEvents(eventsData);
+      setUsers(usersData);
+      setOrders(ordersData);
+      setEnquiries(enquiriesData);
       setLoading(false);
     });
   }, []);
 
   const futureEvents = events.filter((e) => e.event_type === "future");
+  const totalRevenue = orders
+    .filter((o) => o.status === "Completed")
+    .reduce((acc, curr) => acc + curr.amount, 0);
 
   const stats = [
     {
       title: "TOTAL SEEKER ENQUIRIES",
-      value: "0",
-      change: "0%",
-      subText: "this month",
-      icon: Users,
+      value: String(enquiries.length || 0),
+      change: "+100%",
+      subText: "active inquiries",
+      icon: MessageSquare,
       iconColor: "text-[#334d84]",
       iconBg: "bg-[#334d84]/10",
-      href: "/admin/users",
+      href: "/admin/enquiries",
     },
     {
       title: "INITIATED STUDENTS",
-      value: "0",
-      change: "0%",
+      value: String(users.length || 0),
+      change: "+12%",
       subText: "active sadhakas",
       icon: ShieldCheck,
       iconColor: "text-[#0ab39c]",
@@ -59,7 +80,7 @@ function AdminDashboardPage() {
     {
       title: "UPCOMING WORKSHOPS",
       value: String(futureEvents.length || 0),
-      change: "0%",
+      change: "Active",
       subText: "scheduled dikshas",
       icon: Calendar,
       iconColor: "text-[#f7b84b]",
@@ -68,17 +89,15 @@ function AdminDashboardPage() {
     },
     {
       title: "TOTAL REVENUE",
-      value: "0 Rs",
-      change: "0%",
-      subText: "this month",
-      icon: Database,
+      value: `₹${totalRevenue.toLocaleString("en-IN")}`,
+      change: "Verified",
+      subText: "all-time sales",
+      icon: CreditCard,
       iconColor: "text-[#299cdb]",
       iconBg: "bg-[#299cdb]/10",
-      href: "/admin/settings",
+      href: "/admin/orders",
     },
   ];
-
-  const recentInquiries: any[] = [];
 
   return (
     <>
@@ -148,13 +167,13 @@ function AdminDashboardPage() {
             <div className="flex items-center justify-between border-b border-gray-100 p-5">
               <div>
                 <h3 className="text-sm font-bold text-gray-900">Recent Seeker Enquiries</h3>
-                <p className="text-xs text-gray-500">Latest applicants awaiting initiation approval</p>
+                <p className="text-xs text-gray-500">Latest questions & consultation requests</p>
               </div>
               <Link
-                to="/admin/users"
+                to="/admin/enquiries"
                 className="inline-flex items-center gap-1 text-xs font-semibold text-[#334d84] hover:underline"
               >
-                <span>View All</span>
+                <span>View All Enquiries</span>
                 <ArrowUpRight className="size-3.5" />
               </Link>
             </div>
@@ -162,37 +181,46 @@ function AdminDashboardPage() {
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
                   <tr className="border-b border-gray-100 bg-[#f8f9fa] text-[0.72rem] font-semibold text-gray-600 uppercase tracking-wider">
-                    <th className="p-3.5 pl-5">Ref ID</th>
+                    <th className="p-3.5 pl-5">Date</th>
                     <th className="p-3.5">Seeker Name</th>
-                    <th className="p-3.5">Applied Program</th>
-                    <th className="p-3.5">Date</th>
+                    <th className="p-3.5">Subject & Query</th>
+                    <th className="p-3.5">Program</th>
                     <th className="p-3.5">Status</th>
                     <th className="p-3.5 pr-5 text-right">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 font-normal">
-                  {recentInquiries.length === 0 ? (
+                  {enquiries.length === 0 ? (
                     <tr>
                       <td colSpan={6} className="p-8 text-center text-gray-400">
                         No recent enquiries found.
                       </td>
                     </tr>
-                  ) : recentInquiries.map((item) => (
+                  ) : enquiries.slice(0, 5).map((item) => (
                     <tr key={item.id} className="hover:bg-gray-50/80 transition-colors">
-                      <td className="p-3.5 pl-5 font-semibold text-gray-700">{item.id}</td>
+                      <td className="p-3.5 pl-5 text-gray-500 whitespace-nowrap">
+                        {new Date(item.createdAt).toLocaleDateString()}
+                      </td>
                       <td className="p-3.5">
                         <p className="font-semibold text-gray-900">{item.name}</p>
-                        <p className="text-[0.7rem] text-gray-400">{item.email}</p>
+                        <p className="text-[0.68rem] text-gray-400">{item.email}</p>
                       </td>
-                      <td className="p-3.5 text-gray-700">{item.program}</td>
-                      <td className="p-3.5 text-gray-500">{item.date}</td>
+                      <td className="p-3.5 max-w-[200px]">
+                        <p className="font-semibold text-gray-800 truncate">{item.subject}</p>
+                        <p className="text-[0.68rem] text-gray-400 line-clamp-1">{item.message}</p>
+                      </td>
+                      <td className="p-3.5 text-gray-700 whitespace-nowrap">
+                        <span className="bg-gray-100 px-2 py-0.5 rounded text-[0.68rem]">
+                          {item.programInterested || "General"}
+                        </span>
+                      </td>
                       <td className="p-3.5">
                         <span
                           className={cn(
                             "inline-flex items-center rounded-md px-2 py-0.5 text-[0.7rem] font-medium",
-                            item.status === "Approved" && "bg-[#0ab39c]/10 text-[#0ab39c]",
-                            item.status === "Pending Review" && "bg-[#f7b84b]/15 text-[#b7791f]",
-                            item.status === "Initiated" && "bg-[#334d84]/10 text-[#334d84]",
+                            item.status === "Resolved" && "bg-[#0ab39c]/10 text-[#0ab39c]",
+                            item.status === "In Progress" && "bg-[#f7b84b]/15 text-[#b7791f]",
+                            item.status === "New" && "bg-blue-50 text-blue-600",
                           )}
                         >
                           {item.status}
@@ -200,10 +228,10 @@ function AdminDashboardPage() {
                       </td>
                       <td className="p-3.5 pr-5 text-right">
                         <Link
-                          to="/admin/users"
+                          to="/admin/enquiries"
                           className="text-xs font-semibold text-[#334d84] hover:text-[#2b4273]"
                         >
-                          Review
+                          Open
                         </Link>
                       </td>
                     </tr>
@@ -217,6 +245,38 @@ function AdminDashboardPage() {
           <div className="rounded-xl border border-gray-200/80 bg-white p-5 shadow-xs space-y-4">
             <h3 className="text-sm font-bold text-gray-900">Admin Shortcuts</h3>
             <div className="space-y-2.5">
+              <Link
+                to="/admin/orders"
+                className="flex items-center justify-between rounded-lg border border-gray-200 p-3 hover:bg-gray-50 hover:border-[#334d84]/40 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="rounded-md bg-emerald-500/10 p-2 text-emerald-600">
+                    <CreditCard className="size-4" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-gray-800">Orders & Payments</p>
+                    <p className="text-[0.68rem] text-gray-400">{orders.length} transactions recorded</p>
+                  </div>
+                </div>
+                <ArrowUpRight className="size-4 text-gray-400" />
+              </Link>
+
+              <Link
+                to="/admin/refunds"
+                className="flex items-center justify-between rounded-lg border border-gray-200 p-3 hover:bg-gray-50 hover:border-[#334d84]/40 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="rounded-md bg-purple-500/10 p-2 text-purple-600">
+                    <RotateCcw className="size-4" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-gray-800">Refund Requests</p>
+                    <p className="text-[0.68rem] text-gray-400">Cancellations & batch transfers</p>
+                  </div>
+                </div>
+                <ArrowUpRight className="size-4 text-gray-400" />
+              </Link>
+
               <Link
                 to="/admin/events/add"
                 className="flex items-center justify-between rounded-lg border border-gray-200 p-3 hover:bg-gray-50 hover:border-[#334d84]/40 transition-colors"
@@ -234,48 +294,16 @@ function AdminDashboardPage() {
               </Link>
 
               <Link
-                to="/admin/events/future"
-                className="flex items-center justify-between rounded-lg border border-gray-200 p-3 hover:bg-gray-50 hover:border-[#334d84]/40 transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="rounded-md bg-[#0ab39c]/10 p-2 text-[#0ab39c]">
-                    <Sparkles className="size-4" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-gray-800">All Future Events</p>
-                    <p className="text-[0.68rem] text-gray-400">Manage registrations & Google forms</p>
-                  </div>
-                </div>
-                <ArrowUpRight className="size-4 text-gray-400" />
-              </Link>
-
-              <Link
-                to="/admin/events/past"
-                className="flex items-center justify-between rounded-lg border border-gray-200 p-3 hover:bg-gray-50 hover:border-[#334d84]/40 transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="rounded-md bg-[#f7b84b]/10 p-2 text-[#f7b84b]">
-                    <Clock className="size-4" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-gray-800">All Past Events</p>
-                    <p className="text-[0.68rem] text-gray-400">View archived workshops & recordings</p>
-                  </div>
-                </div>
-                <ArrowUpRight className="size-4 text-gray-400" />
-              </Link>
-
-              <Link
                 to="/admin/programs"
                 className="flex items-center justify-between rounded-lg border border-gray-200 p-3 hover:bg-gray-50 hover:border-[#334d84]/40 transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <div className="rounded-md bg-purple-500/10 p-2 text-purple-600">
+                  <div className="rounded-md bg-[#f7b84b]/10 p-2 text-[#f7b84b]">
                     <Layers className="size-4" />
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-gray-800">Programs</p>
-                    <p className="text-[0.68rem] text-gray-400">Curriculum & lineage initiation modules</p>
+                    <p className="text-xs font-semibold text-gray-800">Manage Programs</p>
+                    <p className="text-[0.68rem] text-gray-400">Online & offline sadhana modules</p>
                   </div>
                 </div>
                 <ArrowUpRight className="size-4 text-gray-400" />

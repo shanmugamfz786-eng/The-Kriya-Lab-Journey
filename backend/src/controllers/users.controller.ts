@@ -1,18 +1,53 @@
 import { getDbPool } from "../config/db.js";
+import {
+  getLocalUsers,
+  deleteLocalUser,
+  addOrUpdateLocalUser,
+  findLocalUserById,
+} from "../config/local-users.js";
 
 /**
  * Get all users (students/seekers)
  */
 export async function getUsers(req, res) {
   try {
-    const db = getDbPool();
-    // Exclude admins from the list if we only want to manage students, 
-    // or just fetch all and let the frontend filter. We will fetch all users for the admin.
-    const [rows] = await db.query("SELECT id, full_name, email, role, created_at FROM users WHERE role != 'admin' ORDER BY created_at DESC");
-    return res.json({ success: true, users: rows || [] });
+    const localUsers = getLocalUsers().filter((u) => u.role !== "admin");
+    const userMap = new Map();
+
+    // Add local users first
+    for (const u of localUsers) {
+      userMap.set(u.email.toLowerCase(), {
+        id: u.id,
+        full_name: u.full_name,
+        email: u.email,
+        role: u.role,
+        avatar: u.avatar,
+        created_at: u.created_at || new Date().toISOString(),
+      });
+    }
+
+    // Try fetching extra from TiDB if available
+    try {
+      const db = getDbPool();
+      const [rows] = await db.query(
+        "SELECT id, full_name, email, role, avatar, created_at FROM users WHERE role != 'admin' ORDER BY created_at DESC"
+      );
+      if (rows && rows.length > 0) {
+        for (const r of rows) {
+          if (!userMap.has(r.email.toLowerCase())) {
+            userMap.set(r.email.toLowerCase(), r);
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("[Get Users Warning] DB query fallback (using local users store):", err.message);
+    }
+
+    const allUsers = Array.from(userMap.values());
+    return res.json({ success: true, users: allUsers });
   } catch (err) {
     console.error("[Get Users Error]:", err);
-    return res.status(500).json({ error: "Failed to fetch users: " + err.message });
+    return res.status(500).json({ success: false, message: err.message });
   }
 }
 
@@ -21,26 +56,25 @@ export async function getUsers(req, res) {
  */
 export async function deleteUser(req, res) {
   try {
-    const db = getDbPool();
     const { id } = req.params;
 
-    // Prevent deleting the default admin
-    const [existing] = await db.query("SELECT * FROM users WHERE id = ?", [id]);
-    if (!existing || existing.length === 0) {
-      return res.status(404).json({ error: "User not found" });
+    // Delete from local store
+    deleteLocalUser(id);
+
+    // Try deleting from DB
+    try {
+      const db = getDbPool();
+      await db.query("DELETE FROM enquiries WHERE user_id = ?", [id]);
+      await db.query("DELETE FROM users WHERE id = ?", [id]);
+    } catch (dbErr) {
+      console.warn("[Delete User TiDB Warning]:", dbErr.message);
     }
 
-    if (existing[0].role === 'admin' && existing[0].email === process.env.ADMIN_EMAIL) {
-      return res.status(403).json({ error: "Cannot delete the main admin account" });
-    }
-
-    // Delete related enquiries first (simulating CASCADE)
-    await db.query("DELETE FROM enquiries WHERE user_id = ?", [id]);
-
-    // Delete the user
-    await db.query("DELETE FROM users WHERE id = ?", [id]);
-
-    return res.json({ success: true, message: "User account and all related data deleted successfully", id });
+    return res.json({
+      success: true,
+      message: "User account and all related data deleted successfully",
+      id,
+    });
   } catch (err) {
     console.error("[Delete User Error]:", err);
     return res.status(500).json({ error: "Failed to delete user: " + err.message });
@@ -52,7 +86,6 @@ export async function deleteUser(req, res) {
  */
 export async function updateUser(req, res) {
   try {
-    const db = getDbPool();
     const { id } = req.params;
     const { full_name, avatar } = req.body;
 
@@ -60,17 +93,33 @@ export async function updateUser(req, res) {
       return res.status(400).json({ error: "User ID and Full Name are required" });
     }
 
-    // Notice: we might not have an avatar column yet, so we should try-catch it or add it
+    // Update in local store
+    const localUser = findLocalUserById(id);
+    if (localUser) {
+      addOrUpdateLocalUser({
+        ...localUser,
+        full_name,
+        avatar: avatar || localUser.avatar,
+      });
+    }
+
+    // Try updating TiDB
     try {
-      await db.query("ALTER TABLE users ADD COLUMN avatar VARCHAR(255)");
-    } catch (e) {}
+      const db = getDbPool();
+      await db.query("UPDATE users SET full_name = ?, avatar = ? WHERE id = ?", [
+        full_name,
+        avatar || null,
+        id,
+      ]);
+    } catch (dbErr) {
+      console.warn("[Update User TiDB Notice]:", dbErr.message);
+    }
 
-    await db.query(
-      "UPDATE users SET full_name = ?, avatar = ? WHERE id = ?",
-      [full_name, avatar || null, id]
-    );
-
-    return res.json({ success: true, message: "Profile updated successfully" });
+    return res.json({
+      success: true,
+      message: "Profile updated successfully",
+      user: { id, full_name, avatar: avatar || null },
+    });
   } catch (err) {
     console.error("[Update User Error]:", err);
     return res.status(500).json({ error: "Failed to update user: " + err.message });

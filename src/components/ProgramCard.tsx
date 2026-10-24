@@ -6,6 +6,7 @@ import { useEnrollments } from "@/lib/enrollment-store";
 export function ProgramCard({ program: p, lang }: { program: ProgramItem; lang: "en" | "ta" }) {
   const ta = lang === "ta";
   const title = (ta ? p.title_ta : p.title_en) || p.title_en;
+  const description = (ta ? p.description_ta : p.description_en) || p.description_en || p.description_ta || (p as any).description || "";
   
   const { user } = useAuth();
   const { enrolledIds } = useEnrollments(user?.id);
@@ -29,6 +30,12 @@ export function ProgramCard({ program: p, lang }: { program: ProgramItem; lang: 
       )}
       <div className="p-5 sm:p-6 flex flex-col flex-1">
         <h2 className="font-serif text-[1.15rem] sm:text-xl leading-snug text-gray-900 group-hover:text-[#522938] transition-colors line-clamp-2">{title}</h2>
+        
+        {description && (
+          <p className="mt-2 text-xs sm:text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+            {description}
+          </p>
+        )}
         
         <div className="mt-auto pt-6">
           <Link

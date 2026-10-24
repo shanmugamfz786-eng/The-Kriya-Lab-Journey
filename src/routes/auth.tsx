@@ -29,15 +29,19 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
+type AuthMode = "signin" | "signup" | "forgot";
+
 function AuthPage() {
   const { redirect: redirectPath, mode: initialMode } = Route.useSearch();
   const { t } = useLang();
   const navigate = useNavigate();
   const { login, register: registerUser, isAuthenticated, user } = useAuth();
-  const [mode, setMode] = useState<"signin" | "signup">(initialMode || "signin");
+  const [mode, setMode] = useState<AuthMode>(initialMode || "signin");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [forgotNewPassword, setForgotNewPassword] = useState("");
+  const [forgotConfirmPassword, setForgotConfirmPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -59,7 +63,44 @@ function AuthPage() {
     setBusy(true);
     setError(null);
     setNotice(null);
+
     try {
+      if (mode === "forgot") {
+        if (!email.trim() || !forgotNewPassword) {
+          setError(t(bi("Please enter your registered email and new password.", "மின்னஞ்சல் மற்றும் புதிய கடவுச்சொல்லை உள்ளிடவும்.")));
+          return;
+        }
+        if (forgotNewPassword.length < 6) {
+          setError(t(bi("New password must be at least 6 characters.", "புதிய கடவுச்சொல் குறைந்தது 6 எழுத்துகள் இருக்க வேண்டும்.")));
+          return;
+        }
+        if (forgotNewPassword !== forgotConfirmPassword) {
+          setError(t(bi("Passwords do not match.", "கடவுச்சொற்கள் பொருந்தவில்லை.")));
+          return;
+        }
+
+        const API_URL = (import.meta.env["VITE_API_URL"] as string) || "http://localhost:5000";
+        const res = await fetch(`${API_URL}/api/auth/forgot-password`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: email.trim(), newPassword: forgotNewPassword }),
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          setNotice(t(bi("Password reset successfully! You can now sign in.", "கடவுச்சொல் வெற்றிகரமாக மாற்றப்பட்டது! இப்போது உள்நுழையலாம்.")));
+          setForgotNewPassword("");
+          setForgotConfirmPassword("");
+          setTimeout(() => {
+            setMode("signin");
+            setNotice(null);
+          }, 2500);
+        } else {
+          setError(data.message || t(bi("Failed to reset password.", "கடவுச்சொல்லை மீட்டமைக்க முடியவில்லை.")));
+        }
+        return;
+      }
+
       if (mode === "signin") {
         const loggedUser = await login(email, password);
         if (redirectPath) {
@@ -109,7 +150,9 @@ function AuthPage() {
             <h1 className="font-serif text-3xl sm:text-4xl xl:text-5xl font-light text-white tracking-wide drop-shadow-sm">
               {mode === "signin"
                 ? t(bi("Welcome Back", "மீண்டும் வருக"))
-                : t(bi("Create Account", "கணக்கை உருவாக்கு"))}
+                : mode === "signup"
+                ? t(bi("Create Account", "கணக்கை உருவாக்கு"))
+                : t(bi("Reset Password", "கடவுச்சொல் மீட்டமைப்பு"))}
             </h1>
             <p className="text-xs sm:text-sm text-white/80 mt-2 font-light leading-relaxed">
               {mode === "signin"
@@ -117,9 +160,14 @@ function AuthPage() {
                     "To keep connected with us please login with your personal info",
                     "எங்களுடன் இணைந்திருக்க உங்கள் விவரங்களை உள்ளிட்டு உள்நுழையவும்",
                   ))
-                : t(bi(
+                : mode === "signup"
+                ? t(bi(
                     "Enter your personal details to begin your transformative yogic journey with us",
                     "எங்களுடன் யோகப் பயிற்சியைத் தொடங்க உங்கள் விவரங்களை உள்ளிட்டு பதிவு செய்யுங்கள்",
+                  ))
+                : t(bi(
+                    "Enter your registered email address and choose a new password.",
+                    "உங்கள் பதிவு செய்த மின்னஞ்சலை உள்ளிட்டு புதிய கடவுச்சொல்லை அமைக்கவும்.",
                   ))}
             </p>
           </div>
@@ -143,7 +191,7 @@ function AuthPage() {
               </div>
             )}
 
-            {/* Email */}
+            {/* Email (signin, signup, forgot) */}
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gold/80">
                 <Mail className="w-4 h-4" />
@@ -160,64 +208,118 @@ function AuthPage() {
               />
             </div>
 
-            {/* Password */}
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gold/80">
-                <Lock className="w-4 h-4" />
-              </div>
-              <input
-                id="auth-password"
-                type={showPassword ? "text" : "password"}
-                autoComplete={mode === "signin" ? "current-password" : "new-password"}
-                required
-                minLength={6}
-                placeholder={t(bi("Password", "கடவுச்சொல்"))}
-                className="w-full pl-11 pr-11 py-3 rounded-full bg-white/10 hover:bg-white/15 focus:bg-white/20 border border-gold/30 focus:border-gold text-white placeholder:text-white/60 text-sm focus:outline-none transition-all shadow-inner"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 pr-4 flex items-center text-white/70 hover:text-gold transition-colors"
-                aria-label="Toggle password visibility"
-              >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-            </div>
-
-            {/* Remember me & Forgot password */}
-            <div className="flex items-center justify-between pt-0.5 px-1 text-xs text-white/90">
-              <label className="flex items-center gap-2 cursor-pointer select-none">
+            {/* Normal Password (signin & signup) */}
+            {mode !== "forgot" && (
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gold/80">
+                  <Lock className="w-4 h-4" />
+                </div>
                 <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="w-3.5 h-3.5 rounded border-gold/40 cursor-pointer accent-gold"
+                  id="auth-password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete={mode === "signin" ? "current-password" : "new-password"}
+                  required
+                  minLength={6}
+                  placeholder={t(bi("Password", "கடவுச்சொல்"))}
+                  className="w-full pl-11 pr-11 py-3 rounded-full bg-white/10 hover:bg-white/15 focus:bg-white/20 border border-gold/30 focus:border-gold text-white placeholder:text-white/60 text-sm focus:outline-none transition-all shadow-inner"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                 />
-                <span className="text-white/80">{t(bi("Remember me", "என்னை நினைவில் கொள்"))}</span>
-              </label>
-              {mode === "signin" && (
-                <span className="hover:underline cursor-pointer text-gold/90 hover:text-gold">
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-white/70 hover:text-gold transition-colors"
+                  aria-label="Toggle password visibility"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            )}
+
+            {/* Forgot Mode: New Password & Confirm Password */}
+            {mode === "forgot" && (
+              <>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gold/80">
+                    <Lock className="w-4 h-4" />
+                  </div>
+                  <input
+                    id="auth-forgot-password"
+                    type={showPassword ? "text" : "password"}
+                    required
+                    minLength={6}
+                    placeholder={t(bi("New Password (min 6 chars)", "புதிய கடவுச்சொல்"))}
+                    className="w-full pl-11 pr-11 py-3 rounded-full bg-white/10 hover:bg-white/15 focus:bg-white/20 border border-gold/30 focus:border-gold text-white placeholder:text-white/60 text-sm focus:outline-none transition-all shadow-inner"
+                    value={forgotNewPassword}
+                    onChange={(e) => setForgotNewPassword(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-white/70 hover:text-gold transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gold/80">
+                    <Lock className="w-4 h-4" />
+                  </div>
+                  <input
+                    id="auth-forgot-confirm"
+                    type={showPassword ? "text" : "password"}
+                    required
+                    minLength={6}
+                    placeholder={t(bi("Confirm New Password", "மறுமுறை புதிய கடவுச்சொல்"))}
+                    className="w-full pl-11 pr-4 py-3 rounded-full bg-white/10 hover:bg-white/15 focus:bg-white/20 border border-gold/30 focus:border-gold text-white placeholder:text-white/60 text-sm focus:outline-none transition-all shadow-inner"
+                    value={forgotConfirmPassword}
+                    onChange={(e) => setForgotConfirmPassword(e.target.value)}
+                  />
+                </div>
+              </>
+            )}
+
+            {/* Remember me & Forgot password (signin only) */}
+            {mode === "signin" && (
+              <div className="flex items-center justify-between pt-0.5 px-1 text-xs text-white/90">
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="w-3.5 h-3.5 rounded border-gold/40 cursor-pointer accent-gold"
+                  />
+                  <span className="text-white/80">{t(bi("Remember me", "என்னை நினைவில் கொள்"))}</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode("forgot");
+                    setError(null);
+                    setNotice(null);
+                  }}
+                  className="hover:underline cursor-pointer text-gold/90 hover:text-gold font-medium"
+                >
                   {t(bi("Forgot Password?", "கடவுச்சொல் மறந்துவிட்டதா?"))}
-                </span>
-              )}
-            </div>
+                </button>
+              </div>
+            )}
 
             {/* Error / notice */}
             {error && (
-              <div className="p-3 rounded-2xl bg-black/50 border border-red-400/40 text-xs text-red-200 text-center">
+              <div className="p-3 rounded-2xl bg-black/50 border border-red-400/40 text-xs text-red-200 text-center animate-in fade-in">
                 {error}
               </div>
             )}
             {notice && (
-              <div className="p-3 rounded-2xl bg-emerald-950/70 border border-emerald-400/50 text-xs text-emerald-200 flex items-center justify-center gap-2">
+              <div className="p-3 rounded-2xl bg-emerald-950/70 border border-emerald-400/50 text-xs text-emerald-200 flex items-center justify-center gap-2 animate-in fade-in">
                 <ShieldCheck className="w-4 h-4 shrink-0 text-emerald-400" />
                 <span>{notice}</span>
               </div>
             )}
 
-            {/* Sign In / Sign Up primary button */}
+            {/* Primary button */}
             <button
               type="submit"
               disabled={busy}
@@ -226,24 +328,40 @@ function AuthPage() {
               {busy ? (
                 <div className="w-4 h-4 border-2 border-[#1a1208] border-t-transparent rounded-full animate-spin" />
               ) : (
-                <span>{mode === "signin" ? t(bi("Sign In", "உள்நுழைக")) : t(bi("Sign Up", "கணக்கை உருவாக்கு"))}</span>
+                <span>
+                  {mode === "signin"
+                    ? t(bi("Sign In", "உள்நுழைக"))
+                    : mode === "signup"
+                    ? t(bi("Create Account", "கணக்கை உருவாக்கு"))
+                    : t(bi("Reset Password", "கடவுச்சொல்லை மாற்று"))}
+                </span>
               )}
             </button>
           </form>
 
-          {/* Toggle sign in / sign up */}
+          {/* Toggle buttons / Back to Sign In */}
           <div className="mt-5 text-center">
-            <button
-              type="button"
-              onClick={() => { setMode(mode === "signin" ? "signup" : "signin"); setError(null); setNotice(null); }}
-              className="text-xs text-white/80 hover:text-white font-normal transition-colors cursor-pointer"
-            >
-              {mode === "signin" ? (
-                <>{t(bi("Don't have an account?", "கணக்கு இல்லையா?"))}{" "}<span className="font-semibold text-gold underline ml-1 hover:text-gold/90">{t(bi("Sign Up", "பதிவு செய்"))}</span></>
-              ) : (
-                <>{t(bi("Already have an account?", "ஏற்கனவே கணக்கு உள்ளதா?"))}{" "}<span className="font-semibold text-gold underline ml-1 hover:text-gold/90">{t(bi("Sign In", "உள்நுழைக"))}</span></>
-              )}
-            </button>
+            {mode === "forgot" ? (
+              <button
+                type="button"
+                onClick={() => { setMode("signin"); setError(null); setNotice(null); }}
+                className="text-xs text-gold hover:underline font-semibold transition-colors cursor-pointer"
+              >
+                {t(bi("← Back to Sign In", "← உள்நுழைவுக்கு திரும்புக"))}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => { setMode(mode === "signin" ? "signup" : "signin"); setError(null); setNotice(null); }}
+                className="text-xs text-white/80 hover:text-white font-normal transition-colors cursor-pointer"
+              >
+                {mode === "signin" ? (
+                  <>{t(bi("Don't have an account?", "கணக்கு இல்லையா?"))}{" "}<span className="font-semibold text-gold underline ml-1 hover:text-gold/90">{t(bi("Sign Up", "பதிவு செய்"))}</span></>
+                ) : (
+                  <>{t(bi("Already have an account?", "ஏற்கனவே கணக்கு உள்ளதா?"))}{" "}<span className="font-semibold text-gold underline ml-1 hover:text-gold/90">{t(bi("Sign In", "உள்நுழைக"))}</span></>
+                )}
+              </button>
+            )}
           </div>
         </div>
       </div>

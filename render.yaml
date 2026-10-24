@@ -1,0 +1,38 @@
+services:
+  - type: web
+    name: the-kriya-lab-backend
+    runtime: node
+    rootDir: backend
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        sync: false
+      - key: TIDB_HOST
+        value: gateway01.ap-southeast-1.prod.aws.tidbcloud.com
+      - key: TIDB_PORT
+        value: "4000"
+      - key: TIDB_USER
+        value: 2ufAsPLeYmcSNkD.root
+      - key: TIDB_PASSWORD
+        sync: false
+      - key: TIDB_DATABASE
+        value: the_kriya_lab
+      - key: TIDB_SSL
+        value: "true"
+      - key: CLOUDINARY_CLOUD_NAME
+        value: aqpfwrcn
+      - key: CLOUDINARY_API_KEY
+        value: "763755511943985"
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: ADMIN_EMAIL
+        value: admin@thekriyalab.com
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: ADMIN_NAME
+        value: Kriya Master Admin
+

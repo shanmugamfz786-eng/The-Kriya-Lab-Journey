@@ -1,0 +1,44 @@
+[
+  {
+    "id": "enr_mrg_01",
+    "user_id": "KL_009",
+    "program_id": "prg_1",
+    "status": "active",
+    "created_at": "2026-10-23T08:00:00Z"
+  },
+  {
+    "id": "enr_mrg_02",
+    "user_id": "KL_009",
+    "program_id": "prg_2",
+    "status": "active",
+    "created_at": "2026-10-23T08:30:00Z"
+  },
+  {
+    "id": "enr_mrg_03",
+    "user_id": "KL_009",
+    "program_id": "prg_3",
+    "status": "active",
+    "created_at": "2026-10-23T09:00:00Z"
+  },
+  {
+    "id": "enr_mrg_04",
+    "user_id": "KL_009",
+    "program_id": "prg_4",
+    "status": "active",
+    "created_at": "2026-10-23T09:30:00Z"
+  },
+  {
+    "id": "enr_seed_001",
+    "user_id": "KL_001",
+    "program_id": "prg_1",
+    "status": "active",
+    "created_at": "2026-10-21T09:30:00Z"
+  },
+  {
+    "id": "enr_seed_002",
+    "user_id": "KL_002",
+    "program_id": "prg_2",
+    "status": "active",
+    "created_at": "2026-10-20T14:15:00Z"
+  }
+]

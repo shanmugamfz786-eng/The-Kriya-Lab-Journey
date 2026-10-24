@@ -27,16 +27,24 @@ import { Route as KriyaYogaRouteImport } from './routes/kriya-yoga'
 import { Route as LineageRouteImport } from './routes/lineage'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as ReturnsAndRefundsRouteImport } from './routes/returns-and-refunds'
 import { Route as ScienceOfKriyaYogaRouteImport } from './routes/science-of-kriya-yoga'
+import { Route as SecurityRouteImport } from './routes/security'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as ShippingPolicyRouteImport } from './routes/shipping-policy'
 import { Route as SiddhaTraditionRouteImport } from './routes/siddha-tradition'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as SupportRouteImport } from './routes/support'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TestimonialsRouteImport } from './routes/testimonials'
 import { Route as ThankYouRouteImport } from './routes/thank-you'
 import { Route as TheKriyaLabRouteImport } from './routes/the-kriya-lab'
 import { Route as AuthenticatedMyProgramsRouteImport } from './routes/_authenticated/my-programs'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as AdminEnquiriesRouteImport } from './routes/admin/enquiries'
+import { Route as AdminOrdersRouteImport } from './routes/admin/orders'
 import { Route as AdminProgramsRouteImport } from './routes/admin/programs'
+import { Route as AdminRefundsRouteImport } from './routes/admin/refunds'
 import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as JournalIndexRouteImport } from './routes/journal/index'
@@ -141,9 +149,29 @@ const ProfileRoute = ProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReturnsAndRefundsRoute = ReturnsAndRefundsRouteImport.update({
+  id: '/returns-and-refunds',
+  path: '/returns-and-refunds',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ScienceOfKriyaYogaRoute = ScienceOfKriyaYogaRouteImport.update({
   id: '/science-of-kriya-yoga',
   path: '/science-of-kriya-yoga',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SecurityRoute = SecurityRouteImport.update({
+  id: '/security',
+  path: '/security',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShippingPolicyRoute = ShippingPolicyRouteImport.update({
+  id: '/shipping-policy',
+  path: '/shipping-policy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SiddhaTraditionRoute = SiddhaTraditionRouteImport.update({
@@ -154,6 +182,11 @@ const SiddhaTraditionRoute = SiddhaTraditionRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SupportRoute = SupportRouteImport.update({
+  id: '/support',
+  path: '/support',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TermsRoute = TermsRouteImport.update({
@@ -186,9 +219,24 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AdminEnquiriesRoute = AdminEnquiriesRouteImport.update({
+  id: '/enquiries',
+  path: '/enquiries',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminOrdersRoute = AdminOrdersRouteImport.update({
+  id: '/orders',
+  path: '/orders',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const AdminProgramsRoute = AdminProgramsRouteImport.update({
   id: '/programs',
   path: '/programs',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminRefundsRoute = AdminRefundsRouteImport.update({
+  id: '/refunds',
+  path: '/refunds',
   getParentRoute: () => AdminRouteRoute,
 } as any)
 const AdminSettingsRoute = AdminSettingsRouteImport.update({
@@ -281,15 +329,23 @@ export interface FileRoutesByFullPath {
   '/lineage': typeof LineageRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
+  '/returns-and-refunds': typeof ReturnsAndRefundsRoute
   '/science-of-kriya-yoga': typeof ScienceOfKriyaYogaRoute
+  '/security': typeof SecurityRoute
+  '/settings': typeof SettingsRoute
+  '/shipping-policy': typeof ShippingPolicyRoute
   '/siddha-tradition': typeof SiddhaTraditionRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
   '/testimonials': typeof TestimonialsRoute
   '/thank-you': typeof ThankYouRoute
   '/the-kriya-lab': typeof TheKriyaLabRoute
   '/my-programs': typeof AuthenticatedMyProgramsRoute
+  '/admin/enquiries': typeof AdminEnquiriesRoute
+  '/admin/orders': typeof AdminOrdersRoute
   '/admin/programs': typeof AdminProgramsRouteWithChildren
+  '/admin/refunds': typeof AdminRefundsRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
   '/journal/$slug': typeof JournalSlugRoute
@@ -323,15 +379,23 @@ export interface FileRoutesByTo {
   '/lineage': typeof LineageRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
+  '/returns-and-refunds': typeof ReturnsAndRefundsRoute
   '/science-of-kriya-yoga': typeof ScienceOfKriyaYogaRoute
+  '/security': typeof SecurityRoute
+  '/settings': typeof SettingsRoute
+  '/shipping-policy': typeof ShippingPolicyRoute
   '/siddha-tradition': typeof SiddhaTraditionRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
   '/testimonials': typeof TestimonialsRoute
   '/thank-you': typeof ThankYouRoute
   '/the-kriya-lab': typeof TheKriyaLabRoute
   '/my-programs': typeof AuthenticatedMyProgramsRoute
+  '/admin/enquiries': typeof AdminEnquiriesRoute
+  '/admin/orders': typeof AdminOrdersRoute
   '/admin/programs': typeof AdminProgramsRouteWithChildren
+  '/admin/refunds': typeof AdminRefundsRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
   '/journal/$slug': typeof JournalSlugRoute
@@ -368,15 +432,23 @@ export interface FileRoutesById {
   '/lineage': typeof LineageRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
+  '/returns-and-refunds': typeof ReturnsAndRefundsRoute
   '/science-of-kriya-yoga': typeof ScienceOfKriyaYogaRoute
+  '/security': typeof SecurityRoute
+  '/settings': typeof SettingsRoute
+  '/shipping-policy': typeof ShippingPolicyRoute
   '/siddha-tradition': typeof SiddhaTraditionRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
   '/testimonials': typeof TestimonialsRoute
   '/thank-you': typeof ThankYouRoute
   '/the-kriya-lab': typeof TheKriyaLabRoute
   '/_authenticated/my-programs': typeof AuthenticatedMyProgramsRoute
+  '/admin/enquiries': typeof AdminEnquiriesRoute
+  '/admin/orders': typeof AdminOrdersRoute
   '/admin/programs': typeof AdminProgramsRouteWithChildren
+  '/admin/refunds': typeof AdminRefundsRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
   '/journal/$slug': typeof JournalSlugRoute
@@ -413,15 +485,23 @@ export interface FileRouteTypes {
     | '/lineage'
     | '/privacy'
     | '/profile'
+    | '/returns-and-refunds'
     | '/science-of-kriya-yoga'
+    | '/security'
+    | '/settings'
+    | '/shipping-policy'
     | '/siddha-tradition'
     | '/sitemap.xml'
+    | '/support'
     | '/terms'
     | '/testimonials'
     | '/thank-you'
     | '/the-kriya-lab'
     | '/my-programs'
+    | '/admin/enquiries'
+    | '/admin/orders'
     | '/admin/programs'
+    | '/admin/refunds'
     | '/admin/settings'
     | '/admin/users'
     | '/journal/$slug'
@@ -455,15 +535,23 @@ export interface FileRouteTypes {
     | '/lineage'
     | '/privacy'
     | '/profile'
+    | '/returns-and-refunds'
     | '/science-of-kriya-yoga'
+    | '/security'
+    | '/settings'
+    | '/shipping-policy'
     | '/siddha-tradition'
     | '/sitemap.xml'
+    | '/support'
     | '/terms'
     | '/testimonials'
     | '/thank-you'
     | '/the-kriya-lab'
     | '/my-programs'
+    | '/admin/enquiries'
+    | '/admin/orders'
     | '/admin/programs'
+    | '/admin/refunds'
     | '/admin/settings'
     | '/admin/users'
     | '/journal/$slug'
@@ -499,15 +587,23 @@ export interface FileRouteTypes {
     | '/lineage'
     | '/privacy'
     | '/profile'
+    | '/returns-and-refunds'
     | '/science-of-kriya-yoga'
+    | '/security'
+    | '/settings'
+    | '/shipping-policy'
     | '/siddha-tradition'
     | '/sitemap.xml'
+    | '/support'
     | '/terms'
     | '/testimonials'
     | '/thank-you'
     | '/the-kriya-lab'
     | '/_authenticated/my-programs'
+    | '/admin/enquiries'
+    | '/admin/orders'
     | '/admin/programs'
+    | '/admin/refunds'
     | '/admin/settings'
     | '/admin/users'
     | '/journal/$slug'
@@ -544,9 +640,14 @@ export interface RootRouteChildren {
   LineageRoute: typeof LineageRoute
   PrivacyRoute: typeof PrivacyRoute
   ProfileRoute: typeof ProfileRoute
+  ReturnsAndRefundsRoute: typeof ReturnsAndRefundsRoute
   ScienceOfKriyaYogaRoute: typeof ScienceOfKriyaYogaRoute
+  SecurityRoute: typeof SecurityRoute
+  SettingsRoute: typeof SettingsRoute
+  ShippingPolicyRoute: typeof ShippingPolicyRoute
   SiddhaTraditionRoute: typeof SiddhaTraditionRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  SupportRoute: typeof SupportRoute
   TermsRoute: typeof TermsRoute
   TestimonialsRoute: typeof TestimonialsRoute
   ThankYouRoute: typeof ThankYouRoute
@@ -686,11 +787,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/returns-and-refunds': {
+      id: '/returns-and-refunds'
+      path: '/returns-and-refunds'
+      fullPath: '/returns-and-refunds'
+      preLoaderRoute: typeof ReturnsAndRefundsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/science-of-kriya-yoga': {
       id: '/science-of-kriya-yoga'
       path: '/science-of-kriya-yoga'
       fullPath: '/science-of-kriya-yoga'
       preLoaderRoute: typeof ScienceOfKriyaYogaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/security': {
+      id: '/security'
+      path: '/security'
+      fullPath: '/security'
+      preLoaderRoute: typeof SecurityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/shipping-policy': {
+      id: '/shipping-policy'
+      path: '/shipping-policy'
+      fullPath: '/shipping-policy'
+      preLoaderRoute: typeof ShippingPolicyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/siddha-tradition': {
@@ -705,6 +834,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/support': {
+      id: '/support'
+      path: '/support'
+      fullPath: '/support'
+      preLoaderRoute: typeof SupportRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/terms': {
@@ -749,11 +885,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/admin/enquiries': {
+      id: '/admin/enquiries'
+      path: '/enquiries'
+      fullPath: '/admin/enquiries'
+      preLoaderRoute: typeof AdminEnquiriesRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/orders': {
+      id: '/admin/orders'
+      path: '/orders'
+      fullPath: '/admin/orders'
+      preLoaderRoute: typeof AdminOrdersRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/admin/programs': {
       id: '/admin/programs'
       path: '/programs'
       fullPath: '/admin/programs'
       preLoaderRoute: typeof AdminProgramsRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/refunds': {
+      id: '/admin/refunds'
+      path: '/refunds'
+      fullPath: '/admin/refunds'
+      preLoaderRoute: typeof AdminRefundsRouteImport
       parentRoute: typeof AdminRouteRoute
     }
     '/admin/settings': {
@@ -885,7 +1042,10 @@ const AdminProgramsRouteWithChildren = AdminProgramsRoute._addFileChildren(
 )
 
 interface AdminRouteRouteChildren {
+  AdminEnquiriesRoute: typeof AdminEnquiriesRoute
+  AdminOrdersRoute: typeof AdminOrdersRoute
   AdminProgramsRoute: typeof AdminProgramsRouteWithChildren
+  AdminRefundsRoute: typeof AdminRefundsRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminIndexRoute: typeof AdminIndexRoute
@@ -896,7 +1056,10 @@ interface AdminRouteRouteChildren {
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
+  AdminEnquiriesRoute: AdminEnquiriesRoute,
+  AdminOrdersRoute: AdminOrdersRoute,
   AdminProgramsRoute: AdminProgramsRouteWithChildren,
+  AdminRefundsRoute: AdminRefundsRoute,
   AdminSettingsRoute: AdminSettingsRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminIndexRoute: AdminIndexRoute,
@@ -929,9 +1092,14 @@ const rootRouteChildren: RootRouteChildren = {
   LineageRoute: LineageRoute,
   PrivacyRoute: PrivacyRoute,
   ProfileRoute: ProfileRoute,
+  ReturnsAndRefundsRoute: ReturnsAndRefundsRoute,
   ScienceOfKriyaYogaRoute: ScienceOfKriyaYogaRoute,
+  SecurityRoute: SecurityRoute,
+  SettingsRoute: SettingsRoute,
+  ShippingPolicyRoute: ShippingPolicyRoute,
   SiddhaTraditionRoute: SiddhaTraditionRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  SupportRoute: SupportRoute,
   TermsRoute: TermsRoute,
   TestimonialsRoute: TestimonialsRoute,
   ThankYouRoute: ThankYouRoute,

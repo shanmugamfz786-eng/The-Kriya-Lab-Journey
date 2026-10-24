@@ -1,6 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { bi, useLang } from "@/lib/i18n";
-import { WhatsAppButton } from "@/components/WhatsAppButton";
 
 export const Route = createFileRoute("/thank-you")({
   staticData: { sitemap: false },
@@ -39,7 +38,6 @@ function ThankYou() {
           >
             {t(bi("Return home", "முகப்புக்குத் திரும்பு"))}
           </Link>
-          <WhatsAppButton />
         </div>
       </div>
     </section>

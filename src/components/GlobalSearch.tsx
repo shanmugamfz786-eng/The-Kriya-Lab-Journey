@@ -71,22 +71,22 @@ export function GlobalSearch({ isTransparent }: { isTransparent?: boolean }) {
   const hasResults = filteredPrograms.length > 0 || filteredEvents.length > 0;
 
   return (
-    <div ref={wrapperRef} className="relative hidden xl:block mr-2">
+    <div ref={wrapperRef} className="relative hidden xl:block mr-1">
       <div 
         className={cn(
-          "flex items-center rounded-full border transition-all duration-300 w-48 xl:w-56 2xl:w-64 px-3.5 py-1.5",
+          "flex items-center rounded-full border transition-all duration-300 w-36 xl:w-44 2xl:w-48 px-3 py-1",
           isTransparent 
             ? "border-white/20 bg-white/10 text-white hover:bg-white/20" 
             : "border-border bg-secondary/50 text-foreground hover:bg-secondary",
           isOpen ? "ring-2 ring-gold/50 border-transparent" : ""
         )}
       >
-        <Search className="size-4 shrink-0 mr-2 opacity-70" />
+        <Search className="size-3.5 shrink-0 mr-1.5 opacity-70" />
         <input
           id="global-search-input"
           type="text"
           placeholder={t(bi("Search...", "தேடுக..."))}
-          className="bg-transparent border-none outline-none text-sm font-medium placeholder:text-current placeholder:opacity-60 w-full"
+          className="bg-transparent border-none outline-none text-xs font-normal placeholder:text-current placeholder:opacity-60 w-full"
           value={query}
           onChange={(e) => {
             setQuery(e.target.value);

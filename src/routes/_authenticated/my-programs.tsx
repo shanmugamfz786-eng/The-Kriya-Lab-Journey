@@ -1,11 +1,13 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { PageHero, Section } from "@/components/Primitives";
 import { getMyPrograms, linkMyPurchases, type StudentProgram } from "@/lib/student.functions";
 import { useAuth } from "@/lib/auth-store";
 import { bi, useLang } from "@/lib/i18n";
+import { useEnrollments } from "@/lib/enrollment-store";
+import { getStoredOrders } from "@/lib/orders-api";
 
 export const Route = createFileRoute("/_authenticated/my-programs")({
   staticData: { sitemap: false },
@@ -30,7 +32,8 @@ function MyProgramsPage() {
   const { t, lang } = useLang();
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
+  const { enrolledPrograms, loading: enrollmentsLoading } = useEnrollments(user?.id, user?.email);
   const fetchPrograms = useServerFn(getMyPrograms);
   const linkFn = useServerFn(linkMyPurchases);
 
@@ -43,12 +46,88 @@ function MyProgramsPage() {
     queryFn: () => fetchPrograms() as Promise<StudentProgram[]>,
   });
 
+  const displayPrograms = useMemo(() => {
+    const list: StudentProgram[] = [...(data || [])];
+    const userEmail = (user?.email || "").toLowerCase().trim();
+
+    // 1. Add all completed orders for this user
+    if (userEmail) {
+      const orders = getStoredOrders().filter(
+        (o) =>
+          (o.customerEmail || "").toLowerCase().trim() === userEmail &&
+          o.status !== "Failed"
+      );
+
+      orders.forEach((o) => {
+        const alreadyListed = list.some(
+          (p) =>
+            p.purchaseId === o.id ||
+            p.programSlug === o.programSlug ||
+            p.programLabel.toLowerCase() === (o.programTitle || "").toLowerCase()
+        );
+        if (!alreadyListed) {
+          list.unshift({
+            purchaseId: o.id,
+            programSlug: o.programSlug,
+            programLabel: o.programTitle,
+            amountInr: o.amount,
+            currency: o.currency || "INR",
+            status: o.status === "Completed" ? "confirmed" : o.status.toLowerCase(),
+            purchasedAt: o.createdAt,
+            enrolment: { order: o.orderNumber, payment: o.paymentMethod },
+            zoomUrl: "https://zoom.us/j/kriya-transmission-live",
+            zoomNotesEn: "Please join 10 minutes early on an empty stomach.",
+            zoomNotesTa: "10 நிமிடங்களுக்கு முன்னதாகவே இணையவும்.",
+            materials: [
+              { title: "Daily Practice Checklist & Routine Guide (PDF)", url: "#" },
+              { title: "Guided Meditation & Pranayama Audio (MP3)", url: "#" },
+              { title: "Spine Energy Alignment Diagram (PDF)", url: "#" },
+            ],
+          });
+        }
+      });
+    }
+
+    // 2. Add enrolled programs from store
+    enrolledPrograms.forEach((ep) => {
+      const title = lang === "ta" ? ep.title_ta || ep.title_en : ep.title_en;
+      const alreadyListed = list.some(
+        (p) =>
+          p.programSlug === ep.id ||
+          p.programLabel.toLowerCase() === title.toLowerCase()
+      );
+      if (!alreadyListed) {
+        list.unshift({
+          purchaseId: "enr_" + ep.id,
+          programSlug: ep.id,
+          programLabel: title,
+          amountInr: Number(ep.price_inr) || 4999,
+          currency: "INR",
+          status: "confirmed",
+          purchasedAt: ep.created_at || new Date().toISOString(),
+          enrolment: { batch: ep.duration || "4 Weeks" },
+          zoomUrl: "https://zoom.us/j/kriya-transmission-live",
+          zoomNotesEn: "Please join 10 minutes early in a quiet setting.",
+          zoomNotesTa: "10 நிமிடங்களுக்கு முன்னதாகவே இணையவும்.",
+          materials: [
+            { title: "Daily Sadhana Manual (PDF)", url: "#" },
+            { title: "Sacred Aum Chanting Guide (MP3)", url: "#" },
+          ],
+        });
+      }
+    });
+
+    return list;
+  }, [data, user?.email, enrolledPrograms, lang]);
+
   async function signOut() {
     await qc.cancelQueries();
     qc.clear();
     logout();
     navigate({ to: "/auth", replace: true });
   }
+
+  const isPageLoading = isLoading && enrollmentsLoading;
 
   return (
     <>
@@ -73,11 +152,11 @@ function MyProgramsPage() {
           </button>
         </div>
 
-        {isLoading ? (
+        {isPageLoading ? (
           <p className="text-sm text-muted-foreground">{t(bi("Loading…", "ஏற்றுகிறது…"))}</p>
-        ) : error ? (
+        ) : error && !displayPrograms.length ? (
           <p className="text-sm text-destructive">{(error as Error).message}</p>
-        ) : !data?.length ? (
+        ) : !displayPrograms.length ? (
           <div className="max-w-xl space-y-4">
             <p className="text-sm leading-relaxed text-muted-foreground">
               {t(
@@ -93,7 +172,7 @@ function MyProgramsPage() {
           </div>
         ) : (
           <div className="space-y-10">
-            {data.map((p) => {
+            {displayPrograms.map((p) => {
               const enrolment = Object.entries(p.enrolment ?? {}).filter(
                 ([, v]) => typeof v === "string" || typeof v === "number",
               );

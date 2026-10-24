@@ -1,26 +1,35 @@
-import { useState, type ReactNode } from "react";
-import { Link, useLocation } from "@tanstack/react-router";
+import { useState, useEffect, type ReactNode } from "react";
+import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import {
   LayoutDashboard,
   Users,
   Calendar,
   Settings,
   Bell,
-  Search,
   Menu,
   ChevronDown,
   LogOut,
   ShieldCheck,
-  Maximize2,
   Layers,
   LucideIcon,
   ChevronRight,
   PlusCircle,
   History,
   Sparkles,
+  CreditCard,
+  MessageSquare,
+  RotateCcw,
+  Check,
+  X,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-store";
 import { cn } from "@/lib/utils";
+import {
+  getStoredNotifications,
+  markAllNotificationsRead,
+  type AdminNotification,
+} from "@/lib/notifications-store";
+import { getStoredEnquiries, subscribeToEnquiries } from "@/lib/enquiries-api";
 
 interface VelzonLayoutProps {
   children: ReactNode;
@@ -33,23 +42,103 @@ interface NavItem {
   name: string;
   icon: LucideIcon;
   href: string;
+  badge?: number;
   subItems?: { name: string; href: string; icon?: LucideIcon }[];
 }
 
 export function VelzonLayout({ children }: VelzonLayoutProps) {
   const { user, logout } = useAuth();
   const location = useLocation();
+  const pathname = location.pathname;
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
-  const [eventsExpanded, setEventsExpanded] = useState(true);
-  const [programsExpanded, setProgramsExpanded] = useState(true);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [eventsExpanded, setEventsExpanded] = useState(false);
+  const [programsExpanded, setProgramsExpanded] = useState(false);
+  const [notifications, setNotifications] = useState<AdminNotification[]>([]);
+  const [liveToast, setLiveToast] = useState<AdminNotification | null>(null);
+  const [newEnquiriesCount, setNewEnquiriesCount] = useState<number>(0);
 
-  const pathname = location.pathname;
+  useEffect(() => {
+    if (pathname.startsWith("/admin/events")) {
+      setEventsExpanded(true);
+    }
+    if (pathname.startsWith("/admin/programs")) {
+      setProgramsExpanded(true);
+    }
+  }, [pathname]);
+
+  const handleNotificationClick = (n: AdminNotification) => {
+    setNotificationsOpen(false);
+    const [pathname, queryString] = n.link.split("?");
+    const searchParams = new URLSearchParams(queryString || "");
+    const searchObj: Record<string, string> = {};
+    searchParams.forEach((val, key) => {
+      searchObj[key] = val;
+    });
+
+    navigate({
+      to: (pathname || "/admin") as any,
+      search: searchObj as any,
+    });
+  };
+
+  useEffect(() => {
+    // Initial load
+    setNotifications(getStoredNotifications());
+
+    // Listen for notification updates
+    const handleUpdate = () => {
+      setNotifications(getStoredNotifications());
+    };
+
+    // Track unhandled New enquiries in real-time
+    const updateEnquiriesCount = () => {
+      try {
+        const all = getStoredEnquiries();
+        const unhandled = all.filter((e) => e.status === "New");
+        setNewEnquiriesCount(unhandled.length);
+      } catch {
+        setNewEnquiriesCount(0);
+      }
+    };
+
+    updateEnquiriesCount();
+    const unsubEnquiries = subscribeToEnquiries(updateEnquiriesCount);
+
+    // Listen for real-time toast alerts
+    const handleToast = (e: Event) => {
+      const customEvent = e as CustomEvent<AdminNotification>;
+      if (customEvent.detail) {
+        setLiveToast(customEvent.detail);
+        setNotifications(getStoredNotifications());
+
+        // Auto dismiss toast after 6.5s
+        setTimeout(() => {
+          setLiveToast((current) => (current?.id === customEvent.detail.id ? null : current));
+        }, 6500);
+      }
+    };
+
+    window.addEventListener("kriya_notifications_updated", handleUpdate);
+    window.addEventListener("kriya_toast_alert", handleToast);
+    return () => {
+      unsubEnquiries();
+      window.removeEventListener("kriya_notifications_updated", handleUpdate);
+      window.removeEventListener("kriya_toast_alert", handleToast);
+    };
+  }, []);
+
+  const activeNotifications = notifications.filter(
+    (n) => n.type !== "enquiry" && n.id !== "notif_2" && !n.title.toLowerCase().includes("inquir")
+  );
 
   const navItems: NavItem[] = [
     { id: "dashboard", name: "Dashboard", icon: LayoutDashboard, href: "/admin" },
     { id: "users", name: "Users", icon: Users, href: "/admin/users" },
+    { id: "orders", name: "Orders & Payments", icon: CreditCard, href: "/admin/orders" },
     { 
       id: "programs", 
       name: "Programs", 
@@ -71,6 +160,13 @@ export function VelzonLayout({ children }: VelzonLayoutProps) {
         { name: "All Past Events", href: "/admin/events/past", icon: History },
         { name: "All Future Events", href: "/admin/events/future", icon: Sparkles },
       ],
+    },
+    {
+      id: "enquiries",
+      name: "Enquiries & Questions",
+      icon: MessageSquare,
+      href: "/admin/enquiries",
+      badge: newEnquiriesCount,
     },
     { id: "settings", name: "Settings", icon: Settings, href: "/admin/settings" },
   ];
@@ -108,55 +204,119 @@ export function VelzonLayout({ children }: VelzonLayoutProps) {
           >
             <Menu className="size-5" />
           </button>
-
-          {/* Quick Search */}
-          <div className="relative hidden md:block">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search in admin portal..."
-              className="h-9 w-64 lg:w-72 rounded-lg border border-gray-200 bg-[#f8f9fa] pl-9 pr-4 text-xs font-medium focus:border-[#334d84] focus:bg-white focus:outline-none transition-colors"
-            />
-          </div>
         </div>
 
         {/* Right Side: Action Icons + User Profile */}
         <div className="flex items-center gap-2 sm:gap-3">
-          <Link
-            to="/"
-            className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold text-gray-600 hover:text-[#334d84] bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg px-3 py-1.5 transition-colors"
-          >
-            <span>Live Website</span>
-          </Link>
+          {/* Notifications Dropdown */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => {
+                setNotifications(getStoredNotifications());
+                setNotificationsOpen(!notificationsOpen);
+              }}
+              className="relative rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+              title="Notifications"
+            >
+              <Bell className="size-5" />
+              {activeNotifications.some((n) => !n.read) && (
+                <span className="absolute top-1.5 right-1.5 flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#0ab39c] opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#0ab39c]"></span>
+                </span>
+              )}
+            </button>
 
-          {/* Fullscreen icon */}
-          <button
-            type="button"
-            onClick={() => {
-              if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(() => {});
-              } else {
-                document.exitFullscreen().catch(() => {});
-              }
-            }}
-            className="hidden sm:flex rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
-            title="Fullscreen"
-          >
-            <Maximize2 className="size-4" />
-          </button>
+            {notificationsOpen && (
+              <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl bg-white shadow-xl border border-gray-100 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                <div className="bg-[#334d84] text-white p-4 flex items-center justify-between">
+                  <div>
+                    <h4 className="font-bold text-xs uppercase tracking-wider">Portal Notifications</h4>
+                    <p className="text-[0.68rem] text-white/70">
+                      {activeNotifications.filter((n) => !n.read).length} unread administrative updates
+                    </p>
+                  </div>
+                  {activeNotifications.filter((n) => !n.read).length > 0 && (
+                    <span className="text-[0.62rem] font-bold bg-[#0ab39c] px-2 py-0.5 rounded-full">
+                      {activeNotifications.filter((n) => !n.read).length} New
+                    </span>
+                  )}
+                </div>
 
-          {/* Notifications */}
-          <button
-            type="button"
-            className="relative rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
-            title="Notifications"
-          >
-            <Bell className="size-5" />
-            <span className="absolute top-1.5 right-1.5 flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#0ab39c] opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#0ab39c]"></span>
-            </span>
-          </button>
+                <div className="divide-y divide-gray-100 max-h-80 overflow-y-auto text-xs">
+                  {activeNotifications.length === 0 ? (
+                    <div className="p-8 text-center text-gray-400">
+                      No notifications at this time.
+                    </div>
+                  ) : (
+                    activeNotifications.map((n) => (
+                      <div
+                        key={n.id}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => handleNotificationClick(n)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            handleNotificationClick(n);
+                          }
+                        }}
+                        className={cn(
+                          "p-3.5 flex items-start gap-3 hover:bg-gray-50 transition-colors cursor-pointer",
+                          !n.read && "bg-blue-50/30"
+                        )}
+                      >
+                        <div
+                          className={cn(
+                            "size-8 rounded-full flex items-center justify-center shrink-0 mt-0.5",
+                            n.type === "order"
+                              ? "bg-emerald-50 text-emerald-600"
+                              : "bg-amber-50 text-amber-600"
+                          )}
+                        >
+                          {n.type === "order" ? (
+                            <CreditCard className="size-4" />
+                          ) : (
+                            <RotateCcw className="size-4" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-gray-900 truncate">{n.title}</p>
+                          <p className="text-[0.68rem] text-gray-500 line-clamp-1">{n.message}</p>
+                          <span className="text-[0.62rem] text-gray-400 mt-1 block">
+                            {new Date(n.createdAt).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <div className="p-2.5 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      markAllNotificationsRead();
+                      setNotifications(getStoredNotifications());
+                    }}
+                    className="text-[0.68rem] text-[#334d84] font-bold hover:underline"
+                  >
+                    Mark all as read
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setNotificationsOpen(false)}
+                    className="text-[0.68rem] text-gray-400 hover:text-gray-600"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Theme Toggle */}
           <button
@@ -183,8 +343,8 @@ export function VelzonLayout({ children }: VelzonLayoutProps) {
                 <p className="text-xs font-semibold text-gray-800 leading-tight">
                   {user?.full_name || "Rishi"}
                 </p>
-                <p className="text-[0.65rem] text-gray-400 capitalize font-medium">
-                  {user?.role || "Admin"}
+                <p className="text-[0.65rem] text-gray-400 font-medium">
+                  {user?.role === "admin" ? "Admin" : user?.email}
                 </p>
               </div>
               <ChevronDown className="size-3.5 text-gray-400" />
@@ -379,7 +539,7 @@ export function VelzonLayout({ children }: VelzonLayoutProps) {
                     to={item.href}
                     onClick={() => setMobileMenuOpen(false)}
                     className={cn(
-                      "group flex w-full items-center gap-3.5 px-5 py-2.5 text-[0.9rem] font-medium transition-all text-left cursor-pointer relative",
+                      "group flex w-full items-center justify-between px-5 py-2.5 text-[0.9rem] font-medium transition-all text-left cursor-pointer relative",
                       isActive
                         ? "text-white bg-white/5"
                         : "text-[#abb9e8] hover:text-white hover:bg-white/5"
@@ -388,21 +548,40 @@ export function VelzonLayout({ children }: VelzonLayoutProps) {
                     {isActive && (
                       <span className="absolute left-0 top-0 bottom-0 w-1 bg-[#0ab39c]" />
                     )}
-                    <Icon
-                      className={cn(
-                        "size-4 shrink-0 transition-colors",
-                        isActive ? "text-white" : "text-[#838fb9] group-hover:text-white"
+                    <div className="flex items-center gap-3.5 min-w-0">
+                      <div className="relative shrink-0">
+                        <Icon
+                          className={cn(
+                            "size-4 transition-colors",
+                            isActive ? "text-white" : "text-[#838fb9] group-hover:text-white"
+                          )}
+                        />
+                        {!sidebarOpen && (item.badge ?? 0) > 0 && (
+                          <span className="absolute -top-1 -right-1 size-2 rounded-full bg-rose-500 ring-2 ring-[#405189] animate-pulse" />
+                        )}
+                      </div>
+                      {sidebarOpen && (
+                        <span className="truncate">{item.name}</span>
                       )}
-                    />
-                    {sidebarOpen && (
-                      <span className="flex-1 truncate">{item.name}</span>
+                    </div>
+
+                    {/* Live Unhandled Enquiries Badge */}
+                    {sidebarOpen && (item.badge ?? 0) > 0 && (
+                      <span className="inline-flex items-center justify-center min-w-5 h-5 px-1.5 text-[11px] font-bold text-white bg-rose-500 rounded-full shadow-xs animate-pulse shrink-0 ml-2">
+                        {item.badge}
+                      </span>
                     )}
                   </Link>
 
                   {/* Tooltip for standard items when sidebar is closed */}
                   {!sidebarOpen && (
-                    <div className="absolute left-full top-1/2 -translate-y-1/2 ml-1 hidden rounded-md bg-[#405189] px-3 py-1.5 shadow-xl group-hover/navitem:block z-50 border border-white/10 animate-in fade-in zoom-in-95 whitespace-nowrap">
+                    <div className="absolute left-full top-1/2 -translate-y-1/2 ml-1 hidden rounded-md bg-[#405189] px-3 py-1.5 shadow-xl group-hover/navitem:flex items-center gap-2 z-50 border border-white/10 animate-in fade-in zoom-in-95 whitespace-nowrap">
                       <span className="text-[13px] font-medium text-white">{item.name}</span>
+                      {(item.badge ?? 0) > 0 && (
+                        <span className="px-1.5 py-0.5 text-[10px] font-bold text-white bg-rose-500 rounded-full">
+                          {item.badge}
+                        </span>
+                      )}
                     </div>
                   )}
                 </div>
@@ -448,6 +627,53 @@ export function VelzonLayout({ children }: VelzonLayoutProps) {
           {children}
         </main>
       </div>
+
+      {/* Floating Live Real-Time Toast Alert */}
+      {liveToast && (
+        <div className="fixed top-5 right-5 z-[9999] max-w-sm w-full bg-white rounded-2xl shadow-2xl border-2 border-emerald-500/50 p-4 animate-in slide-in-from-top-4 duration-300 flex items-start gap-3.5 backdrop-blur-md">
+          <div className="size-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 shadow-xs border border-emerald-200">
+            {liveToast.type === "order" ? (
+              <CreditCard className="size-5" />
+            ) : (
+              <Sparkles className="size-5" />
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-[0.68rem] uppercase tracking-wider text-emerald-700 flex items-center gap-1.5">
+                <span className="size-2 rounded-full bg-emerald-500 animate-ping"></span>
+                {liveToast.type === "order" ? "🎉 New Order Alert!" : "Live Portal Alert"}
+              </span>
+              <button
+                type="button"
+                onClick={() => setLiveToast(null)}
+                className="text-gray-400 hover:text-gray-600 p-0.5 rounded-md hover:bg-gray-100"
+              >
+                <X className="size-3.5" />
+              </button>
+            </div>
+            <p className="font-bold text-sm text-gray-900 mt-1">{liveToast.title}</p>
+            <p className="text-xs text-gray-600 line-clamp-2 mt-0.5 leading-relaxed">
+              {liveToast.message}
+            </p>
+            <div className="mt-2.5 flex items-center justify-between pt-2 border-t border-gray-100">
+              <span className="text-[0.62rem] text-gray-400 font-medium">Just now</span>
+              <button
+                type="button"
+                onClick={() => {
+                  if (liveToast) {
+                    handleNotificationClick(liveToast);
+                    setLiveToast(null);
+                  }
+                }}
+                className="inline-flex items-center gap-1 text-xs font-bold text-[#334d84] hover:text-[#283e6b] hover:underline cursor-pointer"
+              >
+                <span>{liveToast.type === "refund" ? "View in Refunds →" : "View in Orders →"}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

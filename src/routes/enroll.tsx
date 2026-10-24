@@ -5,12 +5,13 @@ export const Route = createFileRoute("/enroll")({
   staticData: { sitemap: true },
   validateSearch: (
     search: Record<string, unknown>,
-  ): { program?: string | undefined; persons?: number | undefined } => ({
+  ): { program?: string | undefined; persons?: number | undefined; currency?: string | undefined } => ({
     program: typeof search["program"] === "string" ? (search["program"] as string) : undefined,
     persons:
       typeof search["persons"] === "number" || typeof search["persons"] === "string"
         ? Math.min(20, Math.max(1, Number(search["persons"]) || 1))
         : undefined,
+    currency: typeof search["currency"] === "string" ? (search["currency"] as string).toUpperCase() : undefined,
   }),
   head: () => ({
     meta: [

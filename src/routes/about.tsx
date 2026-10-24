@@ -1,7 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Fragment } from "react";
 import { PageHero, Section, Eyebrow } from "@/components/Primitives";
-import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { bi, useLang } from "@/lib/i18n";
 import { journeyChapters } from "@/content/site";
 import teacherPortrait from "@/assets/images/teacher-portrait.jpg";
@@ -93,7 +92,6 @@ function AboutPage() {
               </ol>
             </div>
             <div className="flex flex-wrap gap-4">
-              <WhatsAppButton />
               <Link
                 to="/lineage"
                 className="rounded-full border border-border px-6 py-3 text-sm transition-colors hover:border-primary hover:text-primary"

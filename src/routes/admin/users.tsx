@@ -4,7 +4,6 @@ import {
   Users,
   Search,
   Filter,
-  Download,
   Eye,
   Trash2,
   Mail,
@@ -12,6 +11,8 @@ import {
   CheckCircle2,
   X,
   Sparkles,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 
 import { showAlert } from "@/lib/alert";
@@ -30,14 +31,21 @@ function AdminUsersPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetchAllUsers().then((data) => {
-      setSeekers(data);
-      setIsLoading(false);
-    });
+    const loadUsers = () => {
+      fetchAllUsers().then((data) => {
+        setSeekers(data);
+        setIsLoading(false);
+      });
+    };
+    loadUsers();
+
+    window.addEventListener("kriya_orders_updated", loadUsers);
+    return () => window.removeEventListener("kriya_orders_updated", loadUsers);
   }, []);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSeeker, setSelectedSeeker] = useState<SeekerItem | null>(null);
   const [viewingProgramsFor, setViewingProgramsFor] = useState<SeekerItem | null>(null);
+  const [expandedSeekerPrograms, setExpandedSeekerPrograms] = useState<Record<string, boolean>>({});
 
   const filtered = seekers.filter((item) => {
     return (
@@ -67,23 +75,6 @@ function AdminUsersPage() {
     }
   };
 
-  const handleExportCsv = () => {
-    const headers = ["Ref ID,Seeker Name,Email,Phone,Applied Program,Date,Experience"];
-    const rows = filtered.map(
-      (s) =>
-        `"${s.id}","${s.name}","${s.email}","${s.phone}","${s.program}","${s.date}","${s.experience}"`
-    );
-    const csvContent = "data:text/csv;charset=utf-8," + [headers, ...rows].join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `seekers_export_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    showAlert.success("CSV Exported", "Seeker data downloaded successfully.", 1500);
-  };
-
   return (
     <>
       <div className="space-y-6 font-['Poppins',sans-serif]">
@@ -96,17 +87,6 @@ function AdminUsersPage() {
             <p className="text-xs text-gray-500 mt-1">
               Manage spiritual aspirants, review background profiles, and assign transmission statuses.
             </p>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleExportCsv}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-[#334d84] px-4 py-2 text-xs font-semibold text-white hover:bg-[#2b4273] shadow-xs transition-colors cursor-pointer"
-            >
-              <Download className="size-3.5" />
-              <span>Export CSV</span>
-            </button>
           </div>
         </div>
 
@@ -131,9 +111,11 @@ function AdminUsersPage() {
               <thead>
                 <tr className="border-b border-gray-100 bg-[#f8f9fa] text-[0.72rem] font-semibold text-gray-600 uppercase tracking-wider">
                   <th className="p-3.5 pl-5">Ref ID</th>
+                  <th className="p-3.5">Purchases</th>
                   <th className="p-3.5">Seeker Name</th>
                   <th className="p-3.5">Contact Info</th>
-                  <th className="p-3.5">Applied Program</th>
+                  <th className="p-3.5">Program Applied</th>
+                  <th className="p-3.5">Status</th>
                   <th className="p-3.5">Date</th>
                   <th className="p-3.5 pr-5 text-right">Actions</th>
                 </tr>
@@ -141,20 +123,38 @@ function AdminUsersPage() {
               <tbody className="divide-y divide-gray-100 font-normal">
                 {isLoading ? (
                   <tr>
-                    <td colSpan={6} className="p-8 text-center text-gray-400">
+                    <td colSpan={8} className="p-8 text-center text-gray-400">
                       Loading users...
                     </td>
                   </tr>
                 ) : filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="p-8 text-center text-gray-400">
+                    <td colSpan={8} className="p-8 text-center text-gray-400">
                       No seeker applications found matching criteria.
                     </td>
                   </tr>
                 ) : (
                   filtered.map((item) => (
                     <tr key={item.id} className="hover:bg-gray-50/80 transition-colors">
-                      <td className="p-3.5 pl-5 font-semibold text-gray-700">{item.id}</td>
+                      <td className="p-3.5 pl-5 font-mono font-semibold text-[#334d84]">{item.id}</td>
+                      <td className="p-3.5 whitespace-nowrap">
+                        <span
+                          className={cn(
+                            "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-bold text-xs border shadow-2xs",
+                            (item.programs?.length || 1) > 1
+                              ? "bg-emerald-50 text-emerald-700 border-emerald-300"
+                              : "bg-blue-50 text-blue-700 border-blue-300"
+                          )}
+                        >
+                          <span
+                            className={cn(
+                              "size-1.5 rounded-full",
+                              (item.programs?.length || 1) > 1 ? "bg-emerald-500 animate-pulse" : "bg-blue-500"
+                            )}
+                          />
+                          {item.programs?.length || 1} {(item.programs?.length || 1) === 1 ? "Purchase" : "Purchases"}
+                        </span>
+                      </td>
                       <td className="p-3.5">
                         <p className="font-semibold text-gray-900">{item.name}</p>
                         <p className="text-[0.7rem] text-gray-400 line-clamp-1">{item.experience}</p>
@@ -169,17 +169,39 @@ function AdminUsersPage() {
                           <span>{item.phone}</span>
                         </div>
                       </td>
-                      <td className="p-3.5">
-                        <button
-                          type="button"
-                          onClick={() => setViewingProgramsFor(item)}
-                          className="inline-flex items-center gap-1.5 rounded-lg bg-[#334d84]/10 px-3 py-1.5 text-[0.72rem] font-bold text-[#334d84] hover:bg-[#334d84]/20 transition-colors shadow-sm"
-                        >
-                          <Eye className="size-3.5" />
-                          <span>View</span>
-                        </button>
+                      <td className="p-3.5 max-w-[260px]">
+                        {item.programs && item.programs.length > 0 ? (
+                          <div className="space-y-1">
+                            {item.programs.map((p, pIdx) => (
+                              <p
+                                key={pIdx}
+                                className="text-[0.72rem] font-medium text-gray-800 line-clamp-1"
+                                title={`${p.title} (${p.status})`}
+                              >
+                                • {p.title}
+                              </p>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="font-medium text-gray-800 line-clamp-1" title={item.program}>
+                            {item.program}
+                          </p>
+                        )}
                       </td>
-                      <td className="p-3.5 text-gray-500">{item.date}</td>
+                      <td className="p-3.5 whitespace-nowrap">
+                        <span
+                          className={cn(
+                            "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[0.68rem] font-bold border",
+                            item.status === "Initiated" && "bg-emerald-50 text-emerald-600 border-emerald-200",
+                            item.status === "Approved" && "bg-blue-50 text-blue-600 border-blue-200",
+                            item.status === "Pending Review" && "bg-amber-50 text-amber-600 border-amber-200",
+                          )}
+                        >
+                          <CheckCircle2 className="size-3" />
+                          {item.status}
+                        </span>
+                      </td>
+                      <td className="p-3.5 text-gray-500 whitespace-nowrap">{item.date}</td>
                       <td className="p-3.5 pr-5 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <button
@@ -211,8 +233,8 @@ function AdminUsersPage() {
         {/* View Details Modal */}
         {selectedSeeker && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 font-['Poppins',sans-serif]">
-            <div className="relative w-full max-w-lg rounded-2xl bg-white shadow-2xl overflow-hidden animate-in fade-in-50 zoom-in-95">
-              <div className="flex items-center justify-between border-b border-gray-100 bg-[#f8f9fa] px-6 py-4">
+            <div className="relative w-full max-w-lg rounded-2xl bg-white shadow-2xl overflow-hidden animate-in fade-in-50 zoom-in-95 max-h-[90vh] flex flex-col">
+              <div className="flex items-center justify-between border-b border-gray-100 bg-[#f8f9fa] px-6 py-4 shrink-0">
                 <div>
                   <h3 className="text-base font-bold text-gray-900">Seeker Application Profile</h3>
                   <p className="text-xs text-gray-500">{selectedSeeker.id}</p>
@@ -226,7 +248,7 @@ function AdminUsersPage() {
                 </button>
               </div>
 
-              <div className="p-6 space-y-4 text-xs">
+              <div className="p-6 space-y-4 text-xs overflow-y-auto flex-1">
                 <div>
                   <span className="text-[0.7rem] font-semibold uppercase tracking-wider text-gray-400">
                     Full Name
@@ -249,18 +271,71 @@ function AdminUsersPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <span className="text-[0.7rem] font-semibold uppercase tracking-wider text-gray-400">
-                      Program Applied
+                {/* All Purchased Programs */}
+                <div className="rounded-xl border border-gray-200 bg-gray-50/50 p-3.5 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[0.7rem] font-bold uppercase tracking-wider text-gray-500">
+                      All Enrolled Programs ({selectedSeeker.programs?.length || 1})
                     </span>
-                    <p className="font-bold text-[#334d84] mt-0.5">{selectedSeeker.program}</p>
+                    {selectedSeeker.totalSpent > 0 && (
+                      <span className="text-xs font-bold text-emerald-600">
+                        Total Paid: ₹{selectedSeeker.totalSpent.toLocaleString("en-IN")}
+                      </span>
+                    )}
                   </div>
+                  <div className="space-y-2 max-h-44 overflow-y-auto pr-1">
+                    {(selectedSeeker.programs && selectedSeeker.programs.length > 0
+                      ? selectedSeeker.programs
+                      : [
+                          {
+                            slug: "prg_1",
+                            title: selectedSeeker.program,
+                            date: selectedSeeker.date,
+                            status: selectedSeeker.status,
+                          },
+                        ]
+                    ).map((p, idx) => (
+                      <div
+                        key={idx}
+                        className="p-2.5 rounded-lg border border-gray-200/80 bg-white flex items-center justify-between gap-2 shadow-2xs"
+                      >
+                        <div className="min-w-0">
+                          <p className="font-semibold text-gray-900 text-xs truncate">{p.title}</p>
+                          <p className="text-[0.68rem] text-gray-400 mt-0.5">
+                            {p.orderNumber ? `${p.orderNumber} • ` : ""}
+                            {p.date}
+                          </p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          {p.amount ? (
+                            <p className="font-bold text-gray-900 text-xs">
+                              {p.currency === "USD" ? "$" : "₹"}
+                              {p.amount.toLocaleString("en-IN")}
+                            </p>
+                          ) : null}
+                          <span className="inline-block text-[0.65rem] font-semibold text-emerald-600">
+                            {p.status}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
                   <div>
                     <span className="text-[0.7rem] font-semibold uppercase tracking-wider text-gray-400">
                       Location
                     </span>
-                    <p className="font-medium text-gray-800 mt-0.5">{selectedSeeker.location || "Not specified"}</p>
+                    <p className="font-medium text-gray-800 mt-0.5">
+                      {selectedSeeker.location || "Not specified"}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-[0.7rem] font-semibold uppercase tracking-wider text-gray-400">
+                      Account Status
+                    </span>
+                    <p className="font-medium text-emerald-600 mt-0.5">{selectedSeeker.status}</p>
                   </div>
                 </div>
 

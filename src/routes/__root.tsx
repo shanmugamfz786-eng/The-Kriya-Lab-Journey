@@ -15,7 +15,6 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { LanguageProvider } from "@/lib/i18n";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { FloatingWhatsApp } from "@/components/WhatsAppButton";
 import { ScrollObserver } from "@/components/ScrollObserver";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { useAuth } from "@/lib/auth-store";
@@ -24,6 +23,8 @@ import { GlobalUserSidebar } from "@/components/GlobalUserSidebar";
 
 import notFoundIllustration from "@/assets/images/not-found-illustion.png";
 import { Home, Compass, MessageCircle, ArrowLeft } from "lucide-react";
+import { syncProgramsFromBackend } from "@/lib/programs-api";
+import { syncEventsFromBackend } from "@/lib/events-api";
 
 function NotFoundComponent() {
   return (
@@ -186,7 +187,34 @@ function RootComponent() {
   const pathname = router.state.location.pathname;
   const isPortal = pathname.startsWith("/admin");
   const isDashboard = pathname.startsWith("/dashboard");
-  const hideFooter = ["/programs", "/events", "/profile"].some(path => pathname.startsWith(path)) || isDashboard;
+  const hideFooter = [
+    "/programs",
+    "/events",
+    "/profile",
+    "/buy",
+    "/enroll",
+    "/settings",
+    "/security",
+    "/shipping-policy",
+    "/returns-and-refunds",
+    "/privacy",
+    "/terms",
+    "/faq",
+    "/support"
+  ].some(path => pathname.startsWith(path)) || isDashboard;
+
+  // 1-Time Initial Sync on Web Page Access:
+  // Whenever user accesses/opens the web page, fetch fresh data from database via backend 1 time
+  // and set it into user's localStorage so all subsequent page browsing reads instantly from local storage.
+  useEffect(() => {
+    const syncKey = "kriya_initial_db_sync_done";
+    const alreadySynced = sessionStorage.getItem(syncKey);
+    if (!alreadySynced) {
+      sessionStorage.setItem(syncKey, "true");
+      syncProgramsFromBackend().catch(() => {});
+      syncEventsFromBackend().catch(() => {});
+    }
+  }, []);
 
   if (isPortal) {
     return (
@@ -222,7 +250,6 @@ function RootComponent() {
             )}
           </div>
         </div>
-        <FloatingWhatsApp />
         {!isPortal && !hideMobileFooter && <MobileBottomNav />}
       </LanguageProvider>
     </QueryClientProvider>

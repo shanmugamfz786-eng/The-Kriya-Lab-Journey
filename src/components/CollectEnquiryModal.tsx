@@ -27,7 +27,7 @@ export function CollectEnquiryModal({ isOpen, onClose, programName }: CollectEnq
     setLoading(true);
 
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+      const apiUrl = (import.meta.env["VITE_API_URL"] as string) || "http://localhost:5000";
       const res = await fetch(`${apiUrl}/api/auth/enquiry`, {
         method: "POST",
         headers: {

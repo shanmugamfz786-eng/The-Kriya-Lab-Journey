@@ -50,15 +50,31 @@ function ContactPage() {
     setSaving(true);
 
     try {
+      const name = String(data.get("name") ?? "").trim();
+      const phone = String(data.get("phone") ?? "").trim() || undefined;
+      const programInterested = String(data.get("type") ?? "") || "General Enquiry";
+      const message = String(data.get("message") ?? "").trim();
+
+      // Record in local store for admin immediate view
+      const { recordNewEnquiry } = await import("@/lib/enquiries-api");
+      await recordNewEnquiry({
+        name,
+        email,
+        phone,
+        subject: `${programInterested} Consultation`,
+        message,
+        programInterested,
+      });
+
       await fetch(`${API_URL}/api/auth/enquiry`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: String(data.get("name") ?? "").trim(),
+          name,
           email,
-          phone: String(data.get("phone") ?? "").trim() || null,
-          program: String(data.get("type") ?? "") || "General Enquiry",
-          message: String(data.get("message") ?? "").trim(),
+          phone,
+          program: programInterested,
+          message,
         }),
       });
     } catch {
