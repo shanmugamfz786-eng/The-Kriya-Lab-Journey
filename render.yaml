@@ -24,9 +24,9 @@ services:
       - key: TIDB_SSL
         value: "true"
       - key: CLOUDINARY_CLOUD_NAME
-        value: aqpfwrcn
+        value: znts7wz2
       - key: CLOUDINARY_API_KEY
-        value: "763755511943985"
+        value: "948873677216319"
       - key: CLOUDINARY_API_SECRET
         sync: false
       - key: ADMIN_EMAIL
