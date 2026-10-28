@@ -20,7 +20,6 @@ import { useEffect, useState } from "react";
 import { settings, ui } from "@/content/site";
 import { bi, useLang } from "@/lib/i18n";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
-import { GlobalSearch } from "@/components/GlobalSearch";
 import { useAuth } from "@/lib/auth-store";
 import { cn } from "@/lib/utils";
 
@@ -120,6 +119,9 @@ const loggedOutNav = [
   { label: bi("Science of Kriya Yoga", "கிரியா யோக அறிவியல்"), to: "/science-of-kriya-yoga" },
   { label: bi("The Kriya Lab", "தி கிரியா லேப்"), to: "/the-kriya-lab" },
   { label: bi("Siddha Tradition", "சித்தர் மரபு"), to: "/siddha-tradition" },
+  { label: bi("Guru Lineage", "குரு பரம்பரை"), to: "/lineage" },
+  { label: bi("All Programs", "அனைத்து நிகழ்ச்சிகள்"), to: "/programs" },
+  { label: bi("About the Teacher", "ஆசிரியர் பற்றி"), to: "/about" },
 ];
 
 function LanguageSwitcher({ className, isTransparent }: { className?: string; isTransparent?: boolean }) {
@@ -449,7 +451,7 @@ export function Header() {
           </Link>
 
           {/* Center: Primary Navigation (Desktop) */}
-          <nav className="hidden lg:flex flex-1 justify-center items-center gap-3.5 xl:gap-5 mx-2" aria-label="Primary">
+          <nav className="hidden lg:flex flex-1 justify-center items-center gap-2.5 xl:gap-4 2xl:gap-5 mx-2" aria-label="Primary">
             {(isAuthenticated ? loggedInNav : loggedOutNav)
               .map((item) => (
               <Link
@@ -457,7 +459,7 @@ export function Header() {
                 to={item.to}
                 activeOptions={{ exact: item.to === "/" }}
                 className={cn(
-                  "text-[0.78rem] xl:text-[0.82rem] whitespace-nowrap tracking-wide font-medium transition-all hover:-translate-y-0.5",
+                  "text-[0.74rem] xl:text-[0.78rem] 2xl:text-[0.82rem] whitespace-nowrap tracking-wide font-medium transition-all hover:-translate-y-0.5",
                   isTransparent
                     ? "text-white/80 hover:text-gold [&.active]:text-gold [&.active]:font-semibold"
                     : "text-muted-foreground hover:text-foreground [&.active]:text-black [&.active]:font-bold",
@@ -470,11 +472,6 @@ export function Header() {
 
           {/* Right: Tools & Actions */}
           <div className="flex items-center gap-2 sm:gap-2.5 pl-3 lg:pl-4 border-l border-white/10 shrink-0">
-            {/* Search */}
-            <div className="hidden sm:block">
-              <GlobalSearch isTransparent={isTransparent} />
-            </div>
-
             {/* Language Switcher */}
             <div className="hidden md:block">
               <LanguageSwitcher isTransparent={isTransparent} />
