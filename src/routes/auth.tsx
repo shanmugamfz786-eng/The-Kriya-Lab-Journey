@@ -427,10 +427,10 @@ export function AuthPage({
   }
 
   return (
-    <div className="relative w-full flex-1 min-h-[calc(100vh-80px)] flex flex-col lg:flex-row bg-background">
+    <div className="relative w-full flex-1 min-h-[calc(100vh-56px)] lg:h-[calc(100vh-64px)] lg:overflow-hidden flex flex-col lg:flex-row bg-background">
 
-      {/* Left Column: Brand Velvet-Deep & Gold Form Sanctuary */}
-      <div className="relative w-full lg:w-1/2 flex-1 min-h-full flex items-center justify-center bg-velvet-deep text-white px-6 py-10 sm:p-10 md:p-14 lg:p-16 z-10 overflow-y-auto">
+      {/* Left Column: Brand Velvet-Deep & Gold Form Sanctuary - Independent Scroll */}
+      <div className="relative w-full lg:w-1/2 h-full flex flex-col items-center justify-start lg:justify-center bg-velvet-deep text-white px-6 py-8 sm:px-10 md:px-14 lg:px-16 z-10 overflow-y-auto">
 
         {/* Ambient subtle glow */}
         <div className="pointer-events-none absolute -top-20 -left-20 w-80 h-80 bg-gold/10 rounded-full blur-3xl" />
@@ -442,7 +442,7 @@ export function AuthPage({
         <div className="absolute top-[12%] right-[10%] w-10 h-10 rounded-full border-[2px] border-gold/10 animate-float-slow pointer-events-none" />
         <div className="absolute bottom-[14%] right-[8%] w-9 h-9 rounded-xl border-[2px] border-gold/25 rotate-45 animate-float-slow-reverse pointer-events-none" />
 
-        <div className="relative z-10 w-full max-w-md flex flex-col justify-center my-auto">
+        <div className="relative z-10 w-full max-w-md flex flex-col justify-center my-auto py-6">
 
           {/* Heading and subtitle */}
           <div className="mb-6 text-left">
@@ -893,12 +893,12 @@ export function AuthPage({
         </div>
       </div>
 
-      {/* Right Column: Clean Yoga Illustration Sanctuary Area (No floating rings/squares) */}
-      <div className="relative hidden lg:flex w-1/2 min-h-full items-center justify-center p-8 xl:p-14 bg-background overflow-hidden">
+      {/* Right Column: Clean Yoga Illustration Sanctuary Area - Fixed & Stationary */}
+      <div className="relative hidden lg:flex w-1/2 h-full items-center justify-center p-8 xl:p-14 bg-background overflow-hidden sticky top-0 select-none">
         <img
           src={authAvatar}
           alt="Yoga & Meditation Sanctuary"
-          className="relative z-10 w-full max-w-[480px] xl:max-w-[540px] max-h-[75vh] object-contain select-none drop-shadow-xl"
+          className="relative z-10 w-full max-w-[480px] xl:max-w-[540px] max-h-[75vh] object-contain select-none drop-shadow-xl pointer-events-none"
         />
       </div>
 
