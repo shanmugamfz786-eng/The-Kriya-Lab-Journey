@@ -150,6 +150,15 @@ export function findLocalUserById(id: string): LocalUserRecord | null {
   return users.find((u) => u.id === id) || null;
 }
 
+export function removeLocalUser(emailOrId: string): void {
+  const users = getLocalUsers();
+  const clean = emailOrId.trim().toLowerCase();
+  const filtered = users.filter((u) => u.email.toLowerCase() !== clean && u.id !== emailOrId);
+  if (filtered.length !== users.length) {
+    saveLocalUsers(filtered);
+  }
+}
+
 export function addOrUpdateLocalUser(user: LocalUserRecord): LocalUserRecord {
   const users = getLocalUsers();
   const cleanEmail = user.email.trim().toLowerCase();

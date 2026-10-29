@@ -2,6 +2,7 @@ import { describe, it, beforeEach, after } from "node:test";
 import assert from "node:assert/strict";
 import { register, detectCountry, preVerifyLocation } from "../src/controllers/auth.controller.js";
 import { getDbPool } from "../src/config/db.js";
+import { removeLocalUser } from "../src/config/local-users.js";
 import {
   defaultCountryVerifier,
 } from "../src/services/geo/country-verifier.service.js";
@@ -121,7 +122,54 @@ describe("Express Auth Registration Controller Integration", () => {
     assert.equal(res.sentJson?.code, "GEO_SERVICE_UNAVAILABLE");
   });
 
-  it("Successfully registers user when Selected === IP === GPS", async () => {
+  it("Asserts TiDB database insert is NEVER invoked when register() fails verification", async () => {
+    let dbInsertInvoked = false;
+    let anyQueryInvoked = false;
+
+    const pool = getDbPool();
+    const originalQuery = pool.query;
+
+    pool.query = async function (sql: any, ...args: any[]) {
+      anyQueryInvoked = true;
+      if (typeof sql === "string" && sql.toUpperCase().includes("INSERT INTO USERS")) {
+        dbInsertInvoked = true;
+      }
+      return originalQuery.apply(this, [sql, ...args]);
+    };
+
+    try {
+      mockIp.setDefaultCountry("US");
+      mockReverse.setDefaultCountry("US");
+
+      const req: any = {
+        body: {
+          full_name: "Blocked User",
+          email: "blocked.mismatch.test@example.com",
+          password: "password123",
+          country: "IN India",
+          gps: { latitude: 37.77, longitude: -122.41, accuracy: 10 },
+        },
+        ip: "8.8.8.8",
+        headers: {},
+        socket: { remoteAddress: "8.8.8.8" },
+      };
+      const res = createMockRes();
+
+      await register(req, res);
+
+      assert.equal(res.statusCode, 403);
+      assert.equal(res.sentJson?.success, false);
+      assert.equal(res.sentJson?.code, "COUNTRY_MISMATCH");
+
+      // Critical Security Assertions:
+      assert.equal(dbInsertInvoked, false, "TiDB INSERT INTO users must NEVER be invoked on verification failure!");
+      assert.equal(anyQueryInvoked, false, "Zero TiDB database queries should be executed when verification fails!");
+    } finally {
+      pool.query = originalQuery;
+    }
+  });
+
+  it("Successfully registers user when Selected === IP === GPS (India valid test with cleanup)", async () => {
     mockIp.setDefaultCountry("IN");
     mockReverse.setDefaultCountry("IN");
 
@@ -140,12 +188,17 @@ describe("Express Auth Registration Controller Integration", () => {
     };
     const res = createMockRes();
 
-    await register(req, res);
+    try {
+      await register(req, res);
 
-    assert.equal(res.statusCode, 201);
-    assert.equal(res.sentJson?.success, true);
-    assert.ok(res.sentJson?.token);
-    assert.equal(res.sentJson?.user?.email, uniqueEmail);
+      assert.equal(res.statusCode, 201);
+      assert.equal(res.sentJson?.success, true);
+      assert.ok(res.sentJson?.token);
+      assert.equal(res.sentJson?.user?.email, uniqueEmail);
+    } finally {
+      // Clean up test account from local store so no test clutter remains
+      removeLocalUser(uniqueEmail);
+    }
   });
 
   it("detectCountry endpoint correctly returns detected IP country code and display name", async () => {
