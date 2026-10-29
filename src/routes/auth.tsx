@@ -427,10 +427,10 @@ export function AuthPage({
   }
 
   return (
-    <div className="relative w-full min-h-screen lg:h-screen lg:max-h-screen flex flex-col lg:flex-row bg-background lg:overflow-hidden">
+    <div className="relative w-full min-h-screen bg-background flex flex-col lg:flex-row">
 
-      {/* Left Column: Brand Velvet-Deep & Gold Form Sanctuary (Independent Scroll) */}
-      <div className="relative w-full lg:w-1/2 min-h-screen lg:min-h-0 lg:h-screen flex flex-col items-center bg-velvet-deep text-white px-6 py-8 sm:px-10 md:px-14 lg:px-16 z-10 overflow-y-auto">
+      {/* Left Column: Brand Velvet-Deep & Gold Form Sanctuary (Scrolls naturally) */}
+      <div className="relative w-full lg:w-1/2 min-h-screen flex flex-col items-center bg-velvet-deep text-white px-6 py-10 sm:px-10 md:px-14 lg:px-16 z-10 shadow-2xl">
 
         {/* Ambient subtle glow */}
         <div className="pointer-events-none absolute -top-20 -left-20 w-80 h-80 bg-gold/10 rounded-full blur-3xl" />
@@ -893,12 +893,12 @@ export function AuthPage({
         </div>
       </div>
 
-      {/* Right Column: Clean Yoga Illustration Sanctuary Area (Fixed Viewport, No Scroll) */}
-      <div className="relative hidden lg:flex w-1/2 h-screen max-h-screen items-center justify-center p-8 xl:p-14 bg-background overflow-hidden lg:sticky lg:top-0">
+      {/* Right Column: Clean Yoga Illustration Sanctuary Area (100% Fixed Viewport, Zero Scroll) */}
+      <div className="hidden lg:flex fixed top-0 right-0 w-1/2 h-screen items-center justify-center p-8 xl:p-14 bg-background overflow-hidden z-0 pointer-events-none select-none">
         <img
           src={authAvatar}
           alt="Yoga & Meditation Sanctuary"
-          className="relative z-10 w-full max-w-[480px] xl:max-w-[540px] max-h-[75vh] object-contain select-none drop-shadow-xl"
+          className="relative z-10 w-full max-w-[480px] xl:max-w-[540px] max-h-[75vh] object-contain select-none drop-shadow-xl pointer-events-auto"
         />
       </div>
 
