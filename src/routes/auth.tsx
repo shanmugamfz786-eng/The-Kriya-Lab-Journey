@@ -574,63 +574,62 @@ export function AuthPage({
                   </div>
                 </div>
 
-                {/* Location Verification Card */}
+                {/* Location Verification - Simple & Compact */}
                 <div className={cn(
-                  "rounded-2xl border p-4 sm:p-5 space-y-3 text-left transition-all",
+                  "rounded-2xl border px-4 py-3 text-left transition-all",
                   geoStatus === "mismatch"
                     ? "border-red-500/40 bg-red-950/20"
                     : "border-white/15 bg-white/5"
                 )}>
-                  <div className="flex items-start gap-3">
-                    <div className="size-8 rounded-full border border-blue-500/30 bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 mt-0.5">
-                      <MapPin className="size-4" />
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="size-8 rounded-full border border-blue-500/30 bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0">
+                        <MapPin className="size-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-semibold text-xs text-white">
+                          Location Verification
+                        </p>
+                        <p className="text-[11px] text-white/60 truncate">
+                          IP and device location verified on signup
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-semibold text-sm text-white">
-                        Location Verification
-                      </p>
-                      <p className="text-xs text-white/70">
-                        Verify your country using IP and device location
-                      </p>
-                    </div>
+
+                    <button
+                      type="button"
+                      disabled={geoLoading}
+                      onClick={async () => {
+                        try {
+                          await acquireGpsCoordinates();
+                        } catch {}
+                      }}
+                      className={cn(
+                        "shrink-0 px-3.5 py-1.5 rounded-full border text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5",
+                        gpsCoords
+                          ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-300"
+                          : "border-white/20 bg-white/10 hover:bg-white/15 text-white"
+                      )}
+                    >
+                      {geoLoading ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
+                          <span>Checking...</span>
+                        </>
+                      ) : gpsCoords ? (
+                        <>
+                          <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>Verified</span>
+                        </>
+                      ) : (
+                        <span>Verify Location</span>
+                      )}
+                    </button>
                   </div>
 
-                  <p className="text-xs text-white/80 leading-relaxed">
-                    Location permission is needed to verify your registration country.
-                  </p>
-
-                  <button
-                    type="button"
-                    disabled={geoLoading}
-                    onClick={async () => {
-                      try {
-                        await acquireGpsCoordinates();
-                      } catch {}
-                    }}
-                    className="w-full rounded-full border border-white/20 bg-transparent hover:bg-white/5 py-2.5 px-4 text-xs font-semibold tracking-wide text-white transition-all cursor-pointer flex items-center justify-center gap-2"
-                  >
-                    {geoLoading ? (
-                      <>
-                        <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
-                        <span>Acquiring location...</span>
-                      </>
-                    ) : gpsCoords ? (
-                      <>
-                        <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
-                        <span>Location Permission Granted</span>
-                      </>
-                    ) : (
-                      <span>Simulate Location Permission</span>
-                    )}
-                  </button>
-
-                  <p className="text-[0.7rem] text-white/50 leading-relaxed">
-                    Design preview only — this button does not access real GPS or verify IP.
-                  </p>
-
                   {geoError && (
-                    <div className="p-2.5 rounded-xl bg-red-950/40 border border-red-500/30 text-[11px] text-red-200 flex items-start gap-2">
-                      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-400" />
+                    <div className="mt-2.5 p-2 rounded-xl bg-red-950/40 border border-red-500/30 text-[11px] text-red-200 flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
                       <span>{geoError}</span>
                     </div>
                   )}
