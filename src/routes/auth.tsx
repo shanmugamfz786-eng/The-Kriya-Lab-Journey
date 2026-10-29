@@ -60,7 +60,7 @@ export function AuthPage({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [country, setCountry] = useState("IN India");
+  const [country, setCountry] = useState("");
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [gpsCoords, setGpsCoords] = useState<{ latitude: number; longitude: number; accuracy?: number } | null>(null);
   const [geoLoading, setGeoLoading] = useState(false);
@@ -81,46 +81,6 @@ export function AuthPage({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-
-  // Initialize country dropdown from server-side IP detection on signup mode
-  useEffect(() => {
-    let isCancelled = false;
-    if (mode === "signup") {
-      fetch(`${API_URL}/api/auth/detect-country`)
-        .then((res) => (res.ok ? res.json() : null))
-        .then((data) => {
-          if (isCancelled || !data?.success) return;
-          const detected = (data.countryCode || "").toUpperCase();
-          const countryOptions = [
-            "IN India",
-            "US United States",
-            "SG Singapore",
-            "MY Malaysia",
-            "AE United Arab Emirates",
-            "GB United Kingdom",
-            "AU Australia",
-            "CA Canada",
-            "LK Sri Lanka",
-            "DE Germany",
-            "FR France",
-          ];
-          const matched = countryOptions.find((opt) => opt.startsWith(detected + " "));
-          if (matched) {
-            setCountry(matched);
-          } else {
-            setCountry("IN India");
-          }
-        })
-        .catch(() => {
-          if (!isCancelled) {
-            setCountry("IN India");
-          }
-        });
-    }
-    return () => {
-      isCancelled = true;
-    };
-  }, [mode, API_URL]);
 
   useEffect(() => {
     if (isAuthenticated && user && !busy) {
@@ -246,7 +206,7 @@ export function AuthPage({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          country: targetCountry,
+          country: targetCountry || undefined,
           gps: coords,
         }),
       });
@@ -404,7 +364,7 @@ export function AuthPage({
         }
 
         const registeredUser = await registerUser(name, email, password, {
-          country,
+          country: country || undefined,
           gps: currentCoords || undefined,
         });
 
@@ -588,35 +548,6 @@ export function AuthPage({
                   </div>
                 </div>
 
-                {/* Country / Region - Auto-detected & Locked (User cannot manually choose) */}
-                <div className="space-y-1.5 text-left">
-                  <div className="flex items-center justify-between">
-                    <label className="block text-xs font-semibold text-white/90">
-                      Country / Region
-                    </label>
-                    <span className="text-[10px] font-medium text-emerald-300 flex items-center gap-1 bg-emerald-500/15 px-2.5 py-0.5 rounded-full border border-emerald-500/30">
-                      <CheckCircle className="size-3 text-emerald-400" />
-                      {geoStatus === "verified" ? "Verified" : "Auto-detected"}
-                    </span>
-                  </div>
-                  <div className="relative">
-                    <input
-                      id="auth-country"
-                      name="country"
-                      type="text"
-                      readOnly
-                      value={country}
-                      className="w-full px-4 py-3 rounded-2xl bg-white/10 border border-white/20 text-white text-sm font-medium focus:outline-none cursor-default select-none shadow-inner"
-                    />
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-emerald-400">
-                      <MapPin className="size-4" />
-                    </div>
-                  </div>
-                  <p className="text-[11px] text-white/50">
-                    Location is automatically verified and locked to your device region
-                  </p>
-                </div>
-
                 {/* Location Verification - Simple & Compact */}
                 <div className={cn(
                   "rounded-2xl border px-4 py-3 text-left transition-all",
@@ -642,7 +573,7 @@ export function AuthPage({
                         </p>
                         <p className="text-[11px] text-white/60 truncate">
                           {geoStatus === "verified"
-                            ? `✓ Location verified: ${country}`
+                            ? `✓ Location verified`
                             : "IP and device location verified on signup"}
                         </p>
                       </div>
@@ -685,6 +616,26 @@ export function AuthPage({
                       <span>{geoError}</span>
                     </div>
                   )}
+                </div>
+
+                {/* Country / Region - Located under Location Verification, Blank initially */}
+                <div className="space-y-1.5 text-left">
+                  <label className="block text-xs font-semibold text-white/90">
+                    Country / Region
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="auth-country"
+                      name="country"
+                      type="text"
+                      readOnly
+                      value={country}
+                      className="w-full px-4 py-3 rounded-2xl bg-white/10 border border-white/20 text-white text-sm font-medium focus:outline-none cursor-default select-none shadow-inner"
+                    />
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-white/40">
+                      <MapPin className="size-4" />
+                    </div>
+                  </div>
                 </div>
 
                 {/* Agree to Terms Checkbox */}

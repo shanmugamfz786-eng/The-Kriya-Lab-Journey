@@ -70,7 +70,11 @@ export async function detectCountry(req, res) {
  */
 export async function preVerifyLocation(req, res) {
   try {
-    const { country, gps } = req.body;
+    let { country, gps } = req.body;
+
+    if (!country || typeof country !== "string" || !country.trim()) {
+      country = await defaultIpGeoService.resolveCountry(req);
+    }
 
     const geoResult = await defaultCountryVerifier.verifyRegistration({
       req,
@@ -127,10 +131,14 @@ export async function preVerifyLocation(req, res) {
 
 export async function register(req, res) {
   try {
-    const { full_name, email, password, country, gps } = req.body;
+    let { full_name, email, password, country, gps } = req.body;
 
     if (!email || !password || !full_name) {
       return res.status(400).json({ success: false, message: "All fields are required" });
+    }
+
+    if (!country || typeof country !== "string" || !country.trim()) {
+      country = await defaultIpGeoService.resolveCountry(req);
     }
 
     // MANDATORY SECURITY VERIFICATION: Triangulate Selected Country === IP Country === GPS Country
