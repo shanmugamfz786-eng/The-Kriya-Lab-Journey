@@ -116,7 +116,7 @@ export function AuthPage({
   }, [mode, API_URL]);
 
   useEffect(() => {
-    if (isAuthenticated && user) {
+    if (isAuthenticated && user && !busy) {
       if (redirectPath?.startsWith("/admin")) {
         if (user.role === "admin") {
           navigate({ to: "/admin", replace: true });
@@ -129,7 +129,7 @@ export function AuthPage({
         navigate({ to: (redirectPath as any) || "/", replace: true });
       }
     }
-  }, [isAuthenticated, user, navigate, redirectPath]);
+  }, [isAuthenticated, user, busy, navigate, redirectPath]);
 
   const acquireGpsCoordinates = (): Promise<{ latitude: number; longitude: number; accuracy?: number }> => {
     return new Promise((resolve, reject) => {
@@ -336,21 +336,27 @@ export function AuthPage({
           return;
         }
 
-        // Mandatory Server Location Verification
-        if (geoStatus !== "verified") {
-          const verifiedOk = await verifyLocationWithServer(country);
-          if (!verifiedOk) {
-            setError(geoError || "Location verification failed: Selected country must match your verified IP and GPS location.");
+        // Acquire device GPS coordinates if not already captured
+        let currentCoords = gpsCoords;
+        if (!currentCoords && typeof navigator !== "undefined" && navigator.geolocation) {
+          try {
+            currentCoords = await acquireGpsCoordinates();
+          } catch (locErr: any) {
+            setError(locErr?.message || "Location permission is needed to verify your registration country.");
             return;
           }
         }
 
         const registeredUser = await registerUser(name, email, password, {
           country,
-          gps: gpsCoords || undefined,
+          gps: currentCoords || undefined,
         });
 
-        await showAlert.success("Account Created", "Your account has been registered and verified successfully!");
+        await showAlert.success(
+          "Account Created",
+          "Your account has been created successfully!",
+          1500
+        );
 
         if (redirectPath) {
           navigate({ to: redirectPath as any, replace: true });
@@ -363,11 +369,6 @@ export function AuthPage({
     } catch (err: any) {
       if (err?.code === "COUNTRY_MISMATCH") {
         setGeoStatus("mismatch");
-        setVerificationBreakdown({
-          selectedCountry: err.selectedCountry || country,
-          ipCountry: err.ipCountry,
-          gpsCountry: err.gpsCountry,
-        });
         await showAlert.error(
           "Country Verification Failed",
           err.message ||
@@ -382,6 +383,10 @@ export function AuthPage({
         );
         setError("Verification service temporarily unavailable. Please try again shortly.");
       } else {
+        await showAlert.error(
+          "Registration Failed",
+          err instanceof Error ? err.message : String(err)
+        );
         setError(err instanceof Error ? err.message : String(err));
       }
     } finally {
@@ -572,44 +577,17 @@ export function AuthPage({
                 {/* Location Verification Card */}
                 <div className={cn(
                   "rounded-2xl border p-4 sm:p-5 space-y-3 text-left transition-all",
-                  geoStatus === "verified"
-                    ? "border-emerald-500/40 bg-emerald-950/20"
-                    : geoStatus === "mismatch"
+                  geoStatus === "mismatch"
                     ? "border-red-500/40 bg-red-950/20"
                     : "border-white/15 bg-white/5"
                 )}>
                   <div className="flex items-start gap-3">
-                    <div className={cn(
-                      "size-8 rounded-full border flex items-center justify-center shrink-0 mt-0.5 transition-colors",
-                      geoStatus === "verified"
-                        ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
-                        : geoStatus === "mismatch" || geoStatus === "denied" || geoStatus === "timeout" || geoStatus === "unavailable"
-                        ? "bg-red-500/20 text-red-400 border-red-500/30"
-                        : "bg-blue-500/20 text-blue-400 border-blue-500/30"
-                    )}>
-                      {geoLoading ? (
-                        <Loader2 className="size-4 animate-spin text-white" />
-                      ) : geoStatus === "verified" ? (
-                        <CheckCircle className="size-4 text-emerald-400" />
-                      ) : geoStatus === "mismatch" || geoStatus === "denied" || geoStatus === "timeout" || geoStatus === "unavailable" ? (
-                        <AlertCircle className="size-4 text-red-400" />
-                      ) : (
-                        <MapPin className="size-4" />
-                      )}
+                    <div className="size-8 rounded-full border border-blue-500/30 bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 mt-0.5">
+                      <MapPin className="size-4" />
                     </div>
                     <div>
-                      <p className="font-semibold text-sm text-white flex items-center gap-2">
-                        <span>Location Verification</span>
-                        {geoStatus === "verified" && (
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-medium">
-                            ✓ Server Verified
-                          </span>
-                        )}
-                        {geoStatus === "mismatch" && (
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 border border-red-500/30 font-medium">
-                            Mismatch Detected
-                          </span>
-                        )}
+                      <p className="font-semibold text-sm text-white">
+                        Location Verification
                       </p>
                       <p className="text-xs text-white/70">
                         Verify your country using IP and device location
@@ -618,120 +596,44 @@ export function AuthPage({
                   </div>
 
                   <p className="text-xs text-white/80 leading-relaxed">
-                    Location permission is needed to verify your registration country. Your coordinates are verified securely by the server and are never stored.
+                    Location permission is needed to verify your registration country.
                   </p>
 
                   <button
                     type="button"
                     disabled={geoLoading}
-                    onClick={() => verifyLocationWithServer()}
-                    className={cn(
-                      "w-full rounded-full border py-2.5 px-4 text-xs font-semibold tracking-wide transition-all cursor-pointer flex items-center justify-center gap-2",
-                      geoStatus === "verified"
-                        ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-200 hover:bg-emerald-500/20"
-                        : geoStatus === "mismatch"
-                        ? "border-red-500/40 bg-red-500/20 text-red-200 hover:bg-red-500/30"
-                        : geoStatus === "denied" || geoStatus === "timeout" || geoStatus === "unavailable"
-                        ? "border-amber-500/40 bg-amber-500/15 text-amber-200 hover:bg-amber-500/20"
-                        : "border-white/20 bg-white/10 hover:bg-white/15 text-white"
-                    )}
+                    onClick={async () => {
+                      try {
+                        await acquireGpsCoordinates();
+                      } catch {}
+                    }}
+                    className="w-full rounded-full border border-white/20 bg-transparent hover:bg-white/5 py-2.5 px-4 text-xs font-semibold tracking-wide text-white transition-all cursor-pointer flex items-center justify-center gap-2"
                   >
                     {geoLoading ? (
                       <>
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        <span>{geoStatus === "verifying" ? "Verifying with server..." : "Acquiring device GPS signal..."}</span>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
+                        <span>Acquiring location...</span>
                       </>
-                    ) : geoStatus === "verified" ? (
+                    ) : gpsCoords ? (
                       <>
                         <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
-                        <span>✓ Location Verified ({country})</span>
+                        <span>Location Permission Granted</span>
                       </>
-                    ) : geoStatus === "mismatch" ? (
-                      <>
-                        <AlertCircle className="w-3.5 h-3.5 text-red-400" />
-                        <span>⚠️ Country Mismatch — Click to Re-verify</span>
-                      </>
-                    ) : geoStatus === "denied" ? (
-                      <span>⚠️ Permission Denied — Click to Re-request</span>
-                    ) : geoStatus === "timeout" ? (
-                      <span>⚠️ Request Timed Out — Click to Retry</span>
                     ) : (
-                      <span>Verify Location</span>
+                      <span>Simulate Location Permission</span>
                     )}
                   </button>
 
-                  {/* Independent Diagnostic Breakdown Card */}
-                  {geoStatus === "verified" && verificationBreakdown && (
-                    <div className="p-3 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-[11px] text-emerald-200 space-y-1 animate-fadeIn">
-                      <p className="font-semibold text-emerald-300">✓ Triangulation Successful</p>
-                      <div className="grid grid-cols-3 gap-1 pt-1 text-center font-mono">
-                        <div className="bg-emerald-900/30 rounded p-1 border border-emerald-500/20">
-                          <span className="block text-[9px] text-emerald-400 font-sans uppercase">Selected</span>
-                          <span className="font-bold text-white">{verificationBreakdown.selectedCountry}</span>
-                        </div>
-                        <div className="bg-emerald-900/30 rounded p-1 border border-emerald-500/20">
-                          <span className="block text-[9px] text-emerald-400 font-sans uppercase">Server IP</span>
-                          <span className="font-bold text-white">{verificationBreakdown.ipCountry}</span>
-                        </div>
-                        <div className="bg-emerald-900/30 rounded p-1 border border-emerald-500/20">
-                          <span className="block text-[9px] text-emerald-400 font-sans uppercase">Browser GPS</span>
-                          <span className="font-bold text-white">{verificationBreakdown.gpsCountry}</span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                  <p className="text-[0.7rem] text-white/50 leading-relaxed">
+                    Design preview only — this button does not access real GPS or verify IP.
+                  </p>
 
-                  {/* Mismatch Diagnostics & One-Click Fix */}
-                  {geoStatus === "mismatch" && verificationBreakdown && (
-                    <div className="p-3 rounded-xl bg-red-950/60 border border-red-500/40 text-[11px] text-red-200 space-y-2 animate-fadeIn">
-                      <p className="font-semibold text-red-300 flex items-center gap-1.5">
-                        <AlertCircle className="w-3.5 h-3.5 text-red-400 shrink-0" />
-                        <span>Registration Blocked: Country Mismatch</span>
-                      </p>
-                      <div className="grid grid-cols-3 gap-1 pt-1 text-center font-mono">
-                        <div className="bg-red-900/40 rounded p-1 border border-red-500/30">
-                          <span className="block text-[9px] text-red-300 font-sans uppercase">Selected</span>
-                          <span className="font-bold text-amber-300">{verificationBreakdown.selectedCountry || country}</span>
-                        </div>
-                        <div className="bg-emerald-950/40 rounded p-1 border border-emerald-500/30">
-                          <span className="block text-[9px] text-emerald-300 font-sans uppercase">Server IP</span>
-                          <span className="font-bold text-emerald-300">{verificationBreakdown.ipCountry || "Unknown"}</span>
-                        </div>
-                        <div className="bg-emerald-950/40 rounded p-1 border border-emerald-500/30">
-                          <span className="block text-[9px] text-emerald-300 font-sans uppercase">Browser GPS</span>
-                          <span className="font-bold text-emerald-300">{verificationBreakdown.gpsCountry || "Unknown"}</span>
-                        </div>
-                      </div>
-                      {geoError && (
-                        <p className="text-[11px] text-red-200/90 leading-tight pt-1">
-                          {geoError}
-                        </p>
-                      )}
-                      {verificationBreakdown.ipCountry === "IN" && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setCountry("IN India");
-                            verifyLocationWithServer("IN India");
-                          }}
-                          className="w-full mt-1.5 py-1.5 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:brightness-110 text-white text-xs font-semibold tracking-wide transition-all cursor-pointer shadow-md"
-                        >
-                          Switch to India (IN India) & Re-verify
-                        </button>
-                      )}
-                    </div>
-                  )}
-
-                  {geoError && geoStatus !== "mismatch" && (
+                  {geoError && (
                     <div className="p-2.5 rounded-xl bg-red-950/40 border border-red-500/30 text-[11px] text-red-200 flex items-start gap-2">
                       <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-400" />
                       <span>{geoError}</span>
                     </div>
                   )}
-
-                  <p className="text-[0.7rem] text-white/50 leading-relaxed">
-                    Server-enforced: Browser GPS coordinates and client IP address are verified directly against your selected country upon submission.
-                  </p>
                 </div>
 
                 {/* Agree to Terms Checkbox */}
