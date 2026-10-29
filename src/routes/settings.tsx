@@ -8,7 +8,6 @@ import {
   Check,
   Globe,
   Bell,
-  Sparkles,
   Save,
   Camera,
   Upload,
@@ -429,12 +428,9 @@ export function SettingsPage() {
                 {/* Announcements */}
                 <div className="flex items-center justify-between p-4 rounded-xl border border-border bg-background">
                   <div className="pr-4">
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="size-4 text-gold" />
-                      <p className="text-sm font-semibold text-foreground">
-                        {t(bi("Initiation & Retreat Updates", "தீட்சை & நிகழ்வு அறிவிப்புகள்"))}
-                      </p>
-                    </div>
+                    <p className="text-sm font-semibold text-foreground">
+                      {t(bi("Initiation & Retreat Updates", "தீட்சை & நிகழ்வு அறிவிப்புகள்"))}
+                    </p>
                     <p className="text-xs text-muted-foreground mt-1">
                       {t(bi("Get notified when new initiation batches, retreats, and live workshops are scheduled.", "புதிய தீட்சை வகுப்புகள் மற்றும் ஆன்லைன் பயிலரங்குகள் பற்றிய அறிவிப்புகளைப் பெறுங்கள்."))}
                     </p>
