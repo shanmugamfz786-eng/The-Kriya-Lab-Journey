@@ -137,7 +137,16 @@ export function AuthPage({
         const msg = "Location services are not supported by your browser. A GPS-enabled browser is required for country verification.";
         setGeoStatus("unavailable");
         setGeoError(msg);
+        setGeoLoading(false);
         reject(new Error(msg));
+        return;
+      }
+
+      // If fresh coordinates already exist in state, return immediately
+      if (gpsCoords) {
+        setGeoLoading(false);
+        setGeoStatus("ready");
+        resolve(gpsCoords);
         return;
       }
 
@@ -154,28 +163,51 @@ export function AuthPage({
           };
           // Security priority: Never log exact coordinates to browser console or telemetry
           setGpsCoords(coords);
+          setGeoStatus("ready");
+          setGeoLoading(false);
           resolve(coords);
         },
         (err) => {
-          setGeoLoading(false);
-          let msg = "Unable to retrieve device location.";
-          if (err.code === 1) {
-            setGeoStatus("denied");
-            msg = "Location permission denied. Please allow location permissions in your browser to verify your registration country.";
-          } else if (err.code === 2) {
-            setGeoStatus("unavailable");
-            msg = "Device location is currently unavailable. Please verify your device GPS/location settings.";
-          } else if (err.code === 3) {
-            setGeoStatus("timeout");
-            msg = "Location request timed out. Please click below to try again.";
-          }
-          setGeoError(msg);
-          reject(new Error(msg));
+          // If high accuracy / initial attempt fails or times out, try standard accuracy fallback
+          navigator.geolocation.getCurrentPosition(
+            (fallbackPos) => {
+              const fallbackCoords = {
+                latitude: fallbackPos.coords.latitude,
+                longitude: fallbackPos.coords.longitude,
+                accuracy: fallbackPos.coords.accuracy,
+              };
+              setGpsCoords(fallbackCoords);
+              setGeoStatus("ready");
+              setGeoLoading(false);
+              resolve(fallbackCoords);
+            },
+            (finalErr) => {
+              setGeoLoading(false);
+              let msg = "Unable to retrieve device location.";
+              if (finalErr.code === 1) {
+                setGeoStatus("denied");
+                msg = "Location permission denied. Please allow location permissions in your browser to verify your registration country.";
+              } else if (finalErr.code === 2) {
+                setGeoStatus("unavailable");
+                msg = "Device location is currently unavailable. Please verify your device GPS/location settings.";
+              } else if (finalErr.code === 3) {
+                setGeoStatus("timeout");
+                msg = "Location request timed out. Please click below to try again.";
+              }
+              setGeoError(msg);
+              reject(new Error(msg));
+            },
+            {
+              enableHighAccuracy: false,
+              timeout: 4000,
+              maximumAge: 300000,
+            }
+          );
         },
         {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0,
+          enableHighAccuracy: false, // Super-fast Wi-Fi/IP resolution on desktop & mobile (< 200ms)
+          timeout: 4000,
+          maximumAge: 300000, // 5 min cache for instantaneous response
         }
       );
     });
