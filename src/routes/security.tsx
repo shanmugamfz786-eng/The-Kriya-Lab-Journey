@@ -194,7 +194,20 @@ export function SecurityPage() {
                 </div>
               )}
 
-              <form onSubmit={handleChangePassword} className="space-y-5">
+              <form onSubmit={handleChangePassword} className="space-y-5" autoComplete="on">
+                {/* Hidden username input for browser password managers to prevent asking 'Select which login to update' */}
+                <input
+                  type="email"
+                  name="username"
+                  id="security-username"
+                  autoComplete="username"
+                  value={user.email}
+                  readOnly
+                  tabIndex={-1}
+                  aria-hidden="true"
+                  className="sr-only absolute pointer-events-none opacity-0 h-0 w-0"
+                />
+
                 {/* Active Gmail for this Password Change */}
                 <div className="p-3.5 rounded-xl border border-gold/30 bg-gold/5 flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2.5 min-w-0">
@@ -220,6 +233,9 @@ export function SecurityPage() {
                   </label>
                   <div className="relative">
                     <input
+                      id="current-password"
+                      name="current-password"
+                      autoComplete="current-password"
                       type={showCurrentPass ? "text" : "password"}
                       value={currentPassword}
                       onChange={(e) => setCurrentPassword(e.target.value)}
@@ -246,6 +262,9 @@ export function SecurityPage() {
                     </label>
                     <div className="relative">
                       <input
+                        id="new-password"
+                        name="new-password"
+                        autoComplete="new-password"
                         type={showNewPass ? "text" : "password"}
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
@@ -271,6 +290,9 @@ export function SecurityPage() {
                     </label>
                     <div className="relative">
                       <input
+                        id="confirm-password"
+                        name="confirm-password"
+                        autoComplete="new-password"
                         type={showConfirmPass ? "text" : "password"}
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
