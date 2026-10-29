@@ -43,6 +43,8 @@ export function AuthPage({
   const searchMode = (searchObj?.get("mode") as AuthMode) || undefined;
   const redirectPath = propRedirect || searchObj?.get("redirect") || undefined;
 
+  const API_URL = (import.meta.env["VITE_API_URL"] as string | undefined) || "http://localhost:5000";
+
   const { t } = useLang();
   const navigate = useNavigate();
   const { login, register: registerUser, isAuthenticated, user } = useAuth();
@@ -55,8 +57,15 @@ export function AuthPage({
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [gpsCoords, setGpsCoords] = useState<{ latitude: number; longitude: number; accuracy?: number } | null>(null);
   const [geoLoading, setGeoLoading] = useState(false);
-  const [geoStatus, setGeoStatus] = useState<"idle" | "acquiring" | "ready" | "denied" | "unavailable" | "timeout">("idle");
+  const [geoStatus, setGeoStatus] = useState<
+    "idle" | "acquiring" | "verifying" | "verified" | "mismatch" | "denied" | "unavailable" | "timeout" | "error"
+  >("idle");
   const [geoError, setGeoError] = useState<string | null>(null);
+  const [verificationBreakdown, setVerificationBreakdown] = useState<{
+    selectedCountry?: string;
+    ipCountry?: string;
+    gpsCountry?: string;
+  } | null>(null);
   const [forgotNewPassword, setForgotNewPassword] = useState("");
   const [forgotConfirmPassword, setForgotConfirmPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(true);
@@ -65,6 +74,46 @@ export function AuthPage({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+
+  // Initialize country dropdown from server-side IP detection on signup mode
+  useEffect(() => {
+    let isCancelled = false;
+    if (mode === "signup") {
+      fetch(`${API_URL}/api/auth/detect-country`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (isCancelled || !data?.success) return;
+          const detected = (data.countryCode || "").toUpperCase();
+          const countryOptions = [
+            "IN India",
+            "US United States",
+            "SG Singapore",
+            "MY Malaysia",
+            "AE United Arab Emirates",
+            "GB United Kingdom",
+            "AU Australia",
+            "CA Canada",
+            "LK Sri Lanka",
+            "DE Germany",
+            "FR France",
+          ];
+          const matched = countryOptions.find((opt) => opt.startsWith(detected + " "));
+          if (matched) {
+            setCountry(matched);
+          } else {
+            setCountry("IN India");
+          }
+        })
+        .catch(() => {
+          if (!isCancelled) {
+            setCountry("IN India");
+          }
+        });
+    }
+    return () => {
+      isCancelled = true;
+    };
+  }, [mode, API_URL]);
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -82,7 +131,7 @@ export function AuthPage({
     }
   }, [isAuthenticated, user, navigate, redirectPath]);
 
-  const acquireLocation = (): Promise<{ latitude: number; longitude: number; accuracy?: number }> => {
+  const acquireGpsCoordinates = (): Promise<{ latitude: number; longitude: number; accuracy?: number }> => {
     return new Promise((resolve, reject) => {
       if (typeof window === "undefined" || !navigator.geolocation) {
         const msg = "Location services are not supported by your browser. A GPS-enabled browser is required for country verification.";
@@ -105,9 +154,6 @@ export function AuthPage({
           };
           // Security priority: Never log exact coordinates to browser console or telemetry
           setGpsCoords(coords);
-          setGeoStatus("ready");
-          setGeoLoading(false);
-          setGeoError(null);
           resolve(coords);
         },
         (err) => {
@@ -133,6 +179,83 @@ export function AuthPage({
         }
       );
     });
+  };
+
+  /**
+   * Performs real server-side verification: Selected Country === IP Country === GPS Country.
+   * Never sets "verified" status unless all three genuine server checks pass.
+   */
+  const verifyLocationWithServer = async (targetCountry: string = country): Promise<boolean> => {
+    setGeoLoading(true);
+    setGeoError(null);
+    setVerificationBreakdown(null);
+
+    let coords = gpsCoords;
+    if (!coords) {
+      try {
+        coords = await acquireGpsCoordinates();
+      } catch {
+        setGeoLoading(false);
+        return false;
+      }
+    }
+
+    setGeoStatus("verifying");
+
+    try {
+      const res = await fetch(`${API_URL}/api/auth/verify-location`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          country: targetCountry,
+          gps: coords,
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      setGeoLoading(false);
+
+      if (res.ok && data.verified) {
+        setGeoStatus("verified");
+        setVerificationBreakdown({
+          selectedCountry: data.selectedCountry,
+          ipCountry: data.ipCountry,
+          gpsCountry: data.gpsCountry,
+        });
+        setGeoError(null);
+        return true;
+      }
+
+      if (res.status === 403 || data.code === "COUNTRY_MISMATCH") {
+        setGeoStatus("mismatch");
+        setVerificationBreakdown({
+          selectedCountry: data.selectedCountry,
+          ipCountry: data.ipCountry,
+          gpsCountry: data.gpsCountry,
+        });
+        const msg =
+          data.message ||
+          `Country mismatch: Selected (${data.selectedCountry || targetCountry}) does not match your IP (${data.ipCountry}) and GPS (${data.gpsCountry}).`;
+        setGeoError(msg);
+        return false;
+      }
+
+      if (res.status === 503 || data.code === "GEO_SERVICE_UNAVAILABLE") {
+        setGeoStatus("error");
+        setGeoError(data.message || "Location verification service is temporarily unavailable. Please try again.");
+        return false;
+      }
+
+      setGeoStatus("error");
+      setGeoError(data.message || "Location verification failed.");
+      return false;
+    } catch {
+      setGeoLoading(false);
+      setGeoStatus("error");
+      setGeoError("Failed to connect to location verification server. Please verify your connection.");
+      return false;
+    }
   };
 
   async function onSubmit(e: React.FormEvent) {
@@ -213,20 +336,18 @@ export function AuthPage({
           return;
         }
 
-        // Require GPS coordinates for country verification
-        let currentCoords = gpsCoords;
-        if (!currentCoords) {
-          try {
-            currentCoords = await acquireLocation();
-          } catch (locErr: any) {
-            setError(locErr.message || "Device location verification is required to complete registration.");
+        // Mandatory Server Location Verification
+        if (geoStatus !== "verified") {
+          const verifiedOk = await verifyLocationWithServer(country);
+          if (!verifiedOk) {
+            setError(geoError || "Location verification failed: Selected country must match your verified IP and GPS location.");
             return;
           }
         }
 
         const registeredUser = await registerUser(name, email, password, {
           country,
-          gps: currentCoords,
+          gps: gpsCoords || undefined,
         });
 
         await showAlert.success("Account Created", "Your account has been registered and verified successfully!");
@@ -241,12 +362,20 @@ export function AuthPage({
       }
     } catch (err: any) {
       if (err?.code === "COUNTRY_MISMATCH") {
+        setGeoStatus("mismatch");
+        setVerificationBreakdown({
+          selectedCountry: err.selectedCountry || country,
+          ipCountry: err.ipCountry,
+          gpsCountry: err.gpsCountry,
+        });
         await showAlert.error(
           "Country Verification Failed",
-          "The country selected in the registration form does not match your verified IP location and GPS coordinates. Please select your actual country."
+          err.message ||
+            `Selected country does not match your verified IP country (${err.ipCountry}) and GPS country (${err.gpsCountry}).`
         );
-        setError("Country verification failed: Selected country does not match your physical location.");
+        setError(err.message || "Registration blocked: Selected country does not match your verified location.");
       } else if (err?.code === "GEO_SERVICE_UNAVAILABLE") {
+        setGeoStatus("error");
         await showAlert.error(
           "Verification Service Unavailable",
           "Location verification service is temporarily unavailable. Please verify your connection and try again."
@@ -406,8 +535,17 @@ export function AuthPage({
                   <div className="relative">
                     <select
                       id="auth-country"
+                      name="country"
+                      autoComplete="off"
                       value={country}
-                      onChange={(e) => setCountry(e.target.value)}
+                      onChange={(e) => {
+                        const newCountry = e.target.value;
+                        setCountry(newCountry);
+                        // Reset verification status when user changes country manually
+                        setGeoStatus("idle");
+                        setGeoError(null);
+                        setVerificationBreakdown(null);
+                      }}
                       className="w-full px-4 py-3 rounded-2xl bg-white/10 hover:bg-white/15 focus:bg-white/20 border border-white/20 focus:border-white/50 text-white text-sm focus:outline-none transition-all appearance-none cursor-pointer"
                     >
                       <option value="IN India" className="bg-[#121824] text-white">IN India</option>
@@ -432,22 +570,29 @@ export function AuthPage({
                 </div>
 
                 {/* Location Verification Card */}
-                <div className="rounded-2xl border border-white/15 bg-white/5 p-4 sm:p-5 space-y-3 text-left">
+                <div className={cn(
+                  "rounded-2xl border p-4 sm:p-5 space-y-3 text-left transition-all",
+                  geoStatus === "verified"
+                    ? "border-emerald-500/40 bg-emerald-950/20"
+                    : geoStatus === "mismatch"
+                    ? "border-red-500/40 bg-red-950/20"
+                    : "border-white/15 bg-white/5"
+                )}>
                   <div className="flex items-start gap-3">
                     <div className={cn(
                       "size-8 rounded-full border flex items-center justify-center shrink-0 mt-0.5 transition-colors",
-                      geoStatus === "ready"
+                      geoStatus === "verified"
                         ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
-                        : geoStatus === "denied" || geoStatus === "timeout" || geoStatus === "unavailable"
-                        ? "bg-amber-500/20 text-amber-400 border-amber-500/30"
+                        : geoStatus === "mismatch" || geoStatus === "denied" || geoStatus === "timeout" || geoStatus === "unavailable"
+                        ? "bg-red-500/20 text-red-400 border-red-500/30"
                         : "bg-blue-500/20 text-blue-400 border-blue-500/30"
                     )}>
                       {geoLoading ? (
-                        <Loader2 className="size-4 animate-spin" />
-                      ) : geoStatus === "ready" ? (
-                        <CheckCircle className="size-4" />
-                      ) : geoStatus === "denied" || geoStatus === "timeout" || geoStatus === "unavailable" ? (
-                        <AlertCircle className="size-4" />
+                        <Loader2 className="size-4 animate-spin text-white" />
+                      ) : geoStatus === "verified" ? (
+                        <CheckCircle className="size-4 text-emerald-400" />
+                      ) : geoStatus === "mismatch" || geoStatus === "denied" || geoStatus === "timeout" || geoStatus === "unavailable" ? (
+                        <AlertCircle className="size-4 text-red-400" />
                       ) : (
                         <MapPin className="size-4" />
                       )}
@@ -455,9 +600,14 @@ export function AuthPage({
                     <div>
                       <p className="font-semibold text-sm text-white flex items-center gap-2">
                         <span>Location Verification</span>
-                        {geoStatus === "ready" && (
+                        {geoStatus === "verified" && (
                           <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-medium">
-                            GPS Signal Ready
+                            ✓ Server Verified
+                          </span>
+                        )}
+                        {geoStatus === "mismatch" && (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 border border-red-500/30 font-medium">
+                            Mismatch Detected
                           </span>
                         )}
                       </p>
@@ -466,17 +616,21 @@ export function AuthPage({
                       </p>
                     </div>
                   </div>
+
                   <p className="text-xs text-white/80 leading-relaxed">
                     Location permission is needed to verify your registration country. Your coordinates are verified securely by the server and are never stored.
                   </p>
+
                   <button
                     type="button"
                     disabled={geoLoading}
-                    onClick={() => acquireLocation().catch(() => {})}
+                    onClick={() => verifyLocationWithServer()}
                     className={cn(
                       "w-full rounded-full border py-2.5 px-4 text-xs font-semibold tracking-wide transition-all cursor-pointer flex items-center justify-center gap-2",
-                      geoStatus === "ready"
+                      geoStatus === "verified"
                         ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-200 hover:bg-emerald-500/20"
+                        : geoStatus === "mismatch"
+                        ? "border-red-500/40 bg-red-500/20 text-red-200 hover:bg-red-500/30"
                         : geoStatus === "denied" || geoStatus === "timeout" || geoStatus === "unavailable"
                         ? "border-amber-500/40 bg-amber-500/15 text-amber-200 hover:bg-amber-500/20"
                         : "border-white/20 bg-white/10 hover:bg-white/15 text-white"
@@ -485,12 +639,17 @@ export function AuthPage({
                     {geoLoading ? (
                       <>
                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        <span>Acquiring Device GPS Signal...</span>
+                        <span>{geoStatus === "verifying" ? "Verifying with server..." : "Acquiring device GPS signal..."}</span>
                       </>
-                    ) : geoStatus === "ready" ? (
+                    ) : geoStatus === "verified" ? (
                       <>
                         <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
                         <span>✓ Location Verified ({country})</span>
+                      </>
+                    ) : geoStatus === "mismatch" ? (
+                      <>
+                        <AlertCircle className="w-3.5 h-3.5 text-red-400" />
+                        <span>⚠️ Country Mismatch — Click to Re-verify</span>
                       </>
                     ) : geoStatus === "denied" ? (
                       <span>⚠️ Permission Denied — Click to Re-request</span>
@@ -501,7 +660,69 @@ export function AuthPage({
                     )}
                   </button>
 
-                  {geoError && (
+                  {/* Independent Diagnostic Breakdown Card */}
+                  {geoStatus === "verified" && verificationBreakdown && (
+                    <div className="p-3 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-[11px] text-emerald-200 space-y-1 animate-fadeIn">
+                      <p className="font-semibold text-emerald-300">✓ Triangulation Successful</p>
+                      <div className="grid grid-cols-3 gap-1 pt-1 text-center font-mono">
+                        <div className="bg-emerald-900/30 rounded p-1 border border-emerald-500/20">
+                          <span className="block text-[9px] text-emerald-400 font-sans uppercase">Selected</span>
+                          <span className="font-bold text-white">{verificationBreakdown.selectedCountry}</span>
+                        </div>
+                        <div className="bg-emerald-900/30 rounded p-1 border border-emerald-500/20">
+                          <span className="block text-[9px] text-emerald-400 font-sans uppercase">Server IP</span>
+                          <span className="font-bold text-white">{verificationBreakdown.ipCountry}</span>
+                        </div>
+                        <div className="bg-emerald-900/30 rounded p-1 border border-emerald-500/20">
+                          <span className="block text-[9px] text-emerald-400 font-sans uppercase">Browser GPS</span>
+                          <span className="font-bold text-white">{verificationBreakdown.gpsCountry}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Mismatch Diagnostics & One-Click Fix */}
+                  {geoStatus === "mismatch" && verificationBreakdown && (
+                    <div className="p-3 rounded-xl bg-red-950/60 border border-red-500/40 text-[11px] text-red-200 space-y-2 animate-fadeIn">
+                      <p className="font-semibold text-red-300 flex items-center gap-1.5">
+                        <AlertCircle className="w-3.5 h-3.5 text-red-400 shrink-0" />
+                        <span>Registration Blocked: Country Mismatch</span>
+                      </p>
+                      <div className="grid grid-cols-3 gap-1 pt-1 text-center font-mono">
+                        <div className="bg-red-900/40 rounded p-1 border border-red-500/30">
+                          <span className="block text-[9px] text-red-300 font-sans uppercase">Selected</span>
+                          <span className="font-bold text-amber-300">{verificationBreakdown.selectedCountry || country}</span>
+                        </div>
+                        <div className="bg-emerald-950/40 rounded p-1 border border-emerald-500/30">
+                          <span className="block text-[9px] text-emerald-300 font-sans uppercase">Server IP</span>
+                          <span className="font-bold text-emerald-300">{verificationBreakdown.ipCountry || "Unknown"}</span>
+                        </div>
+                        <div className="bg-emerald-950/40 rounded p-1 border border-emerald-500/30">
+                          <span className="block text-[9px] text-emerald-300 font-sans uppercase">Browser GPS</span>
+                          <span className="font-bold text-emerald-300">{verificationBreakdown.gpsCountry || "Unknown"}</span>
+                        </div>
+                      </div>
+                      {geoError && (
+                        <p className="text-[11px] text-red-200/90 leading-tight pt-1">
+                          {geoError}
+                        </p>
+                      )}
+                      {verificationBreakdown.ipCountry === "IN" && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCountry("IN India");
+                            verifyLocationWithServer("IN India");
+                          }}
+                          className="w-full mt-1.5 py-1.5 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:brightness-110 text-white text-xs font-semibold tracking-wide transition-all cursor-pointer shadow-md"
+                        >
+                          Switch to India (IN India) & Re-verify
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {geoError && geoStatus !== "mismatch" && (
                     <div className="p-2.5 rounded-xl bg-red-950/40 border border-red-500/30 text-[11px] text-red-200 flex items-start gap-2">
                       <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-400" />
                       <span>{geoError}</span>

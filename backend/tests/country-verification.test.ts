@@ -316,5 +316,105 @@ describe("Country Verification Security Suite", () => {
 
     assert.equal(dbInsertCallCount, 0, "Expected ZERO TiDB insert calls for rejected registration!");
   });
+
+  // TEST 11: User in India (IP IN, GPS IN) selecting Australia (AU) => reject with detailed mismatch
+  it("Test 11: User in India (IP IN, GPS IN) selecting Australia (AU) => reject with detailed mismatch", async () => {
+    mockIpProvider.setDefaultCountry("IN");
+    mockReverseProvider.setMockCountry("IN");
+
+    const fakeReq: any = { ip: "103.21.124.1", headers: {}, socket: { remoteAddress: "103.21.124.1" } };
+
+    await assert.rejects(
+      async () => {
+        await verifier.verifyRegistration({
+          req: fakeReq,
+          selectedCountry: "AU Australia",
+          gps: { latitude: 13.0827, longitude: 80.2707, accuracy: 15 },
+        });
+      },
+      (err: any) => {
+        assert.ok(err instanceof GeoMismatchError);
+        assert.equal(err.statusCode, 403);
+        assert.equal(err.code, "COUNTRY_MISMATCH");
+        assert.equal(err.selectedCountry, "AU");
+        assert.equal(err.ipCountry, "IN");
+        assert.equal(err.gpsCountry, "IN");
+        return true;
+      }
+    );
+  });
+
+  // TEST 12: User in Australia (IP AU, GPS AU) selecting Australia (AU) => passes
+  it("Test 12: User in Australia (IP AU, GPS AU) selecting Australia (AU) => passes verification", async () => {
+    mockIpProvider.setDefaultCountry("AU");
+    mockReverseProvider.setMockCountry("AU");
+
+    const fakeReq: any = { ip: "1.1.1.1", headers: {}, socket: { remoteAddress: "1.1.1.1" } };
+
+    const result = await verifier.verifyRegistration({
+      req: fakeReq,
+      selectedCountry: "AU Australia",
+      gps: { latitude: -33.8688, longitude: 151.2093, accuracy: 20 },
+    });
+
+    assert.equal(result.verified, true);
+    assert.equal(result.selectedCountry, "AU");
+    assert.equal(result.ipCountry, "AU");
+    assert.equal(result.gpsCountry, "AU");
+  });
+
+  // TEST 13: User in Australia (IP AU, GPS AU) selecting India (IN) => reject with detailed mismatch
+  it("Test 13: User in Australia (IP AU, GPS AU) selecting India (IN) => reject with detailed mismatch", async () => {
+    mockIpProvider.setDefaultCountry("AU");
+    mockReverseProvider.setMockCountry("AU");
+
+    const fakeReq: any = { ip: "1.1.1.1", headers: {}, socket: { remoteAddress: "1.1.1.1" } };
+
+    await assert.rejects(
+      async () => {
+        await verifier.verifyRegistration({
+          req: fakeReq,
+          selectedCountry: "IN India",
+          gps: { latitude: -33.8688, longitude: 151.2093, accuracy: 20 },
+        });
+      },
+      (err: any) => {
+        assert.ok(err instanceof GeoMismatchError);
+        assert.equal(err.statusCode, 403);
+        assert.equal(err.code, "COUNTRY_MISMATCH");
+        assert.equal(err.selectedCountry, "IN");
+        assert.equal(err.ipCountry, "AU");
+        assert.equal(err.gpsCountry, "AU");
+        return true;
+      }
+    );
+  });
+
+  // TEST 14: GPS Australia (-33.86, 151.20) + IP India + Selected India => reject with detailed mismatch
+  it("Test 14: GPS Australia + IP India + Selected India => reject with detailed mismatch", async () => {
+    mockIpProvider.setDefaultCountry("IN");
+    mockReverseProvider.setMockCountry("AU");
+
+    const fakeReq: any = { ip: "103.21.124.1", headers: {}, socket: { remoteAddress: "103.21.124.1" } };
+
+    await assert.rejects(
+      async () => {
+        await verifier.verifyRegistration({
+          req: fakeReq,
+          selectedCountry: "IN India",
+          gps: { latitude: -33.8688, longitude: 151.2093, accuracy: 20 },
+        });
+      },
+      (err: any) => {
+        assert.ok(err instanceof GeoMismatchError);
+        assert.equal(err.statusCode, 403);
+        assert.equal(err.code, "COUNTRY_MISMATCH");
+        assert.equal(err.selectedCountry, "IN");
+        assert.equal(err.ipCountry, "IN");
+        assert.equal(err.gpsCountry, "AU");
+        return true;
+      }
+    );
+  });
 });
 

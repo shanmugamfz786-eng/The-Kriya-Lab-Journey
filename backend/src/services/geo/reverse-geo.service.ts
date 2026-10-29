@@ -246,7 +246,9 @@ export class ReverseGeoService {
   }
 
   async resolveCountry(coords: GpsCoordinates): Promise<string> {
-    return await this.provider.getCountryCode(coords.latitude, coords.longitude);
+    const countryCode = await this.provider.getCountryCode(coords.latitude, coords.longitude);
+    console.log(`[GEO_DIAGNOSTIC] Browser GPS reverse geocoded -> Country: ${countryCode}`);
+    return countryCode;
   }
 }
 

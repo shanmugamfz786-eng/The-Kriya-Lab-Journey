@@ -48,7 +48,28 @@ export function extractClientIp(req: Request): string {
     }
   }
 
-  // With 'trust proxy' set, req.ip is populated by Express using the trusted proxy hop
+  // 1. Check CF-Connecting-IP (Render native Cloudflare layer)
+  const cfConnectingIp = req.headers["cf-connecting-ip"];
+  if (typeof cfConnectingIp === "string" && cfConnectingIp.trim()) {
+    const cleanCf = cfConnectingIp.trim().replace(/^::ffff:/, "");
+    if (!isPrivateOrLocalIp(cleanCf)) {
+      return cleanCf;
+    }
+  }
+
+  // 2. Check req.ips (populated by Express when trust proxy is enabled)
+  if (Array.isArray(req.ips) && req.ips.length > 0) {
+    for (const item of req.ips) {
+      if (typeof item === "string") {
+        const cleanItem = item.trim().replace(/^::ffff:/, "");
+        if (!isPrivateOrLocalIp(cleanItem)) {
+          return cleanItem;
+        }
+      }
+    }
+  }
+
+  // 3. Fallback to Express req.ip or socket.remoteAddress
   const rawIp = req.ip || req.socket?.remoteAddress || "";
   const sanitized = rawIp.replace(/^::ffff:/, "").trim();
 
@@ -252,10 +273,14 @@ export class IpGeoService {
       }
       // Non-production fallback (local dev environment): allow fallback IP if provided
       const devFallback = process.env.DEV_FALLBACK_IP || "103.21.124.0"; // Default to India IP for dev
-      return await this.provider.getCountryCode(devFallback);
+      const countryCode = await this.provider.getCountryCode(devFallback);
+      console.log(`[GEO_DIAGNOSTIC] IP Geolocation (dev fallback) -> Country: ${countryCode}`);
+      return countryCode;
     }
 
-    return await this.provider.getCountryCode(clientIp);
+    const countryCode = await this.provider.getCountryCode(clientIp);
+    console.log(`[GEO_DIAGNOSTIC] IP Geolocation resolved -> Country: ${countryCode}`);
+    return countryCode;
   }
 }
 

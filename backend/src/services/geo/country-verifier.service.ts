@@ -16,9 +16,21 @@ export class GeoValidationError extends Error {
 export class GeoMismatchError extends Error {
   public readonly statusCode = 403;
   public readonly code = "COUNTRY_MISMATCH";
-  constructor(message: string = "Registration country verification failed: The selected country does not match your verified location.") {
+  public readonly selectedCountry?: string;
+  public readonly ipCountry?: string;
+  public readonly gpsCountry?: string;
+
+  constructor(
+    message: string = "Registration country verification failed: The selected country does not match your verified location.",
+    details?: { selectedCountry: string; ipCountry: string; gpsCountry: string }
+  ) {
     super(message);
     this.name = "GeoMismatchError";
+    if (details) {
+      this.selectedCountry = details.selectedCountry;
+      this.ipCountry = details.ipCountry;
+      this.gpsCountry = details.gpsCountry;
+    }
   }
 }
 
@@ -150,6 +162,10 @@ export class CountryVerifierService {
     const isGpsMatch = normalizedSelected === gpsCountry;
     const isTriangulated = isIpMatch && isGpsMatch;
 
+    console.log(
+      `[GEO_DIAGNOSTIC] Triangulation Evaluation -> Selected: ${normalizedSelected}, IP: ${ipCountry}, GPS: ${gpsCountry}, Match: ${isTriangulated}`
+    );
+
     if (!isTriangulated) {
       this.logAudit({
         event: "COUNTRY_VERIFICATION",
@@ -162,9 +178,13 @@ export class CountryVerifierService {
         reason: `Mismatch: Selected(${normalizedSelected}) vs IP(${ipCountry}) vs GPS(${gpsCountry})`,
       });
 
-      throw new GeoMismatchError(
-        "Registration country verification failed. Your selected country does not match your physical location or network connection."
-      );
+      const mismatchMsg = `Country verification failed: You selected ${normalizedSelected}, but your verified IP country is ${ipCountry} and your device GPS country is ${gpsCountry}.`;
+
+      throw new GeoMismatchError(mismatchMsg, {
+        selectedCountry: normalizedSelected,
+        ipCountry,
+        gpsCountry,
+      });
     }
 
     // 5. Successful match

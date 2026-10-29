@@ -123,6 +123,9 @@ export function useAuth() {
         const error = new Error(data && data.message ? data.message : `Registration failed with status ${res.status}`);
         (error as any).code = data?.code;
         (error as any).status = res.status;
+        (error as any).selectedCountry = data?.selectedCountry;
+        (error as any).ipCountry = data?.ipCountry;
+        (error as any).gpsCountry = data?.gpsCountry;
         throw error;
       }
 

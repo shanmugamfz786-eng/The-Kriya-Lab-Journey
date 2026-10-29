@@ -15,8 +15,115 @@ import {
   GeoMismatchError,
   GeoServiceUnavailableError,
 } from "../services/geo/country-verifier.service.js";
+import { defaultIpGeoService } from "../services/geo/ip-geo.service.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "the_kriya_lab_secret_key";
+
+/**
+ * Detects the client country purely from their server-side IP address.
+ * Used for initializing the registration form country dropdown.
+ */
+export async function detectCountry(req, res) {
+  try {
+    const ipCountry = await defaultIpGeoService.resolveCountry(req);
+    console.log(`[GEO_DIAGNOSTIC] Detect Country -> IP Country: ${ipCountry}`);
+
+    const COUNTRY_NAMES: Record<string, string> = {
+      IN: "India",
+      US: "United States",
+      SG: "Singapore",
+      MY: "Malaysia",
+      AE: "United Arab Emirates",
+      GB: "United Kingdom",
+      AU: "Australia",
+      CA: "Canada",
+      LK: "Sri Lanka",
+      DE: "Germany",
+      FR: "France",
+    };
+
+    const countryName = COUNTRY_NAMES[ipCountry] || ipCountry;
+    const display = `${ipCountry} ${countryName}`;
+
+    return res.status(200).json({
+      success: true,
+      countryCode: ipCountry,
+      countryName,
+      display,
+    });
+  } catch (err) {
+    console.warn("[GEO_DIAGNOSTIC] detectCountry fallback notice:", err.message);
+    return res.status(200).json({
+      success: true,
+      countryCode: "IN",
+      countryName: "India",
+      display: "IN India",
+      fallback: true,
+    });
+  }
+}
+
+/**
+ * Pre-verifies device location and IP before form submission.
+ * Enforces triangulation: Selected Country === IP Country === GPS Country.
+ * Never logs precise coordinates or personal secrets.
+ */
+export async function preVerifyLocation(req, res) {
+  try {
+    const { country, gps } = req.body;
+
+    const geoResult = await defaultCountryVerifier.verifyRegistration({
+      req,
+      selectedCountry: country,
+      gps,
+    });
+
+    return res.status(200).json({
+      success: true,
+      verified: true,
+      message: "Location verified successfully",
+      selectedCountry: geoResult.selectedCountry,
+      ipCountry: geoResult.ipCountry,
+      gpsCountry: geoResult.gpsCountry,
+    });
+  } catch (geoErr: any) {
+    if (geoErr instanceof GeoValidationError) {
+      return res.status(400).json({
+        success: false,
+        verified: false,
+        code: geoErr.code,
+        message: geoErr.message,
+      });
+    }
+    if (geoErr instanceof GeoMismatchError) {
+      return res.status(403).json({
+        success: false,
+        verified: false,
+        code: geoErr.code,
+        message: geoErr.message,
+        selectedCountry: geoErr.selectedCountry,
+        ipCountry: geoErr.ipCountry,
+        gpsCountry: geoErr.gpsCountry,
+      });
+    }
+    if (geoErr instanceof GeoServiceUnavailableError) {
+      return res.status(503).json({
+        success: false,
+        verified: false,
+        code: geoErr.code,
+        message: geoErr.message,
+      });
+    }
+
+    console.error("[GEO_DIAGNOSTIC] preVerifyLocation error:", geoErr);
+    return res.status(503).json({
+      success: false,
+      verified: false,
+      code: "GEO_VERIFICATION_FAILED",
+      message: "Location verification service is temporarily unavailable.",
+    });
+  }
+}
 
 export async function register(req, res) {
   try {
@@ -48,6 +155,9 @@ export async function register(req, res) {
           success: false,
           code: geoErr.code,
           message: geoErr.message,
+          selectedCountry: geoErr.selectedCountry,
+          ipCountry: geoErr.ipCountry,
+          gpsCountry: geoErr.gpsCountry,
         });
       }
       if (geoErr instanceof GeoServiceUnavailableError) {

@@ -1,6 +1,6 @@
 import { describe, it, beforeEach, after } from "node:test";
 import assert from "node:assert/strict";
-import { register } from "../src/controllers/auth.controller.js";
+import { register, detectCountry, preVerifyLocation } from "../src/controllers/auth.controller.js";
 import { getDbPool } from "../src/config/db.js";
 import {
   defaultCountryVerifier,
@@ -8,6 +8,7 @@ import {
 import {
   MockIpGeoProvider,
   IpGeoService,
+  defaultIpGeoService,
 } from "../src/services/geo/ip-geo.service.js";
 import {
   MockReverseGeoProvider,
@@ -23,6 +24,7 @@ describe("Express Auth Registration Controller Integration", () => {
     mockReverse = new MockReverseGeoProvider("IN");
     defaultCountryVerifier.setIpGeoService(new IpGeoService(mockIp));
     defaultCountryVerifier.setReverseGeoService(new ReverseGeoService(mockReverse));
+    defaultIpGeoService.setProvider(mockIp);
   });
 
   function createMockRes() {
@@ -144,6 +146,71 @@ describe("Express Auth Registration Controller Integration", () => {
     assert.equal(res.sentJson?.success, true);
     assert.ok(res.sentJson?.token);
     assert.equal(res.sentJson?.user?.email, uniqueEmail);
+  });
+
+  it("detectCountry endpoint correctly returns detected IP country code and display name", async () => {
+    mockIp.setDefaultCountry("IN");
+    const req: any = { ip: "103.21.124.1", headers: {}, socket: { remoteAddress: "103.21.124.1" } };
+    const res = createMockRes();
+
+    await detectCountry(req, res);
+
+    assert.equal(res.statusCode, 200);
+    assert.equal(res.sentJson?.success, true);
+    assert.equal(res.sentJson?.countryCode, "IN");
+    assert.equal(res.sentJson?.display, "IN India");
+  });
+
+  it("preVerifyLocation rejects Australia (AU) when client IP & GPS are in India (IN)", async () => {
+    mockIp.setDefaultCountry("IN");
+    mockReverse.setDefaultCountry("IN");
+
+    const req: any = {
+      body: {
+        country: "AU Australia",
+        gps: { latitude: 13.0827, longitude: 80.2707, accuracy: 15 },
+      },
+      ip: "103.21.124.1",
+      headers: {},
+      socket: { remoteAddress: "103.21.124.1" },
+    };
+    const res = createMockRes();
+
+    await preVerifyLocation(req, res);
+
+    assert.equal(res.statusCode, 403);
+    assert.equal(res.sentJson?.success, false);
+    assert.equal(res.sentJson?.verified, false);
+    assert.equal(res.sentJson?.code, "COUNTRY_MISMATCH");
+    assert.equal(res.sentJson?.selectedCountry, "AU");
+    assert.equal(res.sentJson?.ipCountry, "IN");
+    assert.equal(res.sentJson?.gpsCountry, "IN");
+    assert.ok(res.sentJson?.message.includes("Country verification failed"));
+  });
+
+  it("preVerifyLocation succeeds when selected India matches IP & GPS India", async () => {
+    mockIp.setDefaultCountry("IN");
+    mockReverse.setDefaultCountry("IN");
+
+    const req: any = {
+      body: {
+        country: "IN India",
+        gps: { latitude: 13.0827, longitude: 80.2707, accuracy: 15 },
+      },
+      ip: "103.21.124.1",
+      headers: {},
+      socket: { remoteAddress: "103.21.124.1" },
+    };
+    const res = createMockRes();
+
+    await preVerifyLocation(req, res);
+
+    assert.equal(res.statusCode, 200);
+    assert.equal(res.sentJson?.success, true);
+    assert.equal(res.sentJson?.verified, true);
+    assert.equal(res.sentJson?.selectedCountry, "IN");
+    assert.equal(res.sentJson?.ipCountry, "IN");
+    assert.equal(res.sentJson?.gpsCountry, "IN");
   });
 
   after(async () => {
