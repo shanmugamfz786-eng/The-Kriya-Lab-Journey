@@ -56,10 +56,16 @@ export async function initDb() {
         email VARCHAR(191) NOT NULL UNIQUE,
         password_hash VARCHAR(255) NOT NULL,
         role VARCHAR(32) DEFAULT 'student',
+        country VARCHAR(64),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
+
+    // Add country column if users table already exists
+    try {
+      await db.query("ALTER TABLE users ADD COLUMN country VARCHAR(64)");
+    } catch (e) {}
 
     // Create Enquiries Table
     await db.query(`

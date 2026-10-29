@@ -262,6 +262,24 @@ export function AuthPage({
           ipCountry: data.ipCountry,
           gpsCountry: data.gpsCountry,
         });
+        const verifiedCode = (data.selectedCountry || data.gpsCountry || "").toUpperCase();
+        if (verifiedCode) {
+          const countryOptions = [
+            "IN India",
+            "US United States",
+            "SG Singapore",
+            "MY Malaysia",
+            "AE United Arab Emirates",
+            "GB United Kingdom",
+            "AU Australia",
+            "CA Canada",
+            "LK Sri Lanka",
+            "DE Germany",
+            "FR France",
+          ];
+          const matched = countryOptions.find((opt) => opt.startsWith(verifiedCode + " "));
+          setCountry(matched || verifiedCode);
+        }
         setGeoError(null);
         return true;
       }
@@ -570,46 +588,33 @@ export function AuthPage({
                   </div>
                 </div>
 
-                {/* Country / Region */}
+                {/* Country / Region - Auto-detected & Locked (User cannot manually choose) */}
                 <div className="space-y-1.5 text-left">
-                  <label className="block text-xs font-semibold text-white/90">
-                    Country / Region
-                  </label>
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-semibold text-white/90">
+                      Country / Region
+                    </label>
+                    <span className="text-[10px] font-medium text-emerald-300 flex items-center gap-1 bg-emerald-500/15 px-2.5 py-0.5 rounded-full border border-emerald-500/30">
+                      <CheckCircle className="size-3 text-emerald-400" />
+                      {geoStatus === "verified" ? "Verified" : "Auto-detected"}
+                    </span>
+                  </div>
                   <div className="relative">
-                    <select
+                    <input
                       id="auth-country"
                       name="country"
-                      autoComplete="off"
+                      type="text"
+                      readOnly
                       value={country}
-                      onChange={(e) => {
-                        const newCountry = e.target.value;
-                        setCountry(newCountry);
-                        // Reset verification status when user changes country manually
-                        setGeoStatus("idle");
-                        setGeoError(null);
-                        setVerificationBreakdown(null);
-                      }}
-                      className="w-full px-4 py-3 rounded-2xl bg-white/10 hover:bg-white/15 focus:bg-white/20 border border-white/20 focus:border-white/50 text-white text-sm focus:outline-none transition-all appearance-none cursor-pointer"
-                    >
-                      <option value="IN India" className="bg-[#121824] text-white">IN India</option>
-                      <option value="US United States" className="bg-[#121824] text-white">US United States</option>
-                      <option value="SG Singapore" className="bg-[#121824] text-white">SG Singapore</option>
-                      <option value="MY Malaysia" className="bg-[#121824] text-white">MY Malaysia</option>
-                      <option value="AE United Arab Emirates" className="bg-[#121824] text-white">AE United Arab Emirates</option>
-                      <option value="GB United Kingdom" className="bg-[#121824] text-white">GB United Kingdom</option>
-                      <option value="AU Australia" className="bg-[#121824] text-white">AU Australia</option>
-                      <option value="CA Canada" className="bg-[#121824] text-white">CA Canada</option>
-                      <option value="LK Sri Lanka" className="bg-[#121824] text-white">LK Sri Lanka</option>
-                      <option value="DE Germany" className="bg-[#121824] text-white">DE Germany</option>
-                      <option value="FR France" className="bg-[#121824] text-white">FR France</option>
-                      <option value="Other" className="bg-[#121824] text-white">Other</option>
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-white/60">
-                      <svg className="size-4 fill-current" viewBox="0 0 20 20">
-                        <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
-                      </svg>
+                      className="w-full px-4 py-3 rounded-2xl bg-white/10 border border-white/20 text-white text-sm font-medium focus:outline-none cursor-default select-none shadow-inner"
+                    />
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-emerald-400">
+                      <MapPin className="size-4" />
                     </div>
                   </div>
+                  <p className="text-[11px] text-white/50">
+                    Location is automatically verified and locked to your device region
+                  </p>
                 </div>
 
                 {/* Location Verification - Simple & Compact */}
@@ -617,11 +622,18 @@ export function AuthPage({
                   "rounded-2xl border px-4 py-3 text-left transition-all",
                   geoStatus === "mismatch"
                     ? "border-red-500/40 bg-red-950/20"
+                    : geoStatus === "verified"
+                    ? "border-emerald-500/40 bg-emerald-950/20"
                     : "border-white/15 bg-white/5"
                 )}>
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="size-8 rounded-full border border-blue-500/30 bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0">
+                      <div className={cn(
+                        "size-8 rounded-full border flex items-center justify-center shrink-0",
+                        geoStatus === "verified"
+                          ? "border-emerald-500/40 bg-emerald-500/20 text-emerald-300"
+                          : "border-blue-500/30 bg-blue-500/20 text-blue-400"
+                      )}>
                         <MapPin className="size-4" />
                       </div>
                       <div className="min-w-0">
@@ -629,23 +641,25 @@ export function AuthPage({
                           Location Verification
                         </p>
                         <p className="text-[11px] text-white/60 truncate">
-                          IP and device location verified on signup
+                          {geoStatus === "verified"
+                            ? `✓ Location verified: ${country}`
+                            : "IP and device location verified on signup"}
                         </p>
                       </div>
                     </div>
 
                     <button
                       type="button"
-                      disabled={geoLoading}
+                      disabled={geoLoading || geoStatus === "verified"}
                       onClick={async () => {
                         try {
-                          await acquireGpsCoordinates();
+                          await verifyLocationWithServer();
                         } catch {}
                       }}
                       className={cn(
                         "shrink-0 px-3.5 py-1.5 rounded-full border text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5",
-                        gpsCoords
-                          ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-300"
+                        geoStatus === "verified"
+                          ? "border-emerald-500/40 bg-emerald-500/20 text-emerald-300 pointer-events-none"
                           : "border-white/20 bg-white/10 hover:bg-white/15 text-white"
                       )}
                     >
@@ -654,7 +668,7 @@ export function AuthPage({
                           <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
                           <span>Checking...</span>
                         </>
-                      ) : gpsCoords ? (
+                      ) : geoStatus === "verified" ? (
                         <>
                           <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
                           <span>Verified</span>

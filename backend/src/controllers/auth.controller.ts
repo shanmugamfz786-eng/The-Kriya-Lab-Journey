@@ -209,10 +209,18 @@ export async function register(req, res) {
         return res.status(400).json({ success: false, message: "An account with this email already exists" });
       }
 
-      await db.query(
-        "INSERT INTO users (id, full_name, email, password_hash, role) VALUES (?, ?, ?, ?, ?)",
-        [userId, full_name.trim(), cleanEmail, passwordHash, assignedRole]
-      );
+      try {
+        await db.query(
+          "INSERT INTO users (id, full_name, email, password_hash, role, country) VALUES (?, ?, ?, ?, ?, ?)",
+          [userId, full_name.trim(), cleanEmail, passwordHash, assignedRole, geoResult.selectedCountry]
+        );
+      } catch (insertErr) {
+        // Fallback without country column if old schema exists
+        await db.query(
+          "INSERT INTO users (id, full_name, email, password_hash, role) VALUES (?, ?, ?, ?, ?)",
+          [userId, full_name.trim(), cleanEmail, passwordHash, assignedRole]
+        );
+      }
     } catch (dbErr) {
       console.warn("[Auth Warning] TiDB insert error (fallback to local persistent store):", dbErr.message);
     }
