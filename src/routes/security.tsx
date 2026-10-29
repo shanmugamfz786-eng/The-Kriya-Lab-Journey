@@ -12,7 +12,6 @@ import {
   Lock,
   Eye,
   EyeOff,
-  Mail,
 } from "lucide-react";
 import { AccountNavTabs } from "@/components/AccountNavTabs";
 
@@ -94,11 +93,7 @@ export function SecurityPage() {
 
       const data = await res.json();
       if (res.ok && data.success) {
-        setPassSuccess(
-          ta
-            ? `${user.email} கணக்கிற்கான கடவுச்சொல் வெற்றிகரமாக மாற்றப்பட்டது!`
-            : `Password changed successfully for ${user.email}!`
-        );
+        setPassSuccess(ta ? "கடவுச்சொல் வெற்றிகரமாக மாற்றப்பட்டது!" : "Password changed successfully!");
         setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
@@ -149,15 +144,14 @@ export function SecurityPage() {
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-semibold text-foreground">
-                    {t(bi("Protected Account", "பாதுகாக்கப்பட்ட கணக்கு"))}
+                    {t(bi("Account Security", "கணக்கு பாதுகாப்பு"))}
                   </p>
                   <span className="text-[0.68rem] text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/25 px-2 py-0.5 rounded-full font-semibold">
-                    {t(bi("✓ Active", "✓ செயல்பாட்டில் உள்ளது"))}
+                    {t(bi("✓ Active Session", "✓ செயல்பாட்டில் உள்ளது"))}
                   </span>
                 </div>
-                <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                  {t(bi("Logged in as: ", "உள்நுழைந்துள்ள கணக்கு: "))}
-                  <span className="text-gold font-mono">{user.email}</span>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {t(bi("Your account is secured with end-to-end encrypted authentication.", "உங்கள் கணக்கு பாதுகாப்பான முறையில் குறியாக்கம் செய்யப்பட்டுள்ளது."))}
                 </p>
               </div>
             </div>
@@ -207,24 +201,6 @@ export function SecurityPage() {
                   aria-hidden="true"
                   className="sr-only absolute pointer-events-none opacity-0 h-0 w-0"
                 />
-
-                {/* Active Gmail for this Password Change */}
-                <div className="p-3.5 rounded-xl border border-gold/30 bg-gold/5 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="size-8 rounded-full bg-gold/20 flex items-center justify-center text-gold shrink-0">
-                      <Mail className="size-4" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-[0.68rem] uppercase font-bold text-muted-foreground tracking-wider">
-                        {t(bi("Changing Password for Account", "கடவுச்சொல் மாற்றப்படும் கணக்கு"))}
-                      </p>
-                      <p className="text-sm font-mono font-semibold text-gold truncate">{user.email}</p>
-                    </div>
-                  </div>
-                  <span className="text-[0.68rem] text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full font-semibold shrink-0">
-                    {t(bi("Current Gmail", "தற்போதைய ஜிமெயில்"))}
-                  </span>
-                </div>
 
                 {/* Current Password */}
                 <div>
@@ -344,7 +320,7 @@ export function SecurityPage() {
               <ul className="text-xs text-muted-foreground space-y-2 list-disc list-inside leading-relaxed">
                 <li>{t(bi("Use at least 6-8 characters with a mix of letters and numbers.", "குறைந்தது 6 முதல் 8 எழுத்துக்கள் மற்றும் எண்களைப் பயன்படுத்தவும்."))}</li>
                 <li>{t(bi("Do not share your login credentials with anyone.", "உங்கள் கடவுச்சொல்லை எவருடனும் பகிர வேண்டாம்."))}</li>
-                <li>{t(bi("If you forget your password, you can reset it on the sign-in page via your registered Gmail.", "கடவுச்சொல் மறந்துவிட்டால், பதிவு செய்யப்பட்ட ஜிமெயில் மூலம் உள்நுழைவு பக்கத்தில் மீட்டெடுக்கலாம்."))}</li>
+                <li>{t(bi("If you forget your password, you can reset it anytime on the sign-in page.", "கடவுச்சொல் மறந்துவிட்டால், உள்நுழைவு பக்கத்தில் மீட்டெடுக்கலாம்."))}</li>
               </ul>
             </div>
           </div>

@@ -3,8 +3,8 @@ import { useEffect, useState } from "react";
 import { bi, useLang } from "@/lib/i18n";
 import { Mail, Lock, User, Eye, EyeOff, ShieldCheck } from "lucide-react";
 import authAvatar from "@/assets/images/auth-avatar.png";
-
 import { useAuth } from "@/lib/auth-store";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/auth")({
   staticData: { sitemap: false },
@@ -26,17 +26,26 @@ export const Route = createFileRoute("/auth")({
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: AuthPage,
+  component: () => <AuthPage />,
 });
 
-type AuthMode = "signin" | "signup" | "forgot";
+export type AuthMode = "signin" | "signup" | "forgot";
 
-function AuthPage() {
-  const { redirect: redirectPath, mode: initialMode } = Route.useSearch();
+export function AuthPage({
+  initialMode,
+  redirectPath: propRedirect,
+}: {
+  initialMode?: AuthMode;
+  redirectPath?: string;
+} = {}) {
+  const searchObj = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+  const searchMode = (searchObj?.get("mode") as AuthMode) || undefined;
+  const redirectPath = propRedirect || searchObj?.get("redirect") || undefined;
+
   const { t } = useLang();
   const navigate = useNavigate();
   const { login, register: registerUser, isAuthenticated, user } = useAuth();
-  const [mode, setMode] = useState<AuthMode>(initialMode || "signin");
+  const [mode, setMode] = useState<AuthMode>(initialMode || searchMode || "signin");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -51,11 +60,9 @@ function AuthPage() {
   useEffect(() => {
     if (isAuthenticated && user) {
       if (redirectPath?.startsWith("/admin")) {
-        // If already admin, proceed to admin portal!
         if (user.role === "admin") {
           navigate({ to: "/admin", replace: true });
         }
-        // If logged in as student, stay on auth page so they can sign in as admin!
         return;
       }
       if (user.role === "admin") {
@@ -65,19 +72,6 @@ function AuthPage() {
       }
     }
   }, [isAuthenticated, user, navigate, redirectPath]);
-
-  const handleQuickAdminLogin = async () => {
-    setBusy(true);
-    setError(null);
-    try {
-      await login("admin@thekriyalab.com", "admin123");
-      navigate({ to: "/admin", replace: true });
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to login as admin");
-    } finally {
-      setBusy(false);
-    }
-  };
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -192,28 +186,6 @@ function AuthPage() {
                   ))}
             </p>
           </div>
-
-          {redirectPath?.startsWith("/admin") && (
-            <div className="mb-5 p-4 rounded-2xl bg-gradient-to-r from-amber-500/20 to-amber-600/10 border border-amber-400/40 text-xs text-amber-100 animate-in fade-in shadow-lg">
-              <div className="flex items-center justify-between gap-2">
-                <span className="font-bold flex items-center gap-1.5 text-amber-300">
-                  <ShieldCheck className="size-4.5 text-gold" />
-                  Admin Portal Protected
-                </span>
-                <button
-                  type="button"
-                  onClick={handleQuickAdminLogin}
-                  disabled={busy}
-                  className="px-3.5 py-1.5 rounded-full bg-gradient-to-r from-gold via-amber-300 to-gold text-[#1a140b] font-bold text-xs hover:brightness-110 active:scale-95 transition-all cursor-pointer shadow-md disabled:opacity-50"
-                >
-                  {busy ? "Signing in..." : "1-Click Admin Login"}
-                </button>
-              </div>
-              <p className="text-[0.7rem] text-white/80 mt-2 leading-relaxed">
-                Admin access requires an administrator account. Use <span className="font-mono text-amber-300 font-bold">admin@thekriyalab.com</span> or click <strong className="text-amber-200">1-Click Admin Login</strong> above.
-              </p>
-            </div>
-          )}
 
           <form onSubmit={onSubmit} className="space-y-4">
             {/* Username (signup only) */}
