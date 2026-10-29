@@ -12,9 +12,14 @@ import { fetchAllPrograms } from "@/lib/programs-api";
 import { fetchAllEvents } from "@/lib/events-api";
 import { ProgramCard } from "@/components/ProgramCard";
 import { ArrowRight, Calendar, MapPin } from "lucide-react";
+import { AuthPage } from "./auth";
 
 export const Route = createFileRoute("/")({
   staticData: { sitemap: true },
+  validateSearch: (search: Record<string, unknown>): { redirect?: string | undefined; mode?: "signin" | "signup" | undefined } => ({
+    redirect: typeof search["redirect"] === "string" ? search["redirect"] : undefined,
+    mode: search["mode"] === "signup" ? "signup" : search["mode"] === "signin" ? "signin" : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "THE KRIYA LAB — Transform Your self with Kriya Yoga" },
@@ -37,7 +42,13 @@ function Index() {
   const { t, lang } = useLang();
   const [active, setActive] = useState(0);
   const { user, isAuthenticated } = useAuth();
+  const search = Route.useSearch();
   const navigate = useNavigate();
+
+  // If user is not authenticated, the landing page is the Registration or Login page!
+  if (!isAuthenticated) {
+    return <AuthPage initialMode={search.mode} redirectPath={search.redirect} />;
+  }
 
   const { data: programsData } = useQuery({
     queryKey: ["programs"],
@@ -53,125 +64,7 @@ function Index() {
   const topEvents = (eventsData || []).slice(0, 3);
   const ta = lang === "ta";
 
-  if (isAuthenticated && user) {
-    const firstName = user.full_name?.split(" ")[0] || "Seeker";
-    return (
-      <div className="flex flex-col w-full pb-16">
-        {/* Full-width Welcome Hero */}
-        <section className="relative isolate overflow-hidden w-full min-h-[350px] md:min-h-[450px] flex items-center bg-velvet-deep text-white shadow-lg border-b border-white/10">
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="absolute inset-0 -z-10 size-full object-cover opacity-40 mix-blend-luminosity"
-          >
-            <source src={heroVideo} type="video/mp4" />
-          </video>
-          <div className="absolute inset-0 -z-10 bg-gradient-to-r from-velvet-deep/90 via-velvet-deep/60 to-transparent" />
-          
-          <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="max-w-2xl animate-fade-in">
-              <p className="eyebrow text-gold/90 mb-3">{ta ? "உங்கள் தனிப்பட்ட இடம்" : "Your Personal Space"}</p>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif mb-5 text-white drop-shadow-md">
-                {ta ? `வணக்கம், ${firstName}` : `Welcome back, ${firstName}`}
-              </h1>
-              <p className="text-white/80 text-lg md:text-xl font-light">
-                {ta 
-                  ? "உங்கள் யோகப் பயணத்தை தொடர நீங்கள் தயாரா? புதிய பயிற்சிகள் மற்றும் நிகழ்வுகளை இங்கே காணுங்கள்." 
-                  : "Ready to continue your inner journey? Explore our latest programs and events designed to deepen your sadhana."}
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* Content Section */}
-        <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 space-y-12 md:space-y-16">
-
-        {topPrograms.length > 0 && (
-          <section>
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
-              <div>
-                <Eyebrow>{t(bi("Offerings", "பயிற்சிகள்"))}</Eyebrow>
-                <h2 className="mt-2 text-2xl font-serif">
-                  {t(bi("Latest Programs", "புதிய பயிற்சிகள்"))}
-                </h2>
-              </div>
-              <Link to="/programs" className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary/80 transition-colors">
-                {t(bi("Explore All", "அனைத்தையும் காண்க"))}
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {topPrograms.map(p => (
-                <ProgramCard key={p.id} program={p} lang={lang} />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {topEvents.length > 0 && (
-          <section>
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
-              <div>
-                <Eyebrow>{t(bi("Gatherings", "நிகழ்வுகள்"))}</Eyebrow>
-                <h2 className="mt-2 text-2xl font-serif">
-                  {t(bi("Upcoming Events", "வரவிருக்கும் நிகழ்வுகள்"))}
-                </h2>
-              </div>
-              <Link to="/events" className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary/80 transition-colors">
-                {t(bi("Explore All", "அனைத்தையும் காண்க"))}
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {topEvents.map(e => {
-                const eTitle = (ta ? e.title_ta : e.title) || e.title;
-                const eLoc = (ta ? e.location_ta : e.location) || e.location;
-                return (
-                  <article key={e.id} className="rounded-2xl border border-border overflow-hidden bg-background shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full group">
-                    {e.image_url && (
-                      <div className="w-full h-48 bg-gray-50 flex items-center justify-center overflow-hidden border-b border-border">
-                        <img src={e.image_url} alt={eTitle} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                      </div>
-                    )}
-                    <div className="p-6 flex flex-col flex-1">
-                      <h3 className="font-serif text-[1.15rem] sm:text-xl line-clamp-2">{eTitle}</h3>
-                      <div className="mt-3 space-y-1.5 text-xs text-muted-foreground flex-1">
-                        {e.event_date && (
-                          <div className="flex items-center gap-1.5">
-                            <Calendar className="w-3.5 h-3.5 shrink-0" />
-                            <span>{e.event_date}</span>
-                          </div>
-                        )}
-                        {eLoc && (
-                          <div className="flex items-center gap-1.5">
-                            <MapPin className="w-3.5 h-3.5 shrink-0" />
-                            <span className="line-clamp-1">{eLoc}</span>
-                          </div>
-                        )}
-                      </div>
-                      <div className="mt-6 pt-4">
-                        <Link
-                          to="/events"
-                          className="inline-flex w-full items-center justify-center rounded-full bg-[#522938] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#41212d] hover:shadow-lg transition-all"
-                        >
-                          {ta ? "மேலும் காண்க" : "View Event"}
-                        </Link>
-                      </div>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          </section>
-        )}
-        </div>
-      </div>
-    );
-  }
+  const displayName = user?.full_name || (user as any)?.username || (user as any)?.name || user?.email?.split("@")[0] || "Seeker";
 
   return (
     <>
@@ -195,6 +88,16 @@ function Index() {
 
         <div className="mx-auto flex min-h-[94vh] max-w-7xl items-center px-5 pt-36 pb-24 sm:pt-44 sm:pb-28 lg:px-10">
           <div className="animate-rise max-w-2xl">
+            {isAuthenticated && user && (
+              <div className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/15 px-4 py-1.5 text-xs sm:text-sm font-medium text-gold mb-5 backdrop-blur-md shadow-xs animate-fade-in">
+                <span className="size-2 rounded-full bg-gold animate-pulse" />
+                <span>
+                  {ta 
+                    ? `வணக்கம், ${displayName}` 
+                    : `Welcome back, ${displayName}`}
+                </span>
+              </div>
+            )}
             <p className="eyebrow text-gold">{t(settings.tagline)}</p>
             <h1 className="mt-7 text-balance font-serif text-[clamp(2.8rem,7vw,5.6rem)] leading-[1.02]">
               {t(home.heroTitle)}
@@ -202,12 +105,21 @@ function Index() {
             <p className="mt-8 max-w-2xl text-lg text-[oklch(0.85_0.02_300)]">{t(home.heroFlow)}</p>
 
             <div className="mt-11 flex flex-wrap items-center gap-4">
-              <Link
-                to="/programs"
-                className="rounded-full bg-gold px-8 py-3.5 text-sm text-velvet-deep transition-opacity hover:opacity-90"
-              >
-                {t(ui.begin)}
-              </Link>
+              {isAuthenticated ? (
+                <Link
+                  to="/my-programs"
+                  className="rounded-full bg-gold px-8 py-3.5 text-sm font-semibold text-velvet-deep shadow-md hover:bg-gold/90 transition-all hover:scale-105"
+                >
+                  {ta ? "என் பயிற்சிகள் (My Programs)" : "Go to My Programs"}
+                </Link>
+              ) : (
+                <Link
+                  to="/programs"
+                  className="rounded-full bg-gold px-8 py-3.5 text-sm font-semibold text-velvet-deep transition-opacity hover:opacity-90 shadow-md"
+                >
+                  {t(ui.begin)}
+                </Link>
+              )}
               <Link
                 to="/kriya-yoga"
                 className="rounded-full border border-[oklch(1_0_0_/_0.3)] px-8 py-3.5 text-sm transition-colors hover:border-gold hover:text-gold"
@@ -318,6 +230,92 @@ function Index() {
           </div>
         </div>
       </Section>
+
+      {/* Featured Offerings & Gatherings */}
+      {(topPrograms.length > 0 || topEvents.length > 0) && (
+        <Section tone="muted">
+          <div className="space-y-14">
+            {topPrograms.length > 0 && (
+              <div>
+                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+                  <div>
+                    <Eyebrow>{t(bi("Offerings", "பயிற்சிகள்"))}</Eyebrow>
+                    <h2 className="mt-2 text-2xl sm:text-3xl lg:text-4xl font-serif">
+                      {t(bi("Latest Programs", "புதிய பயிற்சிகள்"))}
+                    </h2>
+                  </div>
+                  <Link to="/programs" className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary/80 transition-colors">
+                    {t(bi("Explore All Programs", "அனைத்து பயிற்சிகளையும் காண்க"))}
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </div>
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {topPrograms.map(p => (
+                    <ProgramCard key={p.id} program={p} lang={lang} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {topEvents.length > 0 && (
+              <div className={topPrograms.length > 0 ? "pt-12 border-t border-border" : ""}>
+                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+                  <div>
+                    <Eyebrow>{t(bi("Gatherings", "நிகழ்வுகள்"))}</Eyebrow>
+                    <h2 className="mt-2 text-2xl sm:text-3xl lg:text-4xl font-serif">
+                      {t(bi("Upcoming Events", "வரவிருக்கும் நிகழ்வுகள்"))}
+                    </h2>
+                  </div>
+                  <Link to="/events" className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary/80 transition-colors">
+                    {t(bi("Explore All Events", "அனைத்து நிகழ்வுகளையும் காண்க"))}
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </div>
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {topEvents.map(e => {
+                    const eTitle = (ta ? e.title_ta : e.title) || e.title;
+                    const eLoc = (ta ? e.location_ta : e.location) || e.location;
+                    return (
+                      <article key={e.id} className="rounded-2xl border border-border overflow-hidden bg-background shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full group">
+                        {e.image_url && (
+                          <div className="w-full h-48 bg-gray-50 flex items-center justify-center overflow-hidden border-b border-border">
+                            <img src={e.image_url} alt={eTitle} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                          </div>
+                        )}
+                        <div className="p-6 flex flex-col flex-1">
+                          <h3 className="font-serif text-[1.15rem] sm:text-xl line-clamp-2">{eTitle}</h3>
+                          <div className="mt-3 space-y-1.5 text-xs text-muted-foreground flex-1">
+                            {e.event_date && (
+                              <div className="flex items-center gap-1.5">
+                                <Calendar className="w-3.5 h-3.5 shrink-0" />
+                                <span>{e.event_date}</span>
+                              </div>
+                            )}
+                            {eLoc && (
+                              <div className="flex items-center gap-1.5">
+                                <MapPin className="w-3.5 h-3.5 shrink-0" />
+                                <span className="line-clamp-1">{eLoc}</span>
+                              </div>
+                            )}
+                          </div>
+                          <div className="mt-6 pt-4">
+                            <Link
+                              to="/events"
+                              className="inline-flex w-full items-center justify-center rounded-full bg-[#522938] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#41212d] hover:shadow-lg transition-all"
+                            >
+                              {ta ? "மேலும் காண்க" : "View Event"}
+                            </Link>
+                          </div>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        </Section>
+      )}
 
       {/* Invitation */}
       <Section tone="velvet">

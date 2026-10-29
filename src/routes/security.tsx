@@ -3,15 +3,20 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-store";
 import { Section } from "@/components/Primitives";
 import { bi, useLang } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
+import { showAlert } from "@/lib/alert";
 import {
   KeyRound,
   Shield,
   ShieldCheck,
   Check,
+  CheckCircle2,
+  AlertCircle,
   Loader2,
   Lock,
   Eye,
   EyeOff,
+  X,
 } from "lucide-react";
 import { AccountNavTabs } from "@/components/AccountNavTabs";
 
@@ -41,8 +46,7 @@ export function SecurityPage() {
   const [showNewPass, setShowNewPass] = useState(false);
   const [showConfirmPass, setShowConfirmPass] = useState(false);
   const [isChangingPass, setIsChangingPass] = useState(false);
-  const [passSuccess, setPassSuccess] = useState<string | null>(null);
-  const [passError, setPassError] = useState<string | null>(null);
+  const [confirmMismatch, setConfirmMismatch] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -55,28 +59,45 @@ export function SecurityPage() {
     }
   }, [mounted, isAuthenticated, user, navigate]);
 
-  const handleChangePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleChangePassword = async (e?: React.FormEvent | React.MouseEvent | React.KeyboardEvent) => {
+    if (e && typeof e.preventDefault === "function") {
+      e.preventDefault();
+    }
     if (!user) return;
 
-    if (!currentPassword || !newPassword) {
-      setPassError(ta ? "அனைத்து விவரங்களையும் பூர்த்தி செய்க." : "Please fill in all password fields.");
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      if (newPassword && confirmPassword && newPassword !== confirmPassword) {
+        setConfirmMismatch(true);
+      }
+      await showAlert.warning(
+        ta ? "விவரங்கள் தேவை" : "Required Fields",
+        ta ? "அனைத்து விவரங்களையும் பூர்த்தி செய்க." : "Please fill in all password fields."
+      );
       return;
     }
 
     if (newPassword.length < 6) {
-      setPassError(ta ? "புதிய கடவுச்சொல் குறைந்தது 6 எழுத்துகள் இருக்க வேண்டும்." : "New password must be at least 6 characters.");
+      await showAlert.warning(
+        ta ? "குறைந்தபட்ச நீளம்" : "Password Too Short",
+        ta ? "புதிய கடவுச்சொல் குறைந்தது 6 எழுத்துகள் இருக்க வேண்டும்." : "New password must be at least 6 characters."
+      );
       return;
     }
 
+    // Check if New Password and Confirm Password match
     if (newPassword !== confirmPassword) {
-      setPassError(ta ? "புதிய கடவுச்சொற்கள் பொருந்தவில்லை." : "New passwords do not match.");
+      setConfirmMismatch(true);
+      await showAlert.error(
+        ta ? "கடவுச்சொல் பொருந்தவில்லை" : "Passwords Do Not Match",
+        ta
+          ? "New Password மற்றும் Confirm Password இரண்டும் ஒரே மாதிரியாக இருக்க வேண்டும்."
+          : "New password and Confirm password must be identical."
+      );
       return;
     }
 
+    setConfirmMismatch(false);
     setIsChangingPass(true);
-    setPassError(null);
-    setPassSuccess(null);
 
     try {
       const API_URL = (import.meta.env["VITE_API_URL"] as string) || "http://localhost:5000";
@@ -93,16 +114,24 @@ export function SecurityPage() {
 
       const data = await res.json();
       if (res.ok && data.success) {
-        setPassSuccess(ta ? "கடவுச்சொல் வெற்றிகரமாக மாற்றப்பட்டது!" : "Password changed successfully!");
         setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
-        setTimeout(() => setPassSuccess(null), 5000);
+        setConfirmMismatch(false);
+        await showAlert.success(
+          ta ? "வெற்றி!" : "Success!",
+          ta ? "கடவுச்சொல் வெற்றிகரமாக மாற்றப்பட்டது!" : "Password changed successfully!",
+          2500
+        );
       } else {
-        setPassError(data.message || (ta ? "கடவுச்சொல்லை மாற்ற முடியவில்லை." : "Failed to change password."));
+        await showAlert.error(
+          ta ? "பிழை" : "Error",
+          data.message || (ta ? "கடவுச்சொல்லை மாற்ற முடியவில்லை." : "Failed to change password.")
+        );
       }
     } catch (err: any) {
-      setPassError(
+      await showAlert.error(
+        ta ? "சர்வர் பிழை" : "Connection Error",
         err.message || (ta ? "சர்வர் தொடர்பு பிழை. மீண்டும் முயற்சிக்கவும்." : "Failed to change password. Please check your connection.")
       );
     } finally {
@@ -110,7 +139,7 @@ export function SecurityPage() {
     }
   };
 
-  if (!isAuthenticated || !user) {
+  if (!mounted || !isAuthenticated || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <div className="text-center space-y-3">
@@ -142,13 +171,10 @@ export function SecurityPage() {
                 <ShieldCheck className="size-6" />
               </div>
               <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
+                <div>
                   <p className="text-sm font-semibold text-foreground">
                     {t(bi("Account Security", "கணக்கு பாதுகாப்பு"))}
                   </p>
-                  <span className="text-[0.68rem] text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/25 px-2 py-0.5 rounded-full font-semibold">
-                    {t(bi("✓ Active Session", "✓ செயல்பாட்டில் உள்ளது"))}
-                  </span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {t(bi("Your account is secured with end-to-end encrypted authentication.", "உங்கள் கணக்கு பாதுகாப்பான முறையில் குறியாக்கம் செய்யப்பட்டுள்ளது."))}
@@ -175,33 +201,15 @@ export function SecurityPage() {
                 </div>
               </div>
 
-              {passSuccess && (
-                <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/30 p-4 text-emerald-800 dark:text-emerald-300 text-sm flex items-center gap-3 animate-in fade-in duration-200">
-                  <Check className="size-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                  <span>{passSuccess}</span>
-                </div>
-              )}
-
-              {passError && (
-                <div className="rounded-xl bg-destructive/10 border border-destructive/30 p-4 text-destructive text-sm flex items-center gap-3">
-                  <span>{passError}</span>
-                </div>
-              )}
-
-              <form onSubmit={handleChangePassword} className="space-y-5" autoComplete="on">
-                {/* Hidden username input for browser password managers to prevent asking 'Select which login to update' */}
-                <input
-                  type="email"
-                  name="username"
-                  id="security-username"
-                  autoComplete="username"
-                  value={user.email}
-                  readOnly
-                  tabIndex={-1}
-                  aria-hidden="true"
-                  className="sr-only absolute pointer-events-none opacity-0 h-0 w-0"
-                />
-
+              <div
+                className="space-y-5"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleChangePassword();
+                  }
+                }}
+              >
                 {/* Current Password */}
                 <div>
                   <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
@@ -209,13 +217,22 @@ export function SecurityPage() {
                   </label>
                   <div className="relative">
                     <input
-                      id="current-password"
-                      name="current-password"
-                      autoComplete="current-password"
+                      id="kriya_curr_code"
+                      autoComplete="one-time-code"
+                      data-lpignore="true"
+                      data-1p-ignore="true"
+                      data-bwignore="true"
+                      data-form-type="other"
+                      autoCapitalize="off"
+                      autoCorrect="off"
+                      spellCheck={false}
+                      readOnly
+                      onFocus={(e) => {
+                        e.currentTarget.removeAttribute("readonly");
+                      }}
                       type={showCurrentPass ? "text" : "password"}
                       value={currentPassword}
                       onChange={(e) => setCurrentPassword(e.target.value)}
-                      required
                       className="w-full rounded-xl border border-border bg-background pl-4 pr-10 py-2.5 text-sm text-foreground focus:border-gold focus:ring-1 focus:ring-gold outline-none transition-all"
                       placeholder="••••••••"
                     />
@@ -238,25 +255,30 @@ export function SecurityPage() {
                     </label>
                     <div className="relative">
                       <input
-                        id="new-password"
-                        name="new-password"
-                        autoComplete="new-password"
-                        type={showNewPass ? "text" : "password"}
+                        id="kriya_new_code"
+                        autoComplete="one-time-code"
+                        data-lpignore="true"
+                        data-1p-ignore="true"
+                        data-bwignore="true"
+                        data-form-type="other"
+                        autoCapitalize="off"
+                        autoCorrect="off"
+                        spellCheck={false}
+                        readOnly
+                        onFocus={(e) => {
+                          e.currentTarget.removeAttribute("readonly");
+                        }}
+                        type={showConfirmPass ? "text" : "password"}
                         value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        required
-                        minLength={6}
-                        className="w-full rounded-xl border border-border bg-background pl-4 pr-10 py-2.5 text-sm text-foreground focus:border-gold focus:ring-1 focus:ring-gold outline-none transition-all"
+                        onChange={(e) => {
+                          setNewPassword(e.target.value);
+                          if (confirmMismatch && e.target.value === confirmPassword) {
+                            setConfirmMismatch(false);
+                          }
+                        }}
+                        className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground focus:border-gold focus:ring-1 focus:ring-gold outline-none transition-all"
                         placeholder={t(bi("Min 6 characters", "குறைந்தது 6 எழுத்துகள்"))}
                       />
-                      <button
-                        type="button"
-                        onClick={() => setShowNewPass(!showNewPass)}
-                        className="absolute right-3 top-3 text-muted-foreground hover:text-foreground cursor-pointer"
-                        aria-label="Toggle password visibility"
-                      >
-                        {showNewPass ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                      </button>
                     </div>
                   </div>
 
@@ -266,21 +288,40 @@ export function SecurityPage() {
                     </label>
                     <div className="relative">
                       <input
-                        id="confirm-password"
-                        name="confirm-password"
-                        autoComplete="new-password"
+                        id="kriya_conf_code"
+                        autoComplete="one-time-code"
+                        data-lpignore="true"
+                        data-1p-ignore="true"
+                        data-bwignore="true"
+                        data-form-type="other"
+                        autoCapitalize="off"
+                        autoCorrect="off"
+                        spellCheck={false}
+                        readOnly
+                        onFocus={(e) => {
+                          e.currentTarget.removeAttribute("readonly");
+                        }}
                         type={showConfirmPass ? "text" : "password"}
                         value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        required
-                        minLength={6}
-                        className="w-full rounded-xl border border-border bg-background pl-4 pr-10 py-2.5 text-sm text-foreground focus:border-gold focus:ring-1 focus:ring-gold outline-none transition-all"
+                        onChange={(e) => {
+                          setConfirmPassword(e.target.value);
+                          if (confirmMismatch && e.target.value === newPassword) {
+                            setConfirmMismatch(false);
+                          }
+                        }}
+                        className={cn(
+                          "w-full rounded-xl border pl-4 pr-10 py-2.5 text-sm text-foreground outline-none transition-all duration-200",
+                          confirmMismatch
+                            ? "border-red-500 bg-red-500/[0.04] ring-2 ring-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.45)] focus:border-red-500 focus:ring-red-500/70"
+                            : "border-border bg-background focus:border-gold focus:ring-1 focus:ring-gold"
+                        )}
                         placeholder={t(bi("Re-enter new password", "மீண்டும் உள்ளிடவும்"))}
                       />
                       <button
                         type="button"
                         onClick={() => setShowConfirmPass(!showConfirmPass)}
                         className="absolute right-3 top-3 text-muted-foreground hover:text-foreground cursor-pointer"
+                        title={showConfirmPass ? (ta ? "கடவுச்சொற்களை மறைக்கவும்" : "Hide passwords") : (ta ? "கடவுச்சொற்களை காட்டவும்" : "Show passwords")}
                         aria-label="Toggle password visibility"
                       >
                         {showConfirmPass ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
@@ -291,7 +332,8 @@ export function SecurityPage() {
 
                 <div className="pt-2">
                   <button
-                    type="submit"
+                    type="button"
+                    onClick={handleChangePassword}
                     disabled={isChangingPass}
                     className="inline-flex items-center justify-center gap-2 rounded-full bg-gold text-velvet-deep font-semibold px-6 py-2.5 text-sm hover:bg-gold/90 transition-all shadow-xs disabled:opacity-50 cursor-pointer"
                   >
@@ -308,7 +350,7 @@ export function SecurityPage() {
                     )}
                   </button>
                 </div>
-              </form>
+              </div>
             </div>
 
             {/* Password Guidelines Card */}
@@ -320,7 +362,6 @@ export function SecurityPage() {
               <ul className="text-xs text-muted-foreground space-y-2 list-disc list-inside leading-relaxed">
                 <li>{t(bi("Use at least 6-8 characters with a mix of letters and numbers.", "குறைந்தது 6 முதல் 8 எழுத்துக்கள் மற்றும் எண்களைப் பயன்படுத்தவும்."))}</li>
                 <li>{t(bi("Do not share your login credentials with anyone.", "உங்கள் கடவுச்சொல்லை எவருடனும் பகிர வேண்டாம்."))}</li>
-                <li>{t(bi("If you forget your password, you can reset it anytime on the sign-in page.", "கடவுச்சொல் மறந்துவிட்டால், உள்நுழைவு பக்கத்தில் மீட்டெடுக்கலாம்."))}</li>
               </ul>
             </div>
           </div>

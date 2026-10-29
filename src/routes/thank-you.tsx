@@ -33,8 +33,14 @@ function ThankYou() {
         </p>
         <div className="mt-10 flex flex-wrap justify-center gap-4">
           <Link
+            to="/my-programs"
+            className="rounded-full bg-gold px-7 py-3.5 text-sm font-semibold text-velvet-deep shadow-md hover:bg-gold/90 transition-all hover:scale-105"
+          >
+            {t(bi("View in My Programs", "என் பயிற்சிகளைக் காண்க"))}
+          </Link>
+          <Link
             to="/"
-            className="rounded-full bg-velvet px-7 py-3.5 text-sm text-primary-foreground transition-colors hover:bg-primary"
+            className="rounded-full border border-border px-7 py-3.5 text-sm text-foreground transition-colors hover:border-gold hover:text-gold"
           >
             {t(bi("Return home", "முகப்புக்குத் திரும்பு"))}
           </Link>

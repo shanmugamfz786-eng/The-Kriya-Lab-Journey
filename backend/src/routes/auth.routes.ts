@@ -1,10 +1,11 @@
 import { Router } from "express";
 import { register, login, me, createEnquiry, changePassword, forgotPassword } from "../controllers/auth.controller.js";
+import { registrationRateLimiter } from "../middleware/rate-limiter.js";
 
 const router = Router();
 
-router.post("/signup", register);
-router.post("/register", register);
+router.post("/signup", registrationRateLimiter(), register);
+router.post("/register", registrationRateLimiter(), register);
 router.post("/login", login);
 router.get("/me", me);
 router.post("/enquiry", createEnquiry);

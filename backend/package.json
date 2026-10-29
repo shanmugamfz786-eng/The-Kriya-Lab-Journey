@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "start": "tsx src/server.ts",
-    "dev": "tsx watch src/server.ts"
+    "dev": "tsx watch src/server.ts",
+    "test": "tsx --test tests/**/*.test.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

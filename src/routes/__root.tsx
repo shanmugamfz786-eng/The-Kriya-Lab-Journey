@@ -19,7 +19,6 @@ import { ScrollObserver } from "@/components/ScrollObserver";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { useAuth } from "@/lib/auth-store";
 import { cn } from "@/lib/utils";
-import { GlobalUserSidebar } from "@/components/GlobalUserSidebar";
 
 import notFoundIllustration from "@/assets/images/not-found-illustion.png";
 import { Home, Compass, MessageCircle, ArrowLeft } from "lucide-react";
@@ -186,22 +185,15 @@ function RootComponent() {
   const { isAuthenticated } = useAuth();
   const pathname = router.state.location.pathname;
   const isPortal = pathname.startsWith("/admin");
-  const isDashboard = pathname.startsWith("/dashboard");
+  const isAuthPage = pathname.startsWith("/auth") || (pathname === "/" && !isAuthenticated);
   const hideFooter = [
-    "/programs",
-    "/events",
-    "/profile",
     "/buy",
     "/enroll",
-    "/settings",
-    "/security",
     "/shipping-policy",
     "/returns-and-refunds",
     "/privacy",
     "/terms",
-    "/faq",
-    "/support"
-  ].some(path => pathname.startsWith(path)) || isDashboard;
+  ].some(path => pathname.startsWith(path));
 
   // 1-Time Initial Sync on Web Page Access:
   // Whenever user accesses/opens the web page, fetch fresh data from database via backend 1 time
@@ -232,25 +224,23 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
         <ScrollObserver />
-        <div className={cn("flex min-h-screen flex-col md:flex-row")}>
-          {isAuthenticated && !isPortal && <GlobalUserSidebar />}
-          
-          <div className={cn("flex-1 flex flex-col min-h-screen w-full md:w-auto", (!isPortal && !hideMobileFooter && !isDashboard) ? "pb-[4.25rem] md:pb-0" : "", (isAuthenticated && !isPortal) ? "md:pl-64" : "")}>
-            {(!isAuthenticated || (!isAuthenticated && !isDashboard)) && <Header />}
+        <div className="flex min-h-screen flex-col">
+          <div className="flex-1 flex flex-col min-h-screen w-full">
+            {!isPortal && !isAuthPage && <Header />}
             
             <main className="flex-1 flex flex-col">
               {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
               <Outlet />
             </main>
             
-            {!hideFooter && (
+            {!hideFooter && !isAuthPage && (
               <div className={cn(hideMobileFooter && "hidden md:block")}>
                 <Footer />
               </div>
             )}
           </div>
         </div>
-        {!isPortal && !hideMobileFooter && <MobileBottomNav />}
+        {!isPortal && !isAuthPage && !hideMobileFooter && <MobileBottomNav />}
       </LanguageProvider>
     </QueryClientProvider>
   );

@@ -13,6 +13,9 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Configure trusted proxy for Render edge deployment to obtain authentic client IP
+app.set("trust proxy", process.env.TRUST_PROXY_HOPS ? Number(process.env.TRUST_PROXY_HOPS) : 1);
+
 // Configure CORS for Vercel Frontend
 app.use(
   cors({

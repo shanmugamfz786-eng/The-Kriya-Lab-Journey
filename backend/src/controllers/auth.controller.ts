@@ -9,15 +9,61 @@ import {
   updateLocalUserPasswordById,
   getLocalUsers,
 } from "../config/local-users.js";
+import {
+  defaultCountryVerifier,
+  GeoValidationError,
+  GeoMismatchError,
+  GeoServiceUnavailableError,
+} from "../services/geo/country-verifier.service.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "the_kriya_lab_secret_key";
 
 export async function register(req, res) {
   try {
-    const { full_name, email, password } = req.body;
+    const { full_name, email, password, country, gps } = req.body;
 
     if (!email || !password || !full_name) {
       return res.status(400).json({ success: false, message: "All fields are required" });
+    }
+
+    // MANDATORY SECURITY VERIFICATION: Triangulate Selected Country === IP Country === GPS Country
+    // Enforced strictly BEFORE any TiDB query, password hashing, or user record creation.
+    let geoResult;
+    try {
+      geoResult = await defaultCountryVerifier.verifyRegistration({
+        req,
+        selectedCountry: country,
+        gps,
+      });
+    } catch (geoErr: any) {
+      if (geoErr instanceof GeoValidationError) {
+        return res.status(400).json({
+          success: false,
+          code: geoErr.code,
+          message: geoErr.message,
+        });
+      }
+      if (geoErr instanceof GeoMismatchError) {
+        return res.status(403).json({
+          success: false,
+          code: geoErr.code,
+          message: geoErr.message,
+        });
+      }
+      if (geoErr instanceof GeoServiceUnavailableError) {
+        return res.status(503).json({
+          success: false,
+          code: geoErr.code,
+          message: geoErr.message,
+        });
+      }
+
+      console.error("[Geo Verification Error]:", geoErr);
+      return res.status(503).json({
+        success: false,
+        code: "GEO_VERIFICATION_FAILED",
+        message: "Registration verification could not be completed at this time.",
+      });
     }
 
     const cleanEmail = email.trim().toLowerCase();
@@ -68,6 +114,7 @@ export async function register(req, res) {
       email: cleanEmail,
       password_hash: passwordHash,
       role: assignedRole,
+      country: geoResult.selectedCountry,
       created_at: new Date().toISOString(),
     });
 

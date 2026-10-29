@@ -18,6 +18,7 @@ export interface LocalUserRecord {
   role: "student" | "admin";
   created_at?: string;
   avatar?: string;
+  country?: string;
 }
 
 function ensureDataDir() {

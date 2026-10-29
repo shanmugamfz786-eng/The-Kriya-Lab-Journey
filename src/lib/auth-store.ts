@@ -91,18 +91,39 @@ export function useAuth() {
     }
   };
 
-  const register = async (name: string, email: string, password: string): Promise<AuthUser> => {
+  const register = async (
+    name: string,
+    email: string,
+    password: string,
+    options?: {
+      country?: string;
+      gps?: {
+        latitude: number;
+        longitude: number;
+        accuracy?: number;
+      };
+    }
+  ): Promise<AuthUser> => {
     try {
       const res = await fetch(`${API_URL}/api/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ full_name: name.trim(), email: email.trim(), password }),
+        body: JSON.stringify({
+          full_name: name.trim(),
+          email: email.trim(),
+          password,
+          country: options?.country,
+          gps: options?.gps,
+        }),
       });
 
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        throw new Error((data && data.message) ? data.message : "backend_offline");
+        const error = new Error(data && data.message ? data.message : `Registration failed with status ${res.status}`);
+        (error as any).code = data?.code;
+        (error as any).status = res.status;
+        throw error;
       }
 
       if (data.success && data.user) {
@@ -111,22 +132,8 @@ export function useAuth() {
       }
       throw new Error(data.message || "Registration failed");
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      if (msg !== "Failed to fetch" && msg !== "backend_offline") {
-        throw err;
-      }
-
-      console.info("[Auth Service] Backend server offline, applying local registration fallback.");
-      const fallbackUser: AuthUser = {
-        id: "usr-" + Date.now(),
-        full_name: name || "Seeker",
-        email: email.toLowerCase(),
-        role: email.toLowerCase() === "admin@thekriyalab.com" ? "admin" : "student",
-        avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80",
-      };
-
-      saveSession(fallbackUser, "dev_mock_jwt_token_" + Date.now());
-      return fallbackUser;
+      // Re-throw verification failures and server errors directly
+      throw err;
     }
   };
 
