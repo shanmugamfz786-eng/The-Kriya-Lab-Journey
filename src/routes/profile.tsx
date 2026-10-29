@@ -21,7 +21,7 @@ export const Route = createFileRoute("/profile")({
   staticData: { sitemap: false },
   head: () => ({
     meta: [
-      { title: "Personal Profile | THE KRIYA LAB" },
+      { title: "Personal Details | THE KRIYA LAB" },
       { name: "description", content: "View your personal profile and account details." },
     ],
   }),
@@ -62,7 +62,7 @@ export function ProfilePage() {
   return (
     <div className="min-h-screen flex flex-col w-full bg-background pb-16">
       <AccountNavTabs
-        title={t(bi("Personal Profile", "தனிப்பட்ட விவரங்கள்"))}
+        title={t(bi("Personal Details", "தனிப்பட்ட விவரங்கள்"))}
         subtitle={t(
           bi(
             "Review your personal identity, contact email, and active status in The Kriya Lab.",
@@ -214,7 +214,7 @@ export function ProfilePage() {
           {/* Bottom Actions: Dashboard & Sign Out */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 rounded-2xl border border-border bg-card">
             <Link
-              to="/dashboard"
+              to="/my-programs"
               className="inline-flex items-center gap-2 text-xs font-semibold text-foreground hover:text-gold transition-colors"
             >
               <BookOpen className="size-4 text-gold" />

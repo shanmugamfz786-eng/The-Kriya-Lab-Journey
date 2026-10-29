@@ -189,164 +189,36 @@ function AccountLink({
   isTransparent?: boolean;
 }) {
   const { t } = useLang();
-  const { user, isAuthenticated, logout } = useAuth();
-  const navigate = useNavigate();
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const { user, isAuthenticated } = useAuth();
 
   if (isAuthenticated && user) {
+    const displayName = user.full_name || (user as any).username || (user as any).name || user.email?.split("@")[0] || "User";
+    const initial = displayName.charAt(0).toUpperCase();
+
     return (
-      <div className="relative">
-        <button
-          type="button"
-          onClick={() => setDropdownOpen(!dropdownOpen)}
-          className={cn(
-            "flex items-center gap-1.5 rounded-full py-0.5 px-2 transition-all",
-            isTransparent
-              ? "bg-white/10 text-white hover:bg-white/20"
-              : "bg-secondary/80 text-foreground hover:bg-secondary",
-            className,
-          )}
-        >
-          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-gold/20 text-gold overflow-hidden shrink-0">
-            {user.avatar ? (
-              <img src={user.avatar} alt={user.full_name} className="w-full h-full object-cover" />
-            ) : (
-              <User className="size-3" />
-            )}
-          </div>
-          <span className="text-[0.72rem] font-medium max-w-[90px] truncate">
-            {user.full_name.split(" ")[0]}
-          </span>
-          <ChevronDown className="size-2.5 opacity-70" />
-        </button>
-
-        {dropdownOpen && (
-          <>
-            <div
-              className="fixed inset-0 z-40"
-              onClick={() => setDropdownOpen(false)}
-            />
-            <div className="absolute right-0 top-full mt-2 z-50 w-60 rounded-xl border border-gold/20 bg-velvet-deep text-white py-2 shadow-2xl animate-in fade-in-50 zoom-in-95">
-              <div className="border-b border-white/10 px-4 py-2.5 flex items-center gap-3">
-                <div className="size-9 rounded-full bg-gold/20 border border-gold/40 flex items-center justify-center shrink-0 overflow-hidden text-gold font-bold text-sm">
-                  {user.avatar ? (
-                    <img src={user.avatar} alt={user.full_name} className="w-full h-full object-cover" />
-                  ) : (
-                    <span>{user.full_name?.charAt(0).toUpperCase() || "U"}</span>
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold text-white truncate">{user.full_name}</p>
-                  <p className="text-[0.68rem] text-gold truncate">{user.email}</p>
-                  {user.role === "admin" && (
-                    <span className="mt-0.5 inline-block rounded-full bg-gold/20 px-2 py-0.5 text-[0.6rem] font-semibold text-gold uppercase tracking-wider">
-                      Admin
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              <div className="py-1 text-xs">
-                <Link
-                  to="/dashboard"
-                  onClick={() => {
-                    setDropdownOpen(false);
-                    onClick?.();
-                  }}
-                  className="flex items-center gap-2.5 px-4 py-2 text-white/90 hover:bg-white/10 hover:text-gold transition-colors"
-                >
-                  <LayoutDashboard className="size-4 text-gold" />
-                  <span>User Dashboard</span>
-                </Link>
-                {user.role === "admin" && (
-                  <Link
-                    to="/admin"
-                    onClick={() => {
-                      setDropdownOpen(false);
-                      onClick?.();
-                    }}
-                    className="flex items-center gap-2.5 px-4 py-2 text-white/90 hover:bg-white/10 hover:text-gold transition-colors"
-                  >
-                    <ShieldCheck className="size-4 text-gold" />
-                    <span>Admin Panel</span>
-                  </Link>
-                )}
-                <Link
-                  to="/my-programs"
-                  onClick={() => {
-                    setDropdownOpen(false);
-                    onClick?.();
-                  }}
-                  className="flex items-center gap-2.5 px-4 py-2 text-white/90 hover:bg-white/10 hover:text-gold transition-colors"
-                >
-                  <Compass className="size-4 text-gold" />
-                  <span>My Sadhana</span>
-                </Link>
-                <Link
-                  to="/profile"
-                  onClick={() => {
-                    setDropdownOpen(false);
-                    onClick?.();
-                  }}
-                  className="flex items-center gap-2.5 px-4 py-2 text-white/90 hover:bg-white/10 hover:text-gold transition-colors"
-                >
-                  <User className="size-4 text-gold" />
-                  <span>{t(bi("Personal Profile", "தனிப்பட்ட விவரங்கள்"))}</span>
-                </Link>
-                <Link
-                  to="/settings"
-                  onClick={() => {
-                    setDropdownOpen(false);
-                    onClick?.();
-                  }}
-                  className="flex items-center gap-2.5 px-4 py-2 text-white/90 hover:bg-white/10 hover:text-gold transition-colors"
-                >
-                  <Edit3 className="size-4 text-gold" />
-                  <span>{t(bi("Change Your Details", "விவரங்களை மாற்றவும்"))}</span>
-                </Link>
-                <Link
-                  to="/security"
-                  onClick={() => {
-                    setDropdownOpen(false);
-                    onClick?.();
-                  }}
-                  className="flex items-center gap-2.5 px-4 py-2 text-white/90 hover:bg-white/10 hover:text-gold transition-colors"
-                >
-                  <KeyRound className="size-4 text-gold" />
-                  <span>{t(bi("Security & Password", "பாதுகாப்பு & கடவுச்சொல்"))}</span>
-                </Link>
-                <Link
-                  to="/support"
-                  onClick={() => {
-                    setDropdownOpen(false);
-                    onClick?.();
-                  }}
-                  className="flex items-center gap-2.5 px-4 py-2 text-white/90 hover:bg-white/10 hover:text-gold transition-colors"
-                >
-                  <MessageSquare className="size-4 text-gold" />
-                  <span>{t(bi("Help & Inquiries", "உதவி & வினவல்கள்"))}</span>
-                </Link>
-              </div>
-
-              <div className="border-t border-white/10 pt-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setDropdownOpen(false);
-                    logout();
-                    navigate({ to: "/", replace: true });
-                    onClick?.();
-                  }}
-                  className="flex w-full items-center gap-2.5 px-4 py-2 text-xs text-rose-400 hover:bg-rose-500/10 transition-colors"
-                >
-                  <LogOut className="size-4" />
-                  <span>{t(bi("Sign Out", "வெளியேறு"))}</span>
-                </button>
-              </div>
-            </div>
-          </>
+      <Link
+        to="/profile"
+        onClick={onClick}
+        title={t(bi("Personal Profile & Details", "தனிப்பட்ட விவரங்கள்"))}
+        className={cn(
+          "flex items-center gap-1.5 sm:gap-2 rounded-full py-1 px-2.5 sm:px-3 text-xs font-medium transition-all border shadow-xs cursor-pointer group",
+          isTransparent
+            ? "bg-white/10 text-white border-gold/40 hover:bg-gold/20 hover:border-gold hover:text-gold"
+            : "bg-gold/10 text-foreground border-gold/30 hover:bg-gold/20 hover:border-gold",
+          className,
         )}
-      </div>
+      >
+        <div className="flex h-5 w-5 items-center justify-center rounded-full bg-gold/25 text-gold border border-gold/40 overflow-hidden shrink-0 font-bold text-[0.65rem] group-hover:scale-105 transition-transform">
+          {user.avatar ? (
+            <img src={user.avatar} alt={displayName} className="w-full h-full object-cover" />
+          ) : (
+            <span>{initial}</span>
+          )}
+        </div>
+        <span className="text-[0.74rem] sm:text-[0.78rem] font-semibold max-w-[105px] sm:max-w-[150px] truncate text-gold group-hover:text-gold">
+          {displayName}
+        </span>
+      </Link>
     );
   }
 
@@ -452,8 +324,7 @@ export function Header() {
 
           {/* Center: Primary Navigation (Desktop) */}
           <nav className="hidden lg:flex flex-1 justify-center items-center gap-2.5 xl:gap-4 2xl:gap-5 mx-2" aria-label="Primary">
-            {(isAuthenticated ? loggedInNav : loggedOutNav)
-              .map((item) => (
+            {loggedOutNav.map((item) => (
               <Link
                 key={item.to}
                 to={item.to}
@@ -482,34 +353,9 @@ export function Header() {
               <AccountLink isTransparent={isTransparent} />
             </div>
 
-            {/* Mobile Actions (Register / Dashboard) */}
+            {/* Mobile Actions (Account / Register) */}
             <div className="block sm:hidden">
-              {!isAuthenticated ? (
-                  <Link
-                    to="/auth"
-                    search={{ mode: "signup" }}
-                    className={cn(
-                      "text-[0.65rem] font-semibold px-3 py-1.5 rounded-full transition-all uppercase tracking-wider",
-                      isTransparent
-                        ? "bg-gold text-[#1a140b] hover:bg-gold/90 shadow-[0_0_10px_rgba(212,175,55,0.3)]"
-                        : "bg-[#d4af37] text-white hover:bg-[#c5a030] shadow-md"
-                    )}
-                  >
-                    {t(bi("Sign In / Sign Up", "உள்நுழை / பதிவு செய்"))}
-                  </Link>
-              ) : (
-                <Link
-                  to="/dashboard"
-                  className={cn(
-                    "flex items-center justify-center size-8 rounded-full transition-all border",
-                    isTransparent
-                      ? "bg-white/10 text-gold border-gold/30 hover:bg-white/20"
-                      : "bg-secondary text-primary border-border hover:bg-secondary/80"
-                  )}
-                >
-                  <User className="size-4" />
-                </Link>
-              )}
+              <AccountLink isTransparent={isTransparent} />
             </div>
 
             {/* Hamburger / Menu Trigger */}
