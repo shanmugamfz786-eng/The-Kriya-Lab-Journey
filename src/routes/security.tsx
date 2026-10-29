@@ -12,6 +12,7 @@ import {
   Lock,
   Eye,
   EyeOff,
+  Mail,
 } from "lucide-react";
 import { AccountNavTabs } from "@/components/AccountNavTabs";
 
@@ -85,6 +86,7 @@ export function SecurityPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId: user.id,
+          email: user.email,
           currentPassword,
           newPassword,
         }),
@@ -92,20 +94,22 @@ export function SecurityPage() {
 
       const data = await res.json();
       if (res.ok && data.success) {
-        setPassSuccess(ta ? "கடவுச்சொல் வெற்றிகரமாக மாற்றப்பட்டது!" : "Password changed successfully!");
+        setPassSuccess(
+          ta
+            ? `${user.email} கணக்கிற்கான கடவுச்சொல் வெற்றிகரமாக மாற்றப்பட்டது!`
+            : `Password changed successfully for ${user.email}!`
+        );
         setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
-        setTimeout(() => setPassSuccess(null), 4000);
+        setTimeout(() => setPassSuccess(null), 5000);
       } else {
         setPassError(data.message || (ta ? "கடவுச்சொல்லை மாற்ற முடியவில்லை." : "Failed to change password."));
       }
     } catch (err: any) {
-      setPassSuccess(ta ? "கடவுச்சொல் மாற்றப்பட்டது!" : "Password changed successfully!");
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-      setTimeout(() => setPassSuccess(null), 4000);
+      setPassError(
+        err.message || (ta ? "சர்வர் தொடர்பு பிழை. மீண்டும் முயற்சிக்கவும்." : "Failed to change password. Please check your connection.")
+      );
     } finally {
       setIsChangingPass(false);
     }
@@ -191,6 +195,24 @@ export function SecurityPage() {
               )}
 
               <form onSubmit={handleChangePassword} className="space-y-5">
+                {/* Active Gmail for this Password Change */}
+                <div className="p-3.5 rounded-xl border border-gold/30 bg-gold/5 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="size-8 rounded-full bg-gold/20 flex items-center justify-center text-gold shrink-0">
+                      <Mail className="size-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[0.68rem] uppercase font-bold text-muted-foreground tracking-wider">
+                        {t(bi("Changing Password for Account", "கடவுச்சொல் மாற்றப்படும் கணக்கு"))}
+                      </p>
+                      <p className="text-sm font-mono font-semibold text-gold truncate">{user.email}</p>
+                    </div>
+                  </div>
+                  <span className="text-[0.68rem] text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full font-semibold shrink-0">
+                    {t(bi("Current Gmail", "தற்போதைய ஜிமெயில்"))}
+                  </span>
+                </div>
+
                 {/* Current Password */}
                 <div>
                   <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">

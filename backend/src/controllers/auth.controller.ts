@@ -239,29 +239,48 @@ export async function createEnquiry(req, res) {
 }
 
 /**
- * Change Password (for logged-in users in Settings)
+ * Change Password (for logged-in users in Settings / Security)
+ * Accepts both email and/or userId to ensure the password is changed specifically
+ * for the exact Gmail account the user is currently using.
  */
 export async function changePassword(req, res) {
   try {
-    const { userId, currentPassword, newPassword } = req.body;
+    const { userId, email, currentPassword, newPassword } = req.body;
 
-    if (!userId || !currentPassword || !newPassword) {
-      return res.status(400).json({ success: false, message: "Current and new passwords are required" });
+    if ((!userId && !email) || !currentPassword || !newPassword) {
+      return res.status(400).json({ success: false, message: "Email or User ID, current password, and new password are required" });
     }
 
     if (newPassword.length < 6) {
       return res.status(400).json({ success: false, message: "New password must be at least 6 characters" });
     }
 
-    const cleanUserId = userId.toString().trim();
-    let user = findLocalUserById(cleanUserId);
+    const cleanEmail = email ? email.toString().trim().toLowerCase() : "";
+    const cleanUserId = userId ? userId.toString().trim() : "";
 
+    // 1. Primary lookup by the user's logged-in Gmail address
+    let user = cleanEmail ? findLocalUserByEmail(cleanEmail) : null;
+
+    // 2. Fallback lookup by User ID
+    if (!user && cleanUserId) {
+      user = findLocalUserById(cleanUserId);
+    }
+
+    // 3. Fallback lookup in TiDB database
     if (!user) {
       try {
         const db = getDbPool();
-        const [result] = await db.query("SELECT * FROM users WHERE id = ?", [cleanUserId]);
-        if (result && result.length > 0) {
-          user = result[0];
+        if (cleanEmail) {
+          const [result] = await db.query("SELECT * FROM users WHERE LOWER(email) = ?", [cleanEmail]);
+          if (result && result.length > 0) {
+            user = result[0];
+          }
+        }
+        if (!user && cleanUserId) {
+          const [result] = await db.query("SELECT * FROM users WHERE id = ?", [cleanUserId]);
+          if (result && result.length > 0) {
+            user = result[0];
+          }
         }
       } catch (dbErr) {
         console.warn("[TiDB Notice] changePassword DB query:", dbErr.message);
@@ -269,7 +288,12 @@ export async function changePassword(req, res) {
     }
 
     if (!user) {
-      return res.status(404).json({ success: false, message: "User account not found" });
+      return res.status(404).json({
+        success: false,
+        message: cleanEmail
+          ? `No account found for Gmail: ${cleanEmail}`
+          : "User account not found",
+      });
     }
 
     let isMatch = false;
@@ -286,20 +310,36 @@ export async function changePassword(req, res) {
     const salt = await bcrypt.genSalt(10);
     const newHash = await bcrypt.hash(newPassword, salt);
 
-    // Update in local store
-    updateLocalUserPasswordById(cleanUserId, newHash);
+    // Update in local persistent store by both email and id
+    if (user.email) {
+      updateLocalUserPassword(user.email, newHash);
+    }
+    if (user.id) {
+      updateLocalUserPasswordById(user.id, newHash);
+    }
 
-    // Try updating TiDB
+    // Update in TiDB database
     try {
       const db = getDbPool();
-      await db.query("UPDATE users SET password_hash = ? WHERE id = ?", [newHash, cleanUserId]);
+      if (user.email) {
+        await db.query("UPDATE users SET password_hash = ? WHERE LOWER(email) = ?", [newHash, user.email.toLowerCase()]);
+      }
+      if (user.id) {
+        await db.query("UPDATE users SET password_hash = ? WHERE id = ?", [newHash, user.id]);
+      }
     } catch (dbErr) {
       console.warn("[TiDB Notice] update password in TiDB:", dbErr.message);
     }
 
     return res.status(200).json({
       success: true,
-      message: "Password changed successfully",
+      message: `Password changed successfully for ${user.email}`,
+      user: {
+        id: user.id,
+        email: user.email,
+        full_name: user.full_name,
+        role: user.role,
+      },
     });
   } catch (err) {
     console.error("[Change Password Error]:", err);
@@ -346,11 +386,17 @@ export async function forgotPassword(req, res) {
 
     // Update in local store
     updateLocalUserPassword(cleanEmail, newHash);
+    if (user.id) {
+      updateLocalUserPasswordById(user.id, newHash);
+    }
 
     // Try updating in TiDB
     try {
       const db = getDbPool();
-      await db.query("UPDATE users SET password_hash = ? WHERE email = ?", [newHash, cleanEmail]);
+      await db.query("UPDATE users SET password_hash = ? WHERE LOWER(email) = ?", [newHash, cleanEmail]);
+      if (user.id) {
+        await db.query("UPDATE users SET password_hash = ? WHERE id = ?", [newHash, user.id]);
+      }
     } catch (dbErr) {
       console.warn("[TiDB Notice] forgotPassword update in TiDB:", dbErr.message);
     }
