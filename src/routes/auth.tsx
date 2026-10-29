@@ -43,7 +43,14 @@ export function AuthPage({
   const searchMode = (searchObj?.get("mode") as AuthMode) || undefined;
   const redirectPath = propRedirect || searchObj?.get("redirect") || undefined;
 
-  const API_URL = (import.meta.env["VITE_API_URL"] as string | undefined) || "http://localhost:5000";
+  const API_URL = (() => {
+    const envUrl = (import.meta.env["VITE_API_URL"] as string | undefined)?.trim();
+    if (envUrl && !envUrl.includes("localhost")) return envUrl;
+    if (typeof window !== "undefined" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
+      return envUrl && !envUrl.includes("localhost") ? envUrl : "https://the-kriya-lab-backend.onrender.com";
+    }
+    return envUrl || "http://localhost:5000";
+  })();
 
   const { t } = useLang();
   const navigate = useNavigate();
@@ -311,7 +318,6 @@ export function AuthPage({
           return;
         }
 
-        const API_URL = (import.meta.env["VITE_API_URL"] as string) || "http://localhost:5000";
         const res = await fetch(`${API_URL}/api/auth/forgot-password`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },

@@ -9,7 +9,14 @@ export interface AuthUser {
   phone?: string;
 }
 
-const API_URL = (import.meta.env["VITE_API_URL"] as string | undefined) || "http://localhost:5000";
+const API_URL = (() => {
+  const envUrl = (import.meta.env["VITE_API_URL"] as string | undefined)?.trim();
+  if (envUrl && !envUrl.includes("localhost")) return envUrl;
+  if (typeof window !== "undefined" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
+    return envUrl && !envUrl.includes("localhost") ? envUrl : "https://the-kriya-lab-backend.onrender.com";
+  }
+  return envUrl || "http://localhost:5000";
+})();
 
 const STORAGE_KEY_USER = "the_kriya_lab_user";
 const STORAGE_KEY_TOKEN = "the_kriya_lab_token";
