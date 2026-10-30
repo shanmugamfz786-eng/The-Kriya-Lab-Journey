@@ -411,10 +411,15 @@ export function AuthPage({
   }
 
   return (
-    <div className="relative w-full min-h-screen bg-background flex flex-col lg:flex-row">
+    <div className="relative w-full min-h-screen lg:h-screen lg:overflow-hidden bg-background flex flex-col lg:flex-row">
 
-      {/* Left Column: Brand Velvet-Deep & Gold Form Sanctuary (Scrolls naturally) */}
-      <div className="relative w-full lg:w-1/2 min-h-screen flex flex-col items-center bg-velvet-deep text-white px-6 py-10 sm:px-10 md:px-14 lg:px-16 z-10 shadow-2xl">
+      {/* Left Column: Fixed on Sign In / Forgot, Scrollable on Sign Up */}
+      <div className={cn(
+        "relative w-full lg:w-1/2 flex flex-col items-center bg-velvet-deep text-white px-6 py-8 sm:px-10 md:px-14 lg:px-16 z-10 shadow-2xl",
+        mode === "signup"
+          ? "min-h-screen lg:h-screen lg:overflow-y-auto"
+          : "min-h-screen lg:h-screen lg:overflow-hidden justify-center"
+      )}>
 
         {/* Ambient subtle glow */}
         <div className="pointer-events-none absolute -top-20 -left-20 w-80 h-80 bg-gold/10 rounded-full blur-3xl" />
@@ -426,7 +431,10 @@ export function AuthPage({
         <div className="absolute top-[12%] right-[10%] w-10 h-10 rounded-full border-[2px] border-gold/10 animate-float-slow pointer-events-none" />
         <div className="absolute bottom-[14%] right-[8%] w-9 h-9 rounded-xl border-[2px] border-gold/25 rotate-45 animate-float-slow-reverse pointer-events-none" />
 
-        <div className="relative z-10 w-full max-w-md flex flex-col justify-center my-auto py-8 sm:py-10">
+        <div className={cn(
+          "relative z-10 w-full max-w-md flex flex-col justify-center py-6 sm:py-8",
+          mode === "signup" ? "my-auto lg:my-8" : "my-auto"
+        )}>
 
           {/* Heading and subtitle */}
           <div className="mb-6 text-left">
