@@ -582,11 +582,11 @@ export function AuthPage({
                         <p className="font-semibold text-xs text-white">
                           Location Verification
                         </p>
-                        <p className="text-[11px] text-white/60 truncate">
-                          {geoStatus === "verified"
-                            ? `✓ Location verified`
-                            : "IP and device location verified on signup"}
-                        </p>
+                        {geoStatus === "verified" && (
+                          <p className="text-[11px] text-emerald-400 font-medium truncate">
+                            ✓ Location verified
+                          </p>
+                        )}
                       </div>
                     </div>
 
