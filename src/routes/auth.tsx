@@ -411,14 +411,17 @@ export function AuthPage({
   }
 
   return (
-    <div className="relative w-full min-h-screen lg:h-screen lg:overflow-hidden bg-background flex flex-col lg:flex-row">
+    <div className={cn(
+      "relative w-full bg-background flex flex-col lg:flex-row",
+      mode === "signup" ? "min-h-screen lg:h-screen lg:overflow-hidden" : "h-screen overflow-hidden"
+    )}>
 
-      {/* Left Column: Fixed on Sign In / Forgot, Scrollable on Sign Up */}
+      {/* Left Column: Perfectly Centered on Sign In, Scrollable on Sign Up */}
       <div className={cn(
-        "relative w-full lg:w-1/2 flex flex-col items-center bg-velvet-deep text-white px-6 py-8 sm:px-10 md:px-14 lg:px-16 z-10 shadow-2xl",
+        "relative w-full lg:w-1/2 flex flex-col items-center bg-velvet-deep text-white px-6 sm:px-10 md:px-14 lg:px-16 z-10 shadow-2xl",
         mode === "signup"
-          ? "min-h-screen lg:h-screen lg:overflow-y-auto"
-          : "min-h-screen lg:h-screen lg:overflow-hidden justify-center"
+          ? "min-h-screen lg:h-screen lg:overflow-y-auto py-8 sm:py-10"
+          : "h-screen overflow-hidden justify-center py-0"
       )}>
 
         {/* Ambient subtle glow */}
@@ -432,12 +435,12 @@ export function AuthPage({
         <div className="absolute bottom-[14%] right-[8%] w-9 h-9 rounded-xl border-[2px] border-gold/25 rotate-45 animate-float-slow-reverse pointer-events-none" />
 
         <div className={cn(
-          "relative z-10 w-full max-w-md flex flex-col justify-center py-6 sm:py-8",
-          mode === "signup" ? "my-auto lg:my-8" : "my-auto"
+          "relative z-10 w-full max-w-md flex flex-col justify-center",
+          mode === "signup" ? "my-auto py-6 sm:py-8" : "my-0 py-0"
         )}>
 
           {/* Heading and subtitle */}
-          <div className="mb-6 text-left">
+          <div className={cn("mb-6", mode === "signin" ? "text-center" : "text-left")}>
             <h1 className="font-serif text-3xl sm:text-4xl xl:text-5xl font-light text-white tracking-wide drop-shadow-sm">
               {mode === "signin"
                 ? t(bi("Welcome Back", "மீண்டும் வருக"))
@@ -445,7 +448,7 @@ export function AuthPage({
                 ? t(bi("Create Account", "கணக்கை உருவாக்கு"))
                 : t(bi("Reset Password", "கடவுச்சொல் மீட்டமைப்பு"))}
             </h1>
-            <p className="text-xs sm:text-sm text-white/80 mt-2 font-light leading-relaxed">
+            <p className={cn("text-xs sm:text-sm text-white/80 mt-2 font-light leading-relaxed", mode === "signin" && "max-w-sm mx-auto")}>
               {mode === "signin"
                 ? t(bi(
                     "To keep connected with us please login with your personal info",
