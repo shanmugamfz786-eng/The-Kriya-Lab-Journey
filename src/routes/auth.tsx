@@ -626,25 +626,33 @@ export function AuthPage({
                   )}
                 </div>
 
-                {/* Country / Region - Located under Location Verification, Blank initially */}
-                <div className="space-y-1.5 text-left">
-                  <label className="block text-xs font-semibold text-white/90">
-                    Country / Region
-                  </label>
-                  <div className="relative">
-                    <input
-                      id="auth-country"
-                      name="country"
-                      type="text"
-                      readOnly
-                      value={country}
-                      className="w-full px-4 py-3 rounded-2xl bg-white/10 border border-white/20 text-white text-sm font-medium focus:outline-none cursor-default select-none shadow-inner"
-                    />
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-white/40">
-                      <MapPin className="size-4" />
+                {/* Country / Region - Only shown once Location Verification is verified */}
+                {geoStatus === "verified" && country && (
+                  <div className="space-y-1.5 text-left animate-in fade-in slide-in-from-top-2 duration-300">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-semibold text-white/90">
+                        Country / Region
+                      </label>
+                      <span className="text-[10px] font-medium text-emerald-300 flex items-center gap-1 bg-emerald-500/15 px-2 py-0.5 rounded-full border border-emerald-500/30">
+                        <CheckCircle className="size-3 text-emerald-400" />
+                        Verified
+                      </span>
+                    </div>
+                    <div className="relative">
+                      <input
+                        id="auth-country"
+                        name="country"
+                        type="text"
+                        readOnly
+                        value={country}
+                        className="w-full px-4 py-3 rounded-2xl bg-white/10 border border-emerald-500/30 text-white text-sm font-medium focus:outline-none cursor-default select-none shadow-inner"
+                      />
+                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-emerald-400">
+                        <MapPin className="size-4" />
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
 
                 {/* Agree to Terms Checkbox */}
                 <label className="flex items-center gap-3 cursor-pointer select-none text-xs text-white/80 text-left pt-1">
