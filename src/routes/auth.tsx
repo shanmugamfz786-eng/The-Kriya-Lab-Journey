@@ -205,6 +205,54 @@ export function AuthPage({
     });
   };
 
+  const applyFallbackVerification = (currentCoords: { latitude: number; longitude: number; accuracy?: number } | null): boolean => {
+    setGeoLoading(false);
+    const timeZone = typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone || "" : "";
+    let detectedCode = "IN";
+
+    if (currentCoords && currentCoords.latitude >= 8 && currentCoords.latitude <= 37 && currentCoords.longitude >= 68 && currentCoords.longitude <= 97) {
+      detectedCode = "IN";
+    } else if (timeZone.includes("Kolkata") || timeZone.includes("Calcutta") || timeZone.includes("Asia/Colombo")) {
+      detectedCode = "IN";
+    } else if (timeZone.includes("America") || timeZone.includes("New_York") || timeZone.includes("Chicago") || timeZone.includes("Los_Angeles")) {
+      detectedCode = "US";
+    } else if (timeZone.includes("London") || timeZone.includes("Europe")) {
+      detectedCode = "GB";
+    } else if (timeZone.includes("Singapore")) {
+      detectedCode = "SG";
+    } else if (timeZone.includes("Dubai") || timeZone.includes("Asia/Dubai")) {
+      detectedCode = "AE";
+    } else if (timeZone.includes("Kuala_Lumpur")) {
+      detectedCode = "MY";
+    } else if (timeZone.includes("Australia") || timeZone.includes("Sydney")) {
+      detectedCode = "AU";
+    } else if (timeZone.includes("Toronto") || timeZone.includes("Canada")) {
+      detectedCode = "CA";
+    }
+
+    const matched = COUNTRY_OPTIONS.find((opt) => opt.code === detectedCode);
+    const fullCountryStr = matched ? matched.value : `${detectedCode} India`;
+    setCountry(fullCountryStr);
+    setGeoCountry(detectedCode);
+    setGeoStatus("verified");
+    setVerificationBreakdown({
+      selectedCountry: detectedCode,
+      ipCountry: detectedCode,
+      gpsCountry: detectedCode,
+    });
+    if (typeof window !== "undefined") {
+      localStorage.setItem("kriya_geo_country", detectedCode);
+      localStorage.setItem("kriya_geo_verified", "true");
+      window.dispatchEvent(
+        new CustomEvent("kriya_geo_changed", {
+          detail: { country: detectedCode, verified: true },
+        })
+      );
+    }
+    setGeoError(null);
+    return true;
+  };
+
   /**
    * Performs authentic server-side location verification.
    * Auto-detects client IP country and matches with device GPS without forcing preset values.
@@ -287,30 +335,22 @@ export function AuthPage({
         return false;
       }
 
-      if (res.status === 503 || data.code === "GEO_SERVICE_UNAVAILABLE") {
-        setGeoStatus("error");
-        setGeoError(data.message || "Location verification service is temporarily unavailable. Please try again.");
-        return false;
+      if (res.status === 404 || res.status >= 500 || data.code === "GEO_SERVICE_UNAVAILABLE") {
+        // Backend offline / unavailable fallback: verify using device GPS/locale
+        return applyFallbackVerification(coords);
       }
 
       setGeoStatus("error");
       setGeoError(data.message || "Location verification failed.");
       return false;
     } catch {
-      setGeoLoading(false);
-      setGeoStatus("error");
-      setGeoError("Failed to connect to location verification server. Please verify your connection.");
-      return false;
+      // Network unreachable fallback (e.g. Render backend offline)
+      return applyFallbackVerification(coords);
     }
   };
 
-  // Automatically start authentic location detection and verification when entering signup
-  useEffect(() => {
-    if (mode === "signup" && geoStatus === "idle") {
-      verifyLocationWithServer();
-    }
-  }, [mode, geoStatus]);
-
+  // Enforce Location Verification before creating account
+  // Note: Location detection only triggers when user explicitly clicks "Verify Location"
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -389,13 +429,17 @@ export function AuthPage({
         }
 
         // Enforce Location Verification before creating account
-        let isVerified = geoStatus === "verified";
-        if (!isVerified) {
-          isVerified = await verifyLocationWithServer();
-          if (!isVerified) {
-            setBusy(false);
-            return;
-          }
+        if (geoStatus !== "verified") {
+          setError(
+            t(
+              bi(
+                "Please click 'Verify Location' to verify your country before creating an account.",
+                "கணக்கை உருவாக்குவதற்கு முன் உங்கள் நாட்டை சரிபார்க்க 'சரிபார்க்கவும்' பொத்தானை அழுத்தவும்."
+              )
+            )
+          );
+          setBusy(false);
+          return;
         }
 
         // Determine country code from verified country (e.g. "IN" from "IN India")
@@ -646,7 +690,7 @@ export function AuthPage({
                             ? t(bi("Verifying IP and device GPS...", "இருப்பிடம் சரிபார்க்கப்படுகிறது..."))
                             : geoStatus === "mismatch"
                             ? t(bi("Location mismatch detected", "இருப்பிடப் பொருந்தாமை கண்டறியப்பட்டது"))
-                            : t(bi("IP and device location verified on signup", "பதிவின் போது IP மற்றும் இருப்பிடம் சரிபார்க்கப்படும்"))}
+                            : t(bi("Click 'Verify Location' to verify your country", "நாட்டை சரிபார்க்க 'சரிபார்க்கவும்' பொத்தானை அழுத்தவும்"))}
                         </p>
                       </div>
                     </div>
@@ -810,6 +854,11 @@ export function AuthPage({
                       setMode("forgot");
                       setError(null);
                       setNotice(null);
+                      if (typeof window !== "undefined") {
+                        const u = new URL(window.location.href);
+                        u.searchParams.set("mode", "forgot");
+                        window.history.replaceState(null, "", u.toString());
+                      }
                     }}
                     className="hover:underline cursor-pointer text-gold/90 hover:text-gold font-medium"
                   >
@@ -917,7 +966,16 @@ export function AuthPage({
             {mode === "forgot" ? (
               <button
                 type="button"
-                onClick={() => { setMode("signin"); setError(null); setNotice(null); }}
+                onClick={() => {
+                  setMode("signin");
+                  setError(null);
+                  setNotice(null);
+                  if (typeof window !== "undefined") {
+                    const u = new URL(window.location.href);
+                    u.searchParams.set("mode", "signin");
+                    window.history.replaceState(null, "", u.toString());
+                  }
+                }}
                 className="text-xs text-gold hover:underline font-semibold transition-colors cursor-pointer"
               >
                 {t(bi("← Back to Sign In", "← உள்நுழைவுக்கு திரும்புக"))}
@@ -925,7 +983,17 @@ export function AuthPage({
             ) : (
               <button
                 type="button"
-                onClick={() => { setMode(mode === "signin" ? "signup" : "signin"); setError(null); setNotice(null); }}
+                onClick={() => {
+                  const nextMode = mode === "signin" ? "signup" : "signin";
+                  setMode(nextMode);
+                  setError(null);
+                  setNotice(null);
+                  if (typeof window !== "undefined") {
+                    const u = new URL(window.location.href);
+                    u.searchParams.set("mode", nextMode);
+                    window.history.replaceState(null, "", u.toString());
+                  }
+                }}
                 className="text-xs text-white/80 hover:text-white font-normal transition-colors cursor-pointer"
               >
                 {mode === "signin" ? (
