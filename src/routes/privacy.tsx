@@ -1,7 +1,7 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { PageHero, Section } from "@/components/Primitives";
 import { bi, useLang } from "@/lib/i18n";
-import { ShieldCheck, Lock, EyeOff, UserCheck, HeartHandshake, ArrowLeft } from "lucide-react";
+import { ShieldCheck, Lock, EyeOff, UserCheck, HeartHandshake } from "lucide-react";
 
 export const Route = createFileRoute("/privacy")({
   staticData: { sitemap: true },
@@ -183,24 +183,6 @@ export function PrivacyPage() {
                   )
                 )}
               </p>
-            </div>
-
-            {/* Bottom Back to Sign Up Button */}
-            <div className="pt-8 border-t border-border/60 flex justify-center">
-              <Link
-                to="/auth"
-                search={{ mode: "signup" }}
-                onClick={(e) => {
-                  if (typeof window !== "undefined" && window.opener && !window.opener.closed) {
-                    e.preventDefault();
-                    window.close();
-                  }
-                }}
-                className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-gold hover:text-white bg-gold/15 hover:bg-gold/25 border border-gold/40 px-6 py-2.5 rounded-full transition-all cursor-pointer shadow-xs"
-              >
-                <ArrowLeft className="size-4 text-gold" />
-                <span>{t(bi("Back to Sign Up", "பதிவுக்குத் திரும்பு"))}</span>
-              </Link>
             </div>
           </div>
         </div>
