@@ -8,7 +8,6 @@ import {
   Mail,
   Edit3,
   KeyRound,
-  CheckCircle2,
   Globe,
   Bell,
   ArrowRight,
@@ -129,17 +128,6 @@ export function ProfilePage() {
                     <Mail className="size-3 text-gold" />
                     {effectiveUser.email}
                   </span>
-                  <span className="inline-flex items-center gap-1 text-[0.68rem] text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-500/10 border border-emerald-500/25 px-2.5 py-1 rounded-full">
-                    <CheckCircle2 className="size-3" />
-                    {t(bi("Verified Email", "சரிபார்க்கப்பட்டது"))}
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 text-[0.68rem] text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-500/10 border border-emerald-500/25 px-2.5 py-1 rounded-full">
-                    <span className="text-sm leading-none">{flag}</span>
-                    <span>{countryName} ({countryCode})</span>
-                    <span className="text-[0.62rem] bg-emerald-500/20 px-1.5 py-0.5 rounded-full font-mono font-bold">
-                      ✓ {ta ? "சரிபார்க்கப்பட்டது" : "Verified Location"}
-                    </span>
-                  </span>
                 </div>
               </div>
             </div>
@@ -161,17 +149,11 @@ export function ProfilePage() {
               </div>
 
               <div className="p-4 rounded-xl border border-border bg-background space-y-1">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <MapPin className="size-3.5 text-gold" />
-                    <p className="text-[0.7rem] uppercase font-bold text-muted-foreground tracking-wider">
-                      {t(bi("Country / Region", "நாடு / பிராந்தியம்"))}
-                    </p>
-                  </div>
-                  <span className="text-[0.65rem] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 rounded-full flex items-center gap-1">
-                    <CheckCircle2 className="size-2.5" />
-                    {ta ? "சரிபார்க்கப்பட்டது" : "Verified"}
-                  </span>
+                <div className="flex items-center gap-1.5">
+                  <MapPin className="size-3.5 text-gold" />
+                  <p className="text-[0.7rem] uppercase font-bold text-muted-foreground tracking-wider">
+                    {t(bi("Country / Region", "நாடு / பிராந்தியம்"))}
+                  </p>
                 </div>
                 <div className="flex items-center gap-2 pt-0.5">
                   <span className="text-base">{flag}</span>

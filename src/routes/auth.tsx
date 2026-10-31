@@ -516,10 +516,10 @@ export function AuthPage({
 
       {/* Left Column: Perfectly Centered on Sign In, Scrollable on Sign Up */}
       <div className={cn(
-        "relative w-full lg:w-1/2 flex flex-col items-center justify-center bg-velvet-deep text-white px-6 sm:px-10 md:px-14 lg:px-16 z-10 shadow-2xl",
+        "relative w-full lg:w-1/2 flex flex-col items-center bg-velvet-deep text-white px-6 sm:px-10 md:px-14 lg:px-16 z-10 shadow-2xl",
         mode === "signup"
-          ? "min-h-screen lg:h-screen lg:overflow-y-auto py-8 sm:py-10"
-          : "h-full min-h-screen lg:h-screen overflow-y-auto lg:overflow-hidden py-10 sm:py-14"
+          ? "min-h-screen lg:h-screen lg:overflow-y-auto justify-start pt-8 pb-12 sm:pt-10 sm:pb-14"
+          : "h-full min-h-screen lg:h-screen justify-center overflow-y-auto lg:overflow-hidden py-10 sm:py-14"
       )}>
 
         {/* Ambient subtle glow */}
@@ -533,20 +533,21 @@ export function AuthPage({
         <div className="absolute bottom-[14%] right-[8%] w-9 h-9 rounded-xl border-[2px] border-gold/25 rotate-45 animate-float-slow-reverse pointer-events-none" />
 
         <div className={cn(
-          "relative z-10 w-full max-w-md flex flex-col justify-center my-auto",
+          "relative z-10 w-full max-w-md flex flex-col",
+          mode === "signup" ? "py-2 sm:py-4" : "justify-center my-auto",
           mode === "signin" && "translate-y-8 sm:translate-y-12 lg:translate-y-14"
         )}>
 
           {/* Heading and subtitle */}
-          <div className={cn("mb-6", mode === "signin" ? "text-center" : "text-left")}>
-            <h1 className="font-serif text-3xl sm:text-4xl xl:text-5xl font-light text-white tracking-wide drop-shadow-sm">
+          <div className={cn(mode === "signup" ? "mb-3 sm:mb-4 text-left" : "mb-6 text-center")}>
+            <h1 className="font-serif text-2xl sm:text-3xl xl:text-4xl font-light text-white tracking-wide drop-shadow-sm">
               {mode === "signin"
                 ? t(bi("Welcome Back", "மீண்டும் வருக"))
                 : mode === "signup"
                 ? t(bi("Create Account", "கணக்கை உருவாக்கு"))
                 : t(bi("Reset Password", "கடவுச்சொல் மீட்டமைப்பு"))}
             </h1>
-            <p className={cn("text-xs sm:text-sm text-white/80 mt-2 font-light leading-relaxed", mode === "signin" && "max-w-sm mx-auto")}>
+            <p className={cn("text-xs sm:text-sm text-white/80 font-light leading-relaxed", mode === "signup" ? "mt-1 sm:mt-1.5" : "mt-2 max-w-sm mx-auto")}>
               {mode === "signin"
                 ? t(bi(
                     "To keep connected with us please login with your personal info",
@@ -564,10 +565,10 @@ export function AuthPage({
             </p>
           </div>
 
-          <form onSubmit={onSubmit} className="space-y-4">
+          <form onSubmit={onSubmit} className={cn(mode === "signup" ? "space-y-2.5 sm:space-y-3" : "space-y-4")}>
             {/* SIGNUP MODE */}
             {mode === "signup" && (
-              <div className="space-y-4 animate-fadeIn">
+              <div className="space-y-2.5 sm:space-y-3 animate-fadeIn">
                 {/* Full Name */}
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gold/80">
@@ -579,7 +580,7 @@ export function AuthPage({
                     autoComplete="name"
                     required
                     placeholder={t(bi("Full Name", "முழுப் பெயர்"))}
-                    className="w-full pl-11 pr-4 py-3 rounded-full bg-white/10 hover:bg-white/15 focus:bg-white/20 border border-gold/30 focus:border-gold text-white placeholder:text-white/60 text-sm focus:outline-none transition-all shadow-inner"
+                    className="w-full pl-11 pr-4 py-2.5 sm:py-3 rounded-full bg-white/10 hover:bg-white/15 focus:bg-white/20 border border-gold/30 focus:border-gold text-white placeholder:text-white/60 text-sm focus:outline-none transition-all shadow-inner"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                   />
@@ -596,7 +597,7 @@ export function AuthPage({
                     autoComplete="email"
                     required
                     placeholder={t(bi("Email Address", "மின்னஞ்சல் முகவரி"))}
-                    className="w-full pl-11 pr-4 py-3 rounded-full bg-white/10 hover:bg-white/15 focus:bg-white/20 border border-gold/30 focus:border-gold text-white placeholder:text-white/60 text-sm focus:outline-none transition-all shadow-inner"
+                    className="w-full pl-11 pr-4 py-2.5 sm:py-3 rounded-full bg-white/10 hover:bg-white/15 focus:bg-white/20 border border-gold/30 focus:border-gold text-white placeholder:text-white/60 text-sm focus:outline-none transition-all shadow-inner"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
@@ -614,7 +615,7 @@ export function AuthPage({
                     required
                     minLength={6}
                     placeholder={t(bi("Password (min 6 characters)", "கடவுச்சொல் (குறைந்தது 6 எழுத்துகள்)"))}
-                    className="w-full pl-11 pr-11 py-3 rounded-full bg-white/10 hover:bg-white/15 focus:bg-white/20 border border-gold/30 focus:border-gold text-white placeholder:text-white/60 text-sm focus:outline-none transition-all shadow-inner"
+                    className="w-full pl-11 pr-11 py-2.5 sm:py-3 rounded-full bg-white/10 hover:bg-white/15 focus:bg-white/20 border border-gold/30 focus:border-gold text-white placeholder:text-white/60 text-sm focus:outline-none transition-all shadow-inner"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                   />
@@ -640,7 +641,7 @@ export function AuthPage({
                     required
                     minLength={6}
                     placeholder={t(bi("Confirm Password", "மறுமுறை கடவுச்சொல்"))}
-                    className="w-full pl-11 pr-11 py-3 rounded-full bg-white/10 hover:bg-white/15 focus:bg-white/20 border border-gold/30 focus:border-gold text-white placeholder:text-white/60 text-sm focus:outline-none transition-all shadow-inner"
+                    className="w-full pl-11 pr-11 py-2.5 sm:py-3 rounded-full bg-white/10 hover:bg-white/15 focus:bg-white/20 border border-gold/30 focus:border-gold text-white placeholder:text-white/60 text-sm focus:outline-none transition-all shadow-inner"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                   />
@@ -657,7 +658,7 @@ export function AuthPage({
                 {/* Location Verification Card */}
                 <div
                   className={cn(
-                    "rounded-2xl border px-4 py-3 text-left transition-all",
+                    "rounded-2xl border px-3.5 py-2.5 text-left transition-all",
                     geoStatus === "mismatch"
                       ? "border-red-500/40 bg-red-950/30"
                       : geoStatus === "verified"
@@ -740,15 +741,9 @@ export function AuthPage({
                 {/* Country / Region - Only shown once Location Verification is verified */}
                 {geoStatus === "verified" && country && (
                   <div className="space-y-1.5 text-left animate-in fade-in slide-in-from-top-2 duration-300">
-                    <div className="flex items-center justify-between px-1">
-                      <label htmlFor="auth-country" className="block text-xs font-semibold text-white/90">
-                        {t(bi("Country / Region", "நாடு / பிராந்தியம்"))}
-                      </label>
-                      <span className="text-[10px] font-medium text-emerald-300 flex items-center gap-1 bg-emerald-500/20 px-2.5 py-0.5 rounded-full border border-emerald-500/30">
-                        <CheckCircle className="size-3 text-emerald-400" />
-                        {t(bi("Verified", "சரிபார்க்கப்பட்டது"))}
-                      </span>
-                    </div>
+                    <label htmlFor="auth-country" className="block text-xs font-semibold text-white/90 px-1">
+                      {t(bi("Country / Region", "நாடு / பிராந்தியம்"))}
+                    </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-emerald-400">
                         <MapPin className="w-4 h-4" />
@@ -763,7 +758,7 @@ export function AuthPage({
                           const matched = COUNTRY_OPTIONS.find((c) => c.code === code);
                           return matched ? `${matched.label} (${matched.code})` : country;
                         })()}
-                        className="w-full pl-11 pr-4 py-3 rounded-full bg-white/10 border border-emerald-500/40 text-white text-sm font-medium focus:outline-none cursor-default select-none shadow-inner"
+                        className="w-full pl-11 pr-4 py-2.5 sm:py-3 rounded-full bg-white/10 border border-emerald-500/40 text-white text-sm font-medium focus:outline-none cursor-default select-none shadow-inner"
                       />
                     </div>
                   </div>
@@ -945,7 +940,10 @@ export function AuthPage({
             <button
               type="submit"
               disabled={busy}
-              className="w-full rounded-full bg-gradient-to-r from-[#d4af37] via-[#f7de8b] to-[#d4af37] text-[#1a1208] hover:brightness-110 py-3.5 px-6 text-sm font-bold tracking-wide shadow-lg shadow-gold/20 hover:shadow-xl hover:shadow-gold/30 hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 disabled:opacity-60 flex items-center justify-center cursor-pointer mt-3"
+              className={cn(
+                "w-full rounded-full bg-gradient-to-r from-[#d4af37] via-[#f7de8b] to-[#d4af37] text-[#1a1208] hover:brightness-110 px-6 text-sm font-bold tracking-wide shadow-lg shadow-gold/20 hover:shadow-xl hover:shadow-gold/30 hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 disabled:opacity-60 flex items-center justify-center cursor-pointer",
+                mode === "signup" ? "py-3 sm:py-3.5 mt-2 sm:mt-2.5" : "py-3.5 mt-3"
+              )}
             >
               {busy ? (
                 <div className="w-4 h-4 border-2 border-[#1a1208] border-t-transparent rounded-full animate-spin" />
@@ -962,7 +960,7 @@ export function AuthPage({
           </form>
 
           {/* Toggle buttons / Back to Sign In */}
-          <div className="mt-5 text-center">
+          <div className={cn("text-center", mode === "signup" ? "mt-3 sm:mt-4" : "mt-5")}>
             {mode === "forgot" ? (
               <button
                 type="button"
