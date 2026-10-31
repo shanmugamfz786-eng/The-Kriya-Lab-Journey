@@ -195,32 +195,29 @@ function AccountLink({
   const effectiveAuth = mounted && (isAuthenticated || Boolean(effectiveUser));
 
   if (mounted && effectiveAuth && effectiveUser) {
-    const displayName = effectiveUser.full_name || (effectiveUser as any).username || (effectiveUser as any).name || effectiveUser.email?.split("@")[0] || "User";
-    const initial = displayName.charAt(0).toUpperCase();
+    const initial = (effectiveUser.full_name || effectiveUser.email || "U").charAt(0).toUpperCase();
 
     return (
       <Link
         to="/profile"
         onClick={onClick}
         title={t(bi("Personal Profile & Details", "தனிப்பட்ட விவரங்கள்"))}
+        aria-label={t(bi("Personal Profile & Details", "தனிப்பட்ட விவரங்கள்"))}
         className={cn(
-          "flex items-center gap-1.5 sm:gap-2 rounded-full py-1 px-2.5 sm:px-3 text-xs font-medium transition-all border shadow-xs cursor-pointer group",
+          "flex items-center justify-center rounded-full p-1 transition-all border shadow-xs cursor-pointer group",
           isTransparent
             ? "bg-white/10 text-white border-gold/40 hover:bg-gold/20 hover:border-gold hover:text-gold"
             : "bg-gold/10 text-foreground border-gold/30 hover:bg-gold/20 hover:border-gold",
           className,
         )}
       >
-        <div className="flex h-5 w-5 items-center justify-center rounded-full bg-gold/25 text-gold border border-gold/40 overflow-hidden shrink-0 font-bold text-[0.65rem] group-hover:scale-105 transition-transform">
+        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gold/25 text-gold border border-gold/40 overflow-hidden shrink-0 font-bold text-[0.7rem] group-hover:scale-105 transition-transform">
           {effectiveUser.avatar ? (
-            <img src={effectiveUser.avatar} alt={displayName} className="w-full h-full object-cover" />
+            <img src={effectiveUser.avatar} alt="Profile" className="w-full h-full object-cover" />
           ) : (
             <span>{initial}</span>
           )}
         </div>
-        <span className="text-[0.74rem] sm:text-[0.78rem] font-semibold max-w-[105px] sm:max-w-[150px] truncate text-gold group-hover:text-gold">
-          {displayName}
-        </span>
       </Link>
     );
   }
