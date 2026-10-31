@@ -192,6 +192,12 @@ function RootComponent() {
   const pathname = router.state.location.pathname;
   const isPortal = pathname.startsWith("/admin");
   const isAuthPage = pathname.startsWith("/auth");
+  const hideHeader = [
+    "/terms",
+    "/privacy",
+    "/shipping-policy",
+    "/returns-and-refunds",
+  ].some(path => pathname.startsWith(path));
   const hideFooter = [
     "/buy",
     "/enroll",
@@ -235,7 +241,7 @@ function RootComponent() {
           <ScrollObserver />
           <div className="flex min-h-screen flex-col">
             <div className="flex-1 flex flex-col min-h-screen w-full">
-              {!isPortal && !isAuthPage && <Header />}
+              {!isPortal && !isAuthPage && !hideHeader && <Header />}
               
               <main className="flex-1 flex flex-col">
                 {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
@@ -249,7 +255,7 @@ function RootComponent() {
               )}
             </div>
           </div>
-          {!isPortal && !isAuthPage && !hideMobileFooter && <MobileBottomNav />}
+          {!isPortal && !isAuthPage && !hideHeader && !hideMobileFooter && <MobileBottomNav />}
         </GeoProvider>
       </LanguageProvider>
     </QueryClientProvider>

@@ -23,6 +23,7 @@ export function ReturnsAndRefundsPage() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <PageHero
+        showBackToHome={false}
         eyebrow={t(bi("Customer Help & Policies", "வாடிக்கையாளர் உதவி & கொள்கைகள்"))}
         title={t(bi("Returns & Refund Policy", "திரும்பப் பெறுதல் & பணத்தைத் திருப்பி அளித்தல் கொள்கை"))}
         intro={t(

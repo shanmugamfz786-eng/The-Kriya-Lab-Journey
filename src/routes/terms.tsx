@@ -23,6 +23,7 @@ export function TermsPage() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <PageHero
+        showBackToHome={false}
         eyebrow={t(bi("Ethical Guidelines & Code of Harmony", "நெறிமுறைகள் & வழிகாட்டுதல்கள்"))}
         title={t(bi("Terms & Conditions", "விதிமுறைகள் & நிபந்தனைகள்"))}
         intro={t(

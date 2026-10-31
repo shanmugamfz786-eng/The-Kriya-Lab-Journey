@@ -23,6 +23,7 @@ export function ShippingPolicyPage() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <PageHero
+        showBackToHome={false}
         eyebrow={t(bi("Customer Help & Fulfillment", "வாடிக்கையாளர் உதவி & விநியோகம்"))}
         title={t(bi("Shipping & Delivery Policy", "விநியோகம் & அனுப்புதல் கொள்கை"))}
         intro={t(

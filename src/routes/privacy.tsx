@@ -23,6 +23,7 @@ export function PrivacyPage() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <PageHero
+        showBackToHome={false}
         eyebrow={t(bi("Trust & Transparency", "நம்பிக்கை & வெளிப்படைத்தன்மை"))}
         title={t(bi("Privacy Policy", "தனியுரிமைக் கொள்கை"))}
         intro={t(
