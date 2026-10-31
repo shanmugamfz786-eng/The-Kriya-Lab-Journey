@@ -21,6 +21,34 @@ const API_URL = (() => {
 
 const STORAGE_KEY_USER = "the_kriya_lab_user";
 const STORAGE_KEY_TOKEN = "the_kriya_lab_token";
+const REGISTRY_KEY = "the_kriya_lab_users_registry";
+
+/** Retrieve a previously registered or logged in user by email */
+export function getRegisteredUser(email: string): AuthUser | null {
+  if (typeof window === "undefined" || !email) return null;
+  try {
+    const raw = localStorage.getItem(REGISTRY_KEY);
+    if (!raw) return null;
+    const map = JSON.parse(raw);
+    return map[email.trim().toLowerCase()] || null;
+  } catch {
+    return null;
+  }
+}
+
+/** Persist user profile into long-term client registry so country/details survive logout */
+export function saveRegisteredUser(user: AuthUser) {
+  if (typeof window === "undefined" || !user?.email) return;
+  try {
+    const raw = localStorage.getItem(REGISTRY_KEY);
+    const map = raw ? JSON.parse(raw) : {};
+    map[user.email.trim().toLowerCase()] = {
+      ...map[user.email.trim().toLowerCase()],
+      ...user,
+    };
+    localStorage.setItem(REGISTRY_KEY, JSON.stringify(map));
+  } catch {}
+}
 
 /** Get stored user from localStorage */
 export function getStoredUser(): AuthUser | null {
@@ -62,11 +90,14 @@ export function useAuth() {
   }, []);
 
   const login = async (email: string, password: string): Promise<AuthUser> => {
+    const cleanEmail = email.trim().toLowerCase();
+    const locallyKnownUser = getRegisteredUser(cleanEmail);
+
     try {
       const res = await fetch(`${API_URL}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), password }),
+        body: JSON.stringify({ email: cleanEmail, password }),
       });
 
       const data = await res.json().catch(() => ({}));
@@ -76,7 +107,11 @@ export function useAuth() {
       }
 
       if (data.success && data.user) {
+        if (!data.user.country) {
+          data.user.country = locallyKnownUser?.country || "IN India";
+        }
         saveSession(data.user, data.token);
+        saveRegisteredUser(data.user);
         return data.user;
       }
       throw new Error(data.message || "Login failed");
@@ -88,16 +123,18 @@ export function useAuth() {
 
       // Network unreachable fallback
       console.info("[Auth Service] Backend server offline, applying local session fallback.");
-      const prefix = email.split("@")[0] || "Seeker";
+      const prefix = cleanEmail.split("@")[0] || "Seeker";
       const fallbackUser: AuthUser = {
-        id: "usr-" + Date.now(),
-        full_name: prefix.replace(/[._]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
-        email: email.toLowerCase(),
-        role: email.toLowerCase() === "admin@thekriyalab.com" ? "admin" : "student",
-        avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80",
+        id: locallyKnownUser?.id || "usr-" + Date.now(),
+        full_name: locallyKnownUser?.full_name || prefix.replace(/[._]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+        email: cleanEmail,
+        role: cleanEmail === "admin@thekriyalab.com" ? "admin" : (locallyKnownUser?.role || "student"),
+        country: locallyKnownUser?.country || "IN India",
+        avatar: locallyKnownUser?.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80",
       };
 
       saveSession(fallbackUser, "dev_mock_jwt_token_" + Date.now());
+      saveRegisteredUser(fallbackUser);
       return fallbackUser;
     }
   };
@@ -144,7 +181,11 @@ export function useAuth() {
         if (!data.user.country && options?.country) {
           data.user.country = options.country;
         }
+        if (!data.user.country) {
+          data.user.country = "IN India";
+        }
         saveSession(data.user, data.token);
+        saveRegisteredUser(data.user);
         return data.user;
       }
       throw new Error(data.message || "Registration failed");
@@ -166,6 +207,7 @@ export function useAuth() {
           avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80",
         };
         saveSession(fallbackUser, "dev_mock_jwt_token_" + Date.now());
+        saveRegisteredUser(fallbackUser);
         return fallbackUser;
       }
       // Re-throw verification failures and explicit error messages directly
@@ -203,15 +245,16 @@ export function useAuth() {
 
 function saveSession(user: AuthUser, token: string) {
   if (typeof window !== "undefined") {
+    if (!user.country) {
+      user.country = "IN India";
+    }
     localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user));
     localStorage.setItem(STORAGE_KEY_TOKEN, token);
-    if (user.country) {
-      const cleanCountry = (user.country.split(" ")[0] || "").trim().toUpperCase().slice(0, 2);
-      if (cleanCountry) {
-        localStorage.setItem("kriya_geo_country", cleanCountry);
-        localStorage.setItem("kriya_geo_verified", "true");
-        window.dispatchEvent(new CustomEvent("kriya_geo_changed", { detail: { country: cleanCountry, verified: true } }));
-      }
+    const cleanCountry = (user.country.split(" ")[0] || "IN").trim().toUpperCase().slice(0, 2);
+    if (cleanCountry) {
+      localStorage.setItem("kriya_geo_country", cleanCountry);
+      localStorage.setItem("kriya_geo_verified", "true");
+      window.dispatchEvent(new CustomEvent("kriya_geo_changed", { detail: { country: cleanCountry, verified: true } }));
     }
     window.dispatchEvent(new Event("kriya_auth_changed"));
   }

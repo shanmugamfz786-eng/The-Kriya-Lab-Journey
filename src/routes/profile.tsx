@@ -128,6 +128,10 @@ export function ProfilePage() {
                     <Mail className="size-3 text-gold" />
                     {effectiveUser.email}
                   </span>
+                  <span className="inline-flex items-center gap-1.5 text-xs text-foreground bg-secondary/80 border border-border px-2.5 py-1 rounded-full">
+                    <span className="text-sm leading-none">{flag}</span>
+                    <span>{countryName} ({countryCode})</span>
+                  </span>
                 </div>
               </div>
             </div>
