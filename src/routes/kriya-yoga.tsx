@@ -40,9 +40,9 @@ const sections = [
     ),
   },
   {
-    title: bi("\n", "சுவாசமும் விழிப்புணர்வும்"),
+    title: bi("Breath and Mind Connection", "சுவாசமும் விழிப்புணர்வும்"),
     body: bi(
-      "\n",
+      "The Yoga practice teaches that breath and mental restlessness are linked; by calming the breath, the practitioner stills the mind. Practitioners learn to mentally direct energy through the spinal centers, reducing dependence on external sensory inputs and oxygen.",
       "சுவாசம் மெதுவாகவும் சமமாகவும் ஆகும்போது, கவனம் சிதறுவது குறைகிறது. பின்னணி இரைச்சலாக இருந்தது கவனிக்கத்தக்கதாக மாறுகிறது.",
     ),
   },
@@ -81,14 +81,14 @@ function KriyaYoga() {
   const { t } = useLang();
   return (
     <>
-      <header className="bg-dawn px-5 pb-16 pt-20 lg:px-10 lg:pb-24 lg:pt-28">
-        <div className="mx-auto grid max-w-7xl animate-rise items-center gap-10 lg:grid-cols-[1fr_280px]">
+      <header className="bg-dawn px-5 pt-8 pb-8 sm:pt-10 sm:pb-10 lg:px-10 lg:pt-12 lg:pb-10 border-b border-border/40">
+        <div className="mx-auto grid max-w-7xl animate-rise items-center gap-8 lg:gap-12 lg:grid-cols-[1fr_260px]">
           <div>
             <Eyebrow>{t(bi("Kriya Yoga", "கிரியா யோகம்"))}</Eyebrow>
-            <h1 className="mt-5 max-w-4xl whitespace-pre-line text-balance font-serif text-[clamp(2.4rem,6vw,4.5rem)] leading-[1.05]">
+            <h1 className="mt-3 max-w-4xl whitespace-pre-line text-balance font-serif text-[clamp(2.2rem,5vw,3.8rem)] leading-[1.1]">
               {t(bi("An Ancient Practice for Inner Exploration", "உள்முக ஆய்வுக்கான ஒரு பண்டைய பயிற்சி"))}
             </h1>
-            <p className="measure mt-7 whitespace-pre-line text-lg text-muted-foreground">
+            <p className="measure mt-4 whitespace-pre-line text-base sm:text-lg text-muted-foreground">
               {t(
                 bi(
                   "An overview of the practice, approached experientially and without exaggerated claims.",
@@ -97,31 +97,29 @@ function KriyaYoga() {
               )}
             </p>
           </div>
-          <figure className="aura-image mx-auto w-full max-w-[260px] lg:max-w-none">
+          <figure className="aura-image mx-auto w-full max-w-[220px] lg:max-w-[260px]">
             <img
               src={babajiImage}
               alt={t(bi("Sri Guru Babaji", "ஸ்ரீ குரு பாபாஜி"))}
               className="aspect-[3/4] w-full rounded-sm border border-gold/30 object-cover shadow-xl"
               loading="eager"
             />
-            <figcaption className="mt-3 text-center text-xs tracking-widest text-muted-foreground uppercase">
+            <figcaption className="mt-2.5 text-center text-xs tracking-widest text-muted-foreground uppercase">
               {t(bi("Sri Guru Babaji", "ஸ்ரீ குரு பாபாஜி"))}
             </figcaption>
           </figure>
         </div>
       </header>
 
-      <Section>
-        <div className="grid gap-x-16 gap-y-14 md:grid-cols-2">
+      <Section className="py-8 sm:py-10 lg:py-12">
+        <div className="grid gap-x-12 gap-y-10 md:grid-cols-2">
           {sections.map((s, i) => (
             <article key={i}>
-              <span className={`whitespace-pre-line font-serif ${i === 2 ? "text-[19px] text-black" : "text-2xl text-gold"}`}>
-                {i === 2
-                  ? "03 \nBreath and Mind Connection: The Yoga practice teaches that breath and mental restlessness are linked; by calming the breath, the practitioner stills the mind.  Energy Control: Practitioners learn to mentally direct energy through the spinal centers, reducing dependence on external sensory inputs and oxygen.   \n\n"
-                  : `0${i + 1}`}
+              <span className="font-serif text-2xl text-gold">
+                {`0${i + 1}`}
               </span>
-              <h2 className={`mt-4 font-serif ${i === 2 ? "text-[19px] text-black" : "text-3xl"}`}>{t(s.title)}</h2>
-              <p className="mt-4 leading-relaxed text-muted-foreground">{t(s.body)}</p>
+              <h2 className="mt-3 font-serif text-2xl sm:text-3xl">{t(s.title)}</h2>
+              <p className="mt-3 leading-relaxed text-muted-foreground">{t(s.body)}</p>
             </article>
           ))}
         </div>
