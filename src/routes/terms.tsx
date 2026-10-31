@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageHero, Section } from "@/components/Primitives";
 import { bi, useLang } from "@/lib/i18n";
-import { Scale, HeartHandshake, BookOpen, ShieldCheck, Sparkles } from "lucide-react";
+import { Scale, HeartHandshake, BookOpen, ShieldCheck, Compass } from "lucide-react";
 
 export const Route = createFileRoute("/terms")({
   staticData: { sitemap: true },
@@ -100,7 +100,7 @@ export function TermsPage() {
             {/* 1. Nature of the Practice */}
             <div className="space-y-3">
               <div className="flex items-center gap-3">
-                <Sparkles className="size-5 text-gold shrink-0" />
+                <Compass className="size-5 text-gold shrink-0" />
                 <h2 className="font-serif text-xl font-bold text-foreground">
                   {t(bi("1. Nature of the Teaching & Personal Responsibility", "1. பயிற்சியின் தன்மை & தனிநபர் பொறுப்பு"))}
                 </h2>
