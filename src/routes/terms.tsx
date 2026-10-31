@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageHero, Section } from "@/components/Primitives";
 import { bi, useLang } from "@/lib/i18n";
-import { Scale, HeartHandshake, BookOpen, ShieldCheck, Sparkles } from "lucide-react";
+import { Scale, HeartHandshake, BookOpen, ShieldCheck, Sparkles, ArrowLeft } from "lucide-react";
 
 export const Route = createFileRoute("/terms")({
   staticData: { sitemap: true },
@@ -24,6 +24,11 @@ export function TermsPage() {
     <div className="min-h-screen flex flex-col bg-background">
       <PageHero
         showBackToHome={false}
+        customBackLink={{
+          to: "/auth",
+          search: { mode: "signup" },
+          label: t(bi("Back to Sign Up", "பதிவுக்குத் திரும்பு")),
+        }}
         eyebrow={t(bi("Ethical Guidelines & Code of Harmony", "நெறிமுறைகள் & வழிகாட்டுதல்கள்"))}
         title={t(bi("Terms & Conditions", "விதிமுறைகள் & நிபந்தனைகள்"))}
         intro={t(
@@ -171,6 +176,24 @@ export function TermsPage() {
                   )
                 )}
               </p>
+            </div>
+
+            {/* Bottom Back to Sign Up Button */}
+            <div className="pt-8 border-t border-border/60 flex justify-center">
+              <Link
+                to="/auth"
+                search={{ mode: "signup" }}
+                onClick={(e) => {
+                  if (typeof window !== "undefined" && window.opener && !window.opener.closed) {
+                    e.preventDefault();
+                    window.close();
+                  }
+                }}
+                className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-gold hover:text-white bg-gold/15 hover:bg-gold/25 border border-gold/40 px-6 py-2.5 rounded-full transition-all cursor-pointer shadow-xs"
+              >
+                <ArrowLeft className="size-4 text-gold" />
+                <span>{t(bi("Back to Sign Up", "பதிவுக்குத் திரும்பு"))}</span>
+              </Link>
             </div>
           </div>
         </div>

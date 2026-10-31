@@ -41,12 +41,14 @@ export function PageHero({
   title,
   intro,
   showBackToHome = true,
+  customBackLink,
   className,
 }: {
   eyebrow?: string;
   title: string;
   intro?: string;
   showBackToHome?: boolean;
+  customBackLink?: { to: string; label: string; search?: Record<string, string> };
   className?: string;
 }) {
   const { lang } = useLang();
@@ -55,7 +57,22 @@ export function PageHero({
   return (
     <header className={cn("bg-dawn px-5 pb-6 pt-6 sm:pb-8 sm:pt-8 lg:px-10 lg:pb-8 lg:pt-10", className)}>
       <div className="mx-auto max-w-7xl animate-rise">
-        {showBackToHome && (
+        {customBackLink ? (
+          <Link
+            to={customBackLink.to as any}
+            search={customBackLink.search as any}
+            onClick={(e) => {
+              if (typeof window !== "undefined" && window.opener && !window.opener.closed) {
+                e.preventDefault();
+                window.close();
+              }
+            }}
+            className="inline-flex items-center gap-2 text-xs font-semibold text-gold hover:text-white bg-gold/15 hover:bg-gold/25 border border-gold/40 px-3.5 py-1.5 rounded-full transition-all mb-4 group cursor-pointer shadow-xs"
+          >
+            <ArrowLeft className="size-3.5 text-gold transition-transform group-hover:-translate-x-1" />
+            <span>{customBackLink.label}</span>
+          </Link>
+        ) : showBackToHome ? (
           <Link
             to="/"
             className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-gold transition-colors mb-3.5 group cursor-pointer"
@@ -63,7 +80,7 @@ export function PageHero({
             <ArrowLeft className="size-3.5 text-gold transition-transform group-hover:-translate-x-1" />
             <span>{ta ? "முகப்புக்கு திரும்பு" : "Back to Home"}</span>
           </Link>
-        )}
+        ) : null}
         {eyebrow ? <Eyebrow>{eyebrow}</Eyebrow> : null}
         <h1 className="mt-3 max-w-4xl whitespace-pre-line text-balance font-serif text-[clamp(2.4rem,6vw,4.5rem)] leading-[1.05]">
           {title}
