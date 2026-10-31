@@ -2,15 +2,22 @@ import { Link } from "@tanstack/react-router";
 import { type ProgramItem } from "@/lib/programs-api";
 import { useAuth } from "@/lib/auth-store";
 import { useEnrollments } from "@/lib/enrollment-store";
+import { useGeo } from "@/lib/geo-context";
+import { MapPin, Globe } from "lucide-react";
 
 export function ProgramCard({ program: p, lang }: { program: ProgramItem; lang: "en" | "ta" }) {
   const ta = lang === "ta";
+  const { formatPrice, currency, isIndia } = useGeo();
   const title = (ta ? p.title_ta : p.title_en) || p.title_en;
   const description = (ta ? p.description_ta : p.description_en) || p.description_en || p.description_ta || (p as any).description || "";
   
   const { user } = useAuth();
   const { enrolledIds } = useEnrollments(user?.id);
   const isEnrolled = enrolledIds.includes(p.id);
+
+  const baseInr = Number(p.price_inr) || 0;
+  const priceDisplay = baseInr ? formatPrice(baseInr, currency) : null;
+  const isOffline = p.program_type === "offline";
 
   return (
     <article className="rounded-2xl border border-border overflow-hidden bg-background shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full group">
@@ -36,8 +43,33 @@ export function ProgramCard({ program: p, lang }: { program: ProgramItem; lang: 
             {description}
           </p>
         )}
+
+        {/* Localized Price & Location Badge */}
+        <div className="mt-3 flex items-center justify-between gap-2 pt-2 border-t border-border/50 text-xs">
+          {priceDisplay ? (
+            <span className="font-serif font-bold text-foreground text-sm">
+              {priceDisplay}
+            </span>
+          ) : (
+            <span className="text-muted-foreground text-[0.72rem]">
+              {ta ? "விசாரிக்கவும்" : "Contact"}
+            </span>
+          )}
+
+          {isOffline ? (
+            <span className="inline-flex items-center gap-1 text-[0.65rem] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+              <MapPin className="size-2.5" />
+              {isIndia ? (ta ? "நேரடி மையம்" : "Ashram / Centre") : (ta ? "நேரடி பயிற்சி" : "In Person")}
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 text-[0.65rem] font-medium text-sky-600 dark:text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded-full border border-sky-500/20">
+              <Globe className="size-2.5" />
+              {ta ? "ஆன்லைன்" : "Online Live"}
+            </span>
+          )}
+        </div>
         
-        <div className="mt-auto pt-6">
+        <div className="mt-auto pt-4">
           <Link
             to="/programs/$id"
             params={{ id: String(p.id) }}

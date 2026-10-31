@@ -13,6 +13,7 @@ import {
   Sparkles,
   ChevronDown,
   ChevronUp,
+  MapPin,
 } from "lucide-react";
 
 import { showAlert } from "@/lib/alert";
@@ -113,6 +114,7 @@ function AdminUsersPage() {
                   <th className="p-3.5 pl-5">Ref ID</th>
                   <th className="p-3.5">Purchases</th>
                   <th className="p-3.5">Seeker Name</th>
+                  <th className="p-3.5">Location</th>
                   <th className="p-3.5">Contact Info</th>
                   <th className="p-3.5">Program Applied</th>
                   <th className="p-3.5">Status</th>
@@ -158,6 +160,14 @@ function AdminUsersPage() {
                       <td className="p-3.5">
                         <p className="font-semibold text-gray-900">{item.name}</p>
                         <p className="text-[0.7rem] text-gray-400 line-clamp-1">{item.experience}</p>
+                      </td>
+                      <td className="p-3.5 whitespace-nowrap">
+                        <div className="flex items-center gap-1.5">
+                          <MapPin className="size-3.5 text-gold shrink-0" />
+                          <span className="font-semibold text-gray-800 text-xs">
+                            {item.location || "India (IN)"}
+                          </span>
+                        </div>
                       </td>
                       <td className="p-3.5">
                         <div className="flex items-center gap-1.5 text-gray-600">
@@ -327,9 +337,12 @@ function AdminUsersPage() {
                     <span className="text-[0.7rem] font-semibold uppercase tracking-wider text-gray-400">
                       Location
                     </span>
-                    <p className="font-medium text-gray-800 mt-0.5">
-                      {selectedSeeker.location || "Not specified"}
-                    </p>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <MapPin className="size-3.5 text-gray-600 shrink-0" />
+                      <p className="font-semibold text-gray-900 text-xs">
+                        {selectedSeeker.location || "India (IN)"}
+                      </p>
+                    </div>
                   </div>
                   <div>
                     <span className="text-[0.7rem] font-semibold uppercase tracking-wider text-gray-400">

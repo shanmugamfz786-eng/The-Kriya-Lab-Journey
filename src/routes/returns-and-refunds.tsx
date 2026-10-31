@@ -33,18 +33,18 @@ export function ReturnsAndRefundsPage() {
         )}
       />
 
-      <Section className="!py-12 sm:!py-16">
-        <div className="mx-auto max-w-4xl space-y-12">
+      <Section className="!pt-4 sm:!pt-6 !pb-10 sm:!pb-14">
+        <div className="mx-auto max-w-4xl space-y-6 sm:space-y-8">
           {/* Core Guarantees Cards */}
-          <div className="grid sm:grid-cols-3 gap-6">
-            <div className="rounded-2xl border border-border bg-card p-6 text-center space-y-3 shadow-xs">
-              <div className="size-12 rounded-full bg-gold/15 text-gold flex items-center justify-center mx-auto">
-                <CalendarCheck className="size-6" />
+          <div className="grid sm:grid-cols-3 gap-4">
+            <div className="rounded-2xl border border-border bg-card p-4 sm:p-5 text-center space-y-2 shadow-xs">
+              <div className="size-10 rounded-full bg-gold/15 text-gold flex items-center justify-center mx-auto">
+                <CalendarCheck className="size-5" />
               </div>
-              <h3 className="font-serif text-lg font-bold text-foreground">
+              <h3 className="font-serif text-base font-bold text-foreground">
                 {t(bi("Flexible Rescheduling", "நெகிழ்வான தேதி மாற்றம்"))}
               </h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">
+              <p className="text-xs text-muted-foreground leading-relaxed font-light">
                 {t(
                   bi(
                     "Missed an online batch due to personal emergency? Transfer to the very next batch at zero extra fee.",
@@ -54,14 +54,14 @@ export function ReturnsAndRefundsPage() {
               </p>
             </div>
 
-            <div className="rounded-2xl border border-border bg-card p-6 text-center space-y-3 shadow-xs">
-              <div className="size-12 rounded-full bg-gold/15 text-gold flex items-center justify-center mx-auto">
-                <RotateCcw className="size-6" />
+            <div className="rounded-2xl border border-border bg-card p-4 sm:p-5 text-center space-y-2 shadow-xs">
+              <div className="size-10 rounded-full bg-gold/15 text-gold flex items-center justify-center mx-auto">
+                <RotateCcw className="size-5" />
               </div>
-              <h3 className="font-serif text-lg font-bold text-foreground">
+              <h3 className="font-serif text-base font-bold text-foreground">
                 {t(bi("Pre-Session Cancellation", "வகுப்புக்கு முன் ரத்து செய்தல்"))}
               </h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">
+              <p className="text-xs text-muted-foreground leading-relaxed font-light">
                 {t(
                   bi(
                     "Request cancellation at least 24 hours prior to a webinar/program commencement for a 100% full refund.",
@@ -71,14 +71,14 @@ export function ReturnsAndRefundsPage() {
               </p>
             </div>
 
-            <div className="rounded-2xl border border-border bg-card p-6 text-center space-y-3 shadow-xs">
-              <div className="size-12 rounded-full bg-gold/15 text-gold flex items-center justify-center mx-auto">
-                <HeartHandshake className="size-6" />
+            <div className="rounded-2xl border border-border bg-card p-4 sm:p-5 text-center space-y-2 shadow-xs">
+              <div className="size-10 rounded-full bg-gold/15 text-gold flex items-center justify-center mx-auto">
+                <HeartHandshake className="size-5" />
               </div>
-              <h3 className="font-serif text-lg font-bold text-foreground">
+              <h3 className="font-serif text-base font-bold text-foreground">
                 {t(bi("Fair Human Approach", "மனிதநேய அணுகுமுறை"))}
               </h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">
+              <p className="text-xs text-muted-foreground leading-relaxed font-light">
                 {t(
                   bi(
                     "We don't hide behind automated robots. Write to our team with your situation and we will find a fair solution.",
@@ -90,16 +90,16 @@ export function ReturnsAndRefundsPage() {
           </div>
 
           {/* Full Policy Body */}
-          <div className="rounded-2xl border border-border bg-card p-6 sm:p-10 space-y-8 text-foreground/90 leading-relaxed">
+          <div className="rounded-2xl border border-border bg-card p-5 sm:p-8 space-y-6 text-foreground/90 leading-relaxed shadow-sm">
             {/* 1. Online Programs */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <CheckCircle2 className="size-5 text-gold shrink-0" />
-                <h2 className="font-serif text-xl font-bold text-foreground">
+            <div className="space-y-2 sm:space-y-2.5">
+              <div className="flex items-center gap-2.5">
+                <CheckCircle2 className="size-4 text-gold shrink-0" />
+                <h2 className="font-serif text-lg sm:text-xl font-bold text-foreground">
                   {t(bi("1. Online Initiations & Interactive Webinars", "1. ஆன்லைன் தீட்சைகள் & நேரலை வகுப்புகள்"))}
                 </h2>
               </div>
-              <div className="text-sm text-muted-foreground space-y-3 leading-relaxed">
+              <div className="text-xs sm:text-sm text-muted-foreground space-y-2 font-light leading-relaxed">
                 <p>
                   {t(
                     bi(
@@ -108,7 +108,7 @@ export function ReturnsAndRefundsPage() {
                     )
                   )}
                 </p>
-                <ul className="list-disc list-inside space-y-2 pl-2">
+                <ul className="list-disc list-inside space-y-1.5 pl-2">
                   <li>
                     <strong className="text-foreground">{t(bi("Cancellation 24+ Hours Before Session:", "வகுப்புக்கு 24 மணி நேரத்திற்கு முன் ரத்து செய்தால்:"))}</strong>{" "}
                     {t(
@@ -141,14 +141,14 @@ export function ReturnsAndRefundsPage() {
             </div>
 
             {/* 2. Residential Retreats */}
-            <div className="space-y-3 border-t border-border/60 pt-6">
-              <div className="flex items-center gap-3">
-                <CheckCircle2 className="size-5 text-gold shrink-0" />
-                <h2 className="font-serif text-xl font-bold text-foreground">
+            <div className="space-y-2 sm:space-y-2.5 border-t border-border/60 pt-5">
+              <div className="flex items-center gap-2.5">
+                <CheckCircle2 className="size-4 text-gold shrink-0" />
+                <h2 className="font-serif text-lg sm:text-xl font-bold text-foreground">
                   {t(bi("2. Offline Retreats & In-Person Deeksha Camps", "2. நேரடி முகாம்கள் & தங்கும் பயிற்சி வகுப்புகள்"))}
                 </h2>
               </div>
-              <div className="text-sm text-muted-foreground space-y-3 leading-relaxed">
+              <div className="text-xs sm:text-sm text-muted-foreground space-y-2 font-light leading-relaxed">
                 <p>
                   {t(
                     bi(
@@ -157,7 +157,7 @@ export function ReturnsAndRefundsPage() {
                     )
                   )}
                 </p>
-                <ul className="list-disc list-inside space-y-2 pl-2">
+                <ul className="list-disc list-inside space-y-1.5 pl-2">
                   <li>
                     <strong className="text-foreground">{t(bi("7 Days Prior Notice:", "7 நாட்களுக்கு முன் அறிவித்தால்:"))}</strong>{" "}
                     {t(
@@ -181,14 +181,14 @@ export function ReturnsAndRefundsPage() {
             </div>
 
             {/* 3. Physical Sadhana Goods */}
-            <div className="space-y-3 border-t border-border/60 pt-6">
-              <div className="flex items-center gap-3">
-                <RotateCcw className="size-5 text-gold shrink-0" />
-                <h2 className="font-serif text-xl font-bold text-foreground">
+            <div className="space-y-2 sm:space-y-2.5 border-t border-border/60 pt-5">
+              <div className="flex items-center gap-2.5">
+                <RotateCcw className="size-4 text-gold shrink-0" />
+                <h2 className="font-serif text-lg sm:text-xl font-bold text-foreground">
                   {t(bi("3. Physical Items (Books, Mats, Sadhana Kits)", "3. புத்தகங்கள், தியான விரிப்புகள் & கையேடுகள்"))}
                 </h2>
               </div>
-              <p className="text-sm text-muted-foreground leading-relaxed">
+              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed font-light">
                 {t(
                   bi(
                     "You may return any unopened, unused physical item within 14 days of delivery for a replacement or refund. If an item arrives broken or damaged during transit, take a quick photo and email us — we will immediately send a fresh copy at zero extra cost.",
@@ -199,14 +199,14 @@ export function ReturnsAndRefundsPage() {
             </div>
 
             {/* 4. Refund Process Timeline */}
-            <div className="space-y-3 border-t border-border/60 pt-6">
-              <div className="flex items-center gap-3">
-                <ShieldCheck className="size-5 text-gold shrink-0" />
-                <h2 className="font-serif text-xl font-bold text-foreground">
+            <div className="space-y-2 sm:space-y-2.5 border-t border-border/60 pt-5">
+              <div className="flex items-center gap-2.5">
+                <ShieldCheck className="size-4 text-gold shrink-0" />
+                <h2 className="font-serif text-lg sm:text-xl font-bold text-foreground">
                   {t(bi("4. How to Request & Processing Timeline", "4. பணத்தை திரும்பப் பெறுவது எப்படி?"))}
                 </h2>
               </div>
-              <div className="text-sm text-muted-foreground space-y-2 leading-relaxed">
+              <div className="text-xs sm:text-sm text-muted-foreground space-y-1.5 font-light leading-relaxed">
                 <p>
                   {t(
                     bi(

@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-router";
 import heroImage from "@/assets/hero-breath.jpg";
 import heroVideo from "@/assets/Hero-sections.mp4";
 import { home, koshas, settings, ui } from "@/content/site";
@@ -6,7 +6,7 @@ import { bi, useLang } from "@/lib/i18n";
 import { CTARow, Eyebrow, Section } from "@/components/Primitives";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/lib/auth-store";
+import { useAuth, getStoredUser } from "@/lib/auth-store";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAllPrograms } from "@/lib/programs-api";
 import { fetchAllEvents } from "@/lib/events-api";
@@ -20,6 +20,17 @@ export const Route = createFileRoute("/")({
     redirect: typeof search["redirect"] === "string" ? search["redirect"] : undefined,
     mode: search["mode"] === "signup" ? "signup" : search["mode"] === "signin" ? "signin" : undefined,
   }),
+  beforeLoad: ({ search }) => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("kriya_user");
+      if (!stored) {
+        throw redirect({
+          to: "/auth",
+          search: { mode: search.mode || "signin", redirect: search.redirect },
+        });
+      }
+    }
+  },
   head: () => ({
     meta: [
       { title: "THE KRIYA LAB — Transform Your self with Kriya Yoga" },
@@ -42,29 +53,39 @@ function Index() {
   const { t, lang } = useLang();
   const [active, setActive] = useState(0);
   const { user, isAuthenticated } = useAuth();
+  const effectiveUser = user || (typeof window !== "undefined" ? getStoredUser() : null);
+  const effectiveAuth = isAuthenticated || Boolean(effectiveUser);
   const search = Route.useSearch();
   const navigate = useNavigate();
-
-  // If user is not authenticated, the landing page is the Registration or Login page!
-  if (!isAuthenticated) {
-    return <AuthPage initialMode={search.mode} redirectPath={search.redirect} />;
-  }
 
   const { data: programsData } = useQuery({
     queryKey: ["programs"],
     queryFn: () => fetchAllPrograms(),
+    enabled: effectiveAuth,
   });
   
   const { data: eventsData } = useQuery({
     queryKey: ["events"],
     queryFn: () => fetchAllEvents(),
+    enabled: effectiveAuth,
   });
+
+  // If user is not authenticated, do not show home page; redirect to sign in page
+  useEffect(() => {
+    if (!effectiveAuth) {
+      navigate({ to: "/auth", search: { mode: "signin" }, replace: true });
+    }
+  }, [effectiveAuth, navigate]);
+
+  if (!effectiveAuth) {
+    return <AuthPage initialMode={search.mode || "signin"} redirectPath={search.redirect} />;
+  }
 
   const topPrograms = (programsData || []).slice(0, 3);
   const topEvents = (eventsData || []).slice(0, 3);
   const ta = lang === "ta";
 
-  const displayName = user?.full_name || (user as any)?.username || (user as any)?.name || user?.email?.split("@")[0] || "Seeker";
+  const displayName = effectiveUser?.full_name || (effectiveUser as any)?.username || (effectiveUser as any)?.name || effectiveUser?.email?.split("@")[0] || "Seeker";
 
   return (
     <>
@@ -75,7 +96,7 @@ function Index() {
           loop
           muted
           playsInline
-          preload="auto"
+          preload="metadata"
           poster={heroImage}
           className="absolute inset-0 -z-10 size-full object-cover opacity-75 scale-115 origin-top pointer-events-none"
         >
@@ -88,14 +109,16 @@ function Index() {
 
         <div className="mx-auto flex min-h-[94vh] max-w-7xl items-center px-5 pt-36 pb-24 sm:pt-44 sm:pb-28 lg:px-10">
           <div className="animate-rise max-w-2xl">
-            {isAuthenticated && user && (
-              <div className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/15 px-4 py-1.5 text-xs sm:text-sm font-medium text-gold mb-5 backdrop-blur-md shadow-xs animate-fade-in">
-                <span className="size-2 rounded-full bg-gold animate-pulse" />
-                <span>
-                  {ta 
-                    ? `வணக்கம், ${displayName}` 
-                    : `Welcome back, ${displayName}`}
-                </span>
+            {effectiveAuth && effectiveUser && (
+              <div className="mb-5 animate-fade-in">
+                <div className="flex items-center gap-1.5 text-base sm:text-lg">
+                  <span className="font-sans text-white/80 font-medium tracking-wide">
+                    {ta ? "வணக்கம்," : "Welcome back,"}
+                  </span>
+                  <span className="font-serif font-bold tracking-wide capitalize bg-gradient-to-r from-amber-200 via-gold to-amber-400 bg-clip-text text-transparent drop-shadow-md">
+                    {displayName}
+                  </span>
+                </div>
               </div>
             )}
             <p className="eyebrow text-gold">{t(settings.tagline)}</p>
@@ -105,7 +128,7 @@ function Index() {
             <p className="mt-8 max-w-2xl text-lg text-[oklch(0.85_0.02_300)]">{t(home.heroFlow)}</p>
 
             <div className="mt-11 flex flex-wrap items-center gap-4">
-              {isAuthenticated ? (
+              {effectiveAuth ? (
                 <Link
                   to="/my-programs"
                   className="rounded-full bg-gold px-8 py-3.5 text-sm font-semibold text-velvet-deep shadow-md hover:bg-gold/90 transition-all hover:scale-105"

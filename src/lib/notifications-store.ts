@@ -9,7 +9,7 @@ export interface AdminNotification {
   read: boolean;
 }
 
-const STORAGE_KEY = "kriya_admin_notifications_v4";
+const STORAGE_KEY = "kriya_admin_notifications_v6";
 
 const SEED_NOTIFICATIONS: AdminNotification[] = [
   {
@@ -17,7 +17,7 @@ const SEED_NOTIFICATIONS: AdminNotification[] = [
     type: "order",
     title: "New Order: ₹4,999",
     message: "Senthil Kumar purchased Inner Awakening Kriya",
-    link: "/admin/orders?search=Senthil",
+    link: "/admin/orders?filter=new",
     amount: 4999,
     createdAt: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
     read: false,
@@ -27,7 +27,7 @@ const SEED_NOTIFICATIONS: AdminNotification[] = [
     type: "refund",
     title: "Refund Request: Dropped Program",
     message: "Vijayakumar dropped Foundation Weekend Workshop (Refund Pending)",
-    link: "/admin/refunds?search=Vijayakumar",
+    link: "/admin/orders?filter=pending",
     createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
     read: false,
   },
@@ -40,6 +40,8 @@ export function getStoredNotifications(): AdminNotification[] {
     localStorage.removeItem("kriya_admin_notifications_v1");
     localStorage.removeItem("kriya_admin_notifications_v2");
     localStorage.removeItem("kriya_admin_notifications_v3");
+    localStorage.removeItem("kriya_admin_notifications_v4");
+    localStorage.removeItem("kriya_admin_notifications_v5");
 
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
@@ -47,13 +49,24 @@ export function getStoredNotifications(): AdminNotification[] {
       return SEED_NOTIFICATIONS;
     }
     const parsed: AdminNotification[] = JSON.parse(raw);
-    const filtered = parsed.filter(
-      (n) => n.type !== "enquiry" && n.id !== "notif_2" && !n.title.toLowerCase().includes("inquir")
-    );
-    if (filtered.length !== parsed.length) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+    const sanitized = parsed
+      .filter((n) => n.type !== "enquiry" && n.id !== "notif_2" && !n.title.toLowerCase().includes("inquir"))
+      .map((n) => {
+        let link = n.link || "/admin/orders";
+        if (n.type === "refund" || link.includes("refund")) {
+          link = "/admin/orders?filter=pending";
+        } else if (n.type === "order") {
+          link = "/admin/orders?filter=new";
+        }
+        return {
+          ...n,
+          link,
+        };
+      });
+    if (sanitized.length !== parsed.length || JSON.stringify(sanitized) !== raw) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized));
     }
-    return filtered;
+    return sanitized;
   } catch {
     return SEED_NOTIFICATIONS;
   }
@@ -109,11 +122,16 @@ export function pushNotification(
   notif: Omit<AdminNotification, "id" | "createdAt" | "read">
 ): AdminNotification {
   const list = getStoredNotifications();
+  const link =
+    notif.type === "refund" || notif.link.includes("refund")
+      ? "/admin/orders?filter=pending"
+      : "/admin/orders?filter=new";
   const item: AdminNotification = {
     ...notif,
     id: "notif_" + Date.now(),
     createdAt: new Date().toISOString(),
     read: false,
+    link,
   };
   list.unshift(item);
   saveStoredNotifications(list);
@@ -131,6 +149,12 @@ export function pushNotification(
   }
 
   return item;
+}
+
+export function markNotificationRead(id: string): void {
+  const list = getStoredNotifications();
+  const updated = list.map((n) => (n.id === id ? { ...n, read: true } : n));
+  saveStoredNotifications(updated);
 }
 
 export function markAllNotificationsRead(): void {

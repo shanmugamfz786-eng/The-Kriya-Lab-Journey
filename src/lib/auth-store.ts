@@ -7,6 +7,7 @@ export interface AuthUser {
   role: "student" | "admin";
   avatar?: string;
   phone?: string;
+  country?: string;
 }
 
 const API_URL = (() => {
@@ -44,6 +45,9 @@ export function useAuth() {
   const [token, setToken] = useState<string | null>(() => getStoredToken());
 
   useEffect(() => {
+    setUser(getStoredUser());
+    setToken(getStoredToken());
+
     const handleAuthChange = () => {
       setUser(getStoredUser());
       setToken(getStoredToken());
@@ -137,6 +141,9 @@ export function useAuth() {
       }
 
       if (data.success && data.user) {
+        if (!data.user.country && options?.country) {
+          data.user.country = options.country;
+        }
         saveSession(data.user, data.token);
         return data.user;
       }
@@ -147,11 +154,18 @@ export function useAuth() {
     }
   };
 
-  const logout = () => {
+  const logout = (redirectTo: string = "/auth?mode=signin") => {
     if (typeof window !== "undefined") {
       localStorage.removeItem(STORAGE_KEY_USER);
       localStorage.removeItem(STORAGE_KEY_TOKEN);
+      localStorage.removeItem("kriya_geo_country");
+      localStorage.removeItem("kriya_geo_currency");
+      localStorage.removeItem("kriya_geo_verified");
       window.dispatchEvent(new Event("kriya_auth_changed"));
+      window.dispatchEvent(new CustomEvent("kriya_geo_changed", { detail: { country: "IN", verified: false } }));
+      if (redirectTo) {
+        window.location.href = redirectTo;
+      }
     }
     setUser(null);
     setToken(null);
@@ -172,6 +186,14 @@ function saveSession(user: AuthUser, token: string) {
   if (typeof window !== "undefined") {
     localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user));
     localStorage.setItem(STORAGE_KEY_TOKEN, token);
+    if (user.country) {
+      const cleanCountry = (user.country.split(" ")[0] || "").trim().toUpperCase().slice(0, 2);
+      if (cleanCountry) {
+        localStorage.setItem("kriya_geo_country", cleanCountry);
+        localStorage.setItem("kriya_geo_verified", "true");
+        window.dispatchEvent(new CustomEvent("kriya_geo_changed", { detail: { country: cleanCountry, verified: true } }));
+      }
+    }
     window.dispatchEvent(new Event("kriya_auth_changed"));
   }
 }

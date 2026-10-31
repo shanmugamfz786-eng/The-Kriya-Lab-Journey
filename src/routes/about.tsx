@@ -38,7 +38,7 @@ function AboutPage() {
         )}
       />
 
-      <Section>
+      <Section className="!pt-4 sm:!pt-6 lg:!pt-8 !pb-12 sm:!pb-16">
         <div className="grid gap-14 lg:grid-cols-[0.5fr_1.5fr]">
           <figure className="aura-image max-w-xs self-start overflow-hidden rounded-sm border border-border">
             <img

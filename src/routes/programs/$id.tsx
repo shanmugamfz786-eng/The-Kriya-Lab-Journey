@@ -1,23 +1,30 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Check, ShieldCheck, BookOpen, Clock, MapPin, User, ArrowLeft } from "lucide-react";
+import { Check, ShieldCheck, BookOpen, Clock, MapPin, User, ArrowLeft, Globe } from "lucide-react";
 import { PageHero, PlaceholderNote, Section } from "@/components/Primitives";
 import { bi, useLang, type Bi } from "@/lib/i18n";
 import { ui } from "@/content/site";
 import { listPublicPrograms } from "@/lib/programs.functions";
-import { type ProgramItem, fetchAllPrograms, INITIAL_PROGRAMS } from "@/lib/programs-api";
+import { type ProgramItem, fetchAllPrograms, INITIAL_PROGRAMS, getLocalPrograms } from "@/lib/programs-api";
 import { ProgramCard } from "@/components/ProgramCard";
 import { CollectEnquiryModal } from "@/components/CollectEnquiryModal";
 import { useAuth } from "@/lib/auth-store";
 import { enrollProgram, useEnrollments } from "@/lib/enrollment-store";
 import { showAlert } from "@/lib/alert";
 import { cn } from "@/lib/utils";
+import { useGeo } from "@/lib/geo-context";
 
 export const Route = createFileRoute("/programs/$id")({
   staticData: { sitemap: true },
   loader: async ({ params }) => {
-    let all = await listPublicPrograms();
+    let all: ProgramItem[] = [];
+    if (typeof window !== "undefined") {
+      all = getLocalPrograms();
+    }
+    if (!all || all.length === 0) {
+      all = await listPublicPrograms();
+    }
     if (!all || all.length === 0) {
       all = INITIAL_PROGRAMS;
     }
@@ -45,8 +52,15 @@ function ProgramPage() {
   const { id } = Route.useParams();
   const { t, lang } = useLang();
   const { isAuthenticated, user } = useAuth();
+  const { currency: geoCurrency, currencySymbol, formatPrice, isIndia } = useGeo();
   const [isCollectModalOpen, setCollectModalOpen] = useState(false);
-  const [currency, setCurrency] = useState<"INR" | "USD">("INR");
+  const [currency, setCurrency] = useState<string>(() => geoCurrency || (isIndia ? "INR" : "USD"));
+
+  useEffect(() => {
+    if (geoCurrency) {
+      setCurrency(geoCurrency);
+    }
+  }, [geoCurrency]);
 
   const { data: allProgramsData } = useQuery({
     queryKey: ["programs"],
@@ -86,16 +100,20 @@ function ProgramPage() {
   const language = (ta ? program.language_ta : program.language_en) || program.language_en;
 
   // Formatted price strings
-  const formattedINR = program.price_inr
-    ? `₹ ${!isNaN(Number(program.price_inr)) ? Number(program.price_inr).toLocaleString("en-IN") : program.price_inr}`
+  const baseInr = Number(program.price_inr) || 0;
+  const formattedINR = baseInr
+    ? `₹ ${baseInr.toLocaleString("en-IN")}`
     : null;
   const formattedUSD = program.price_usd
-    ? `$ ${!isNaN(Number(program.price_usd)) ? Number(program.price_usd).toLocaleString("en-US") : program.price_usd}`
-    : null;
+    ? `$ ${Number(program.price_usd).toLocaleString("en-US")}`
+    : (baseInr ? `$ ${Math.round(baseInr / 84)}` : null);
+  const formattedLocal = baseInr ? formatPrice(baseInr, currency) : null;
 
   const activePriceDisplay = currency === "INR"
     ? (formattedINR || t(bi("Contact for Price", "கட்டண விவரம் அறிய தொடர்பு கொள்ளவும்")))
-    : (formattedUSD || t(bi("Contact for Price", "கட்டண விவரம் அறிய தொடர்பு கொள்ளவும்")));
+    : currency === "USD"
+      ? (formattedUSD || t(bi("Contact for Price", "கட்டண விவரம் அறிய தொடர்பு கொள்ளவும்")))
+      : (formattedLocal || t(bi("Contact for Price", "கட்டண விவரம் அறிய தொடர்பு கொள்ளவும்")));
 
   const rows: [Bi, string][] = [
     [bi("Level", "நிலை"), program.level],
@@ -263,6 +281,18 @@ function ProgramPage() {
                     >
                       $ USD
                     </button>
+                    {geoCurrency !== "INR" && geoCurrency !== "USD" && (
+                      <button
+                        type="button"
+                        onClick={() => setCurrency(geoCurrency)}
+                        className={cn(
+                          "px-2.5 py-0.5 rounded-full transition-all cursor-pointer",
+                          currency === geoCurrency ? "bg-gold text-velvet-deep shadow-xs font-bold" : "text-muted-foreground hover:text-foreground"
+                        )}
+                      >
+                        {currencySymbol} {geoCurrency}
+                      </button>
+                    )}
                   </div>
                 </div>
                 <div className="text-2xl sm:text-3xl font-serif font-bold text-foreground">
@@ -273,6 +303,23 @@ function ProgramPage() {
                     ? (ta ? "இந்திய மாணவர்களுக்கான கட்டணம் (ஜிஎஸ்டி உள்ளடக்கம்)" : "Standard fee for Indian seekers (All taxes incl.)") 
                     : (ta ? "சர்வதேச மாணவர்களுக்கான கட்டணம்" : "Standard fee for international seekers")}
                 </p>
+
+                {/* Location-based recommendation for offline programs */}
+                {program.program_type === "offline" && (
+                  <div className="mt-2.5 pt-2 border-t border-border/60 text-[0.68rem]">
+                    {isIndia ? (
+                      <span className="inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-semibold">
+                        <MapPin className="size-3" />
+                        {ta ? "அருகிலுள்ள ஆசிரம மையம் (கோவை / சென்னை)" : "Nearby In-Person Centre Available (Ashram / Centres)"}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 text-sky-600 dark:text-sky-400 font-semibold">
+                        <Globe className="size-3" />
+                        {ta ? "சர்வதேச மாணவர்களுக்கான ஆன்லைன் அமர்வு கிடைக்கும்" : "Online Live Stream Available for International Seekers"}
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="mt-4 flex flex-col gap-2.5">

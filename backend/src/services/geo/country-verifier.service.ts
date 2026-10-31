@@ -178,7 +178,10 @@ export class CountryVerifierService {
         reason: `Mismatch: Selected(${normalizedSelected}) vs IP(${ipCountry}) vs GPS(${gpsCountry})`,
       });
 
-      const mismatchMsg = `Country verification failed: You selected ${normalizedSelected}, but your verified IP country is ${ipCountry} and your device GPS country is ${gpsCountry}.`;
+      const mismatchMsg =
+        normalizedSelected === ipCountry
+          ? `Country verification failed: Your verified IP country is ${ipCountry}, but your device GPS country is ${gpsCountry}.`
+          : `Country verification failed: Selected country (${normalizedSelected}) does not match your verified IP country (${ipCountry}) and device GPS country (${gpsCountry}).`;
 
       throw new GeoMismatchError(mismatchMsg, {
         selectedCountry: normalizedSelected,

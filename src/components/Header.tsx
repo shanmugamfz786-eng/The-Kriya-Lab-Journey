@@ -3,9 +3,6 @@ import {
   Menu,
   X,
   ArrowRight,
-  Compass,
-  Sparkles,
-  BookOpen,
   User,
   LayoutDashboard,
   ShieldCheck,
@@ -20,14 +17,14 @@ import { useEffect, useState } from "react";
 import { settings, ui } from "@/content/site";
 import { bi, useLang } from "@/lib/i18n";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
-import { useAuth } from "@/lib/auth-store";
+import { useAuth, getStoredUser } from "@/lib/auth-store";
 import { cn } from "@/lib/utils";
+import { CountryCurrencySwitcher } from "@/components/CountryCurrencySwitcher";
 
 /** Grouped navigation items for the comprehensive Luxury Drawer */
 const navigationGroups = [
   {
     title: bi("Wisdom & Tradition", "ஞானமும் மரபும்"),
-    icon: Sparkles,
     links: [
       {
         label: bi("Kriya Yoga", "கிரியா யோகம்"),
@@ -58,7 +55,6 @@ const navigationGroups = [
   },
   {
     title: bi("Programs & Events", "நிகழ்ச்சிகளும் நிகழ்வுகளும்"),
-    icon: Compass,
     links: [
       {
         label: bi("All Programs", "அனைத்து நிகழ்ச்சிகள்"),
@@ -74,7 +70,6 @@ const navigationGroups = [
   },
   {
     title: bi("Insights & Support", "அறிந்து கொள்ளுங்கள்"),
-    icon: BookOpen,
     links: [
       {
         label: bi("About the Teacher", "ஆசிரியர் பற்றி"),
@@ -190,9 +185,17 @@ function AccountLink({
 }) {
   const { t } = useLang();
   const { user, isAuthenticated } = useAuth();
+  const [mounted, setMounted] = useState(false);
 
-  if (isAuthenticated && user) {
-    const displayName = user.full_name || (user as any).username || (user as any).name || user.email?.split("@")[0] || "User";
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const effectiveUser = mounted ? (user || (typeof window !== "undefined" ? getStoredUser() : null)) : null;
+  const effectiveAuth = mounted && (isAuthenticated || Boolean(effectiveUser));
+
+  if (mounted && effectiveAuth && effectiveUser) {
+    const displayName = effectiveUser.full_name || (effectiveUser as any).username || (effectiveUser as any).name || effectiveUser.email?.split("@")[0] || "User";
     const initial = displayName.charAt(0).toUpperCase();
 
     return (
@@ -209,8 +212,8 @@ function AccountLink({
         )}
       >
         <div className="flex h-5 w-5 items-center justify-center rounded-full bg-gold/25 text-gold border border-gold/40 overflow-hidden shrink-0 font-bold text-[0.65rem] group-hover:scale-105 transition-transform">
-          {user.avatar ? (
-            <img src={user.avatar} alt={displayName} className="w-full h-full object-cover" />
+          {effectiveUser.avatar ? (
+            <img src={effectiveUser.avatar} alt={displayName} className="w-full h-full object-cover" />
           ) : (
             <span>{initial}</span>
           )}
@@ -342,9 +345,14 @@ export function Header() {
           </nav>
 
           {/* Right: Tools & Actions */}
-          <div className="flex items-center gap-2 sm:gap-2.5 pl-3 lg:pl-4 border-l border-white/10 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2.5 pl-2 sm:pl-3 lg:pl-4 border-l border-white/10 shrink-0">
+            {/* Country & Currency Switcher (Always visible with verified status) */}
+            <div className="flex items-center">
+              <CountryCurrencySwitcher isTransparent={isTransparent} />
+            </div>
+
             {/* Language Switcher */}
-            <div className="hidden md:block">
+            <div className="hidden sm:block">
               <LanguageSwitcher isTransparent={isTransparent} />
             </div>
 
@@ -400,7 +408,7 @@ export function Header() {
                 </p>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <LanguageSwitcher isTransparent={true} />
                 <button
                   type="button"
@@ -416,11 +424,9 @@ export function Header() {
             {/* Categorized Navigation Columns */}
             <div className="flex-1 overflow-y-auto overscroll-contain space-y-8 px-4 py-6 sm:px-6">
               {navigationGroups.map((group, idx) => {
-                const Icon = group.icon;
                 return (
                   <div key={idx} className="space-y-4">
-                    <div className="flex items-center gap-2.5 border-b border-gold/20 pb-2">
-                      <Icon className="size-4 text-gold" />
+                    <div className="border-b border-gold/20 pb-2">
                       <h3 className="font-serif text-sm tracking-widest text-gold uppercase">
                         {t(group.title)}
                       </h3>
@@ -457,8 +463,7 @@ export function Header() {
                     type="button"
                     onClick={() => {
                       setOpen(false);
-                      logout();
-                      navigate({ to: "/", replace: true });
+                      logout("/auth?mode=signin");
                     }}
                     className="flex w-full items-center justify-between rounded-xl p-3 text-rose-400 transition-all hover:bg-rose-500/10 hover:text-rose-300"
                   >

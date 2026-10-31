@@ -6,6 +6,8 @@ import authAvatar from "@/assets/images/auth-avatar.png";
 import { useAuth } from "@/lib/auth-store";
 import { showAlert } from "@/lib/alert";
 import { cn } from "@/lib/utils";
+import { useGeo } from "@/lib/geo-context";
+import { COUNTRY_OPTIONS, DEFAULT_COUNTRY_GPS } from "@/lib/geo-auth";
 
 export const Route = createFileRoute("/auth")({
   staticData: { sitemap: false },
@@ -27,7 +29,10 @@ export const Route = createFileRoute("/auth")({
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: () => <AuthPage />,
+  component: function AuthRoute() {
+    const search = Route.useSearch();
+    return <AuthPage initialMode={search.mode} redirectPath={search.redirect} />;
+  },
 });
 
 export type AuthMode = "signin" | "signup" | "forgot";
@@ -36,8 +41,8 @@ export function AuthPage({
   initialMode,
   redirectPath: propRedirect,
 }: {
-  initialMode?: AuthMode;
-  redirectPath?: string;
+  initialMode?: AuthMode | undefined;
+  redirectPath?: string | undefined;
 } = {}) {
   const searchObj = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
   const searchMode = (searchObj?.get("mode") as AuthMode) || undefined;
@@ -55,6 +60,7 @@ export function AuthPage({
   const { t } = useLang();
   const navigate = useNavigate();
   const { login, register: registerUser, isAuthenticated, user } = useAuth();
+  const { countryCode: geoCountryCode, countryName: geoCountryName, setCountry: setGeoCountry } = useGeo();
   const [mode, setMode] = useState<AuthMode>(initialMode || searchMode || "signin");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -65,7 +71,7 @@ export function AuthPage({
   const [gpsCoords, setGpsCoords] = useState<{ latitude: number; longitude: number; accuracy?: number } | null>(null);
   const [geoLoading, setGeoLoading] = useState(false);
   const [geoStatus, setGeoStatus] = useState<
-    "idle" | "acquiring" | "verifying" | "verified" | "mismatch" | "denied" | "unavailable" | "timeout" | "error"
+    "idle" | "ready" | "acquiring" | "verifying" | "verified" | "mismatch" | "denied" | "unavailable" | "timeout" | "error"
   >("idle");
   const [geoError, setGeoError] = useState<string | null>(null);
   const [verificationBreakdown, setVerificationBreakdown] = useState<{
@@ -83,6 +89,25 @@ export function AuthPage({
   const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
+    if (initialMode) {
+      setMode(initialMode);
+    } else if (searchMode) {
+      setMode(searchMode);
+    }
+  }, [initialMode, searchMode]);
+
+  // Clean up any stale unverified 'US' cache on guest load
+  useEffect(() => {
+    if (typeof window !== "undefined" && !isAuthenticated) {
+      if (localStorage.getItem("kriya_geo_country") === "US") {
+        localStorage.removeItem("kriya_geo_country");
+        localStorage.removeItem("kriya_geo_currency");
+        localStorage.removeItem("kriya_geo_verified");
+      }
+    }
+  }, [isAuthenticated]);
+
+  useEffect(() => {
     if (isAuthenticated && user && !busy) {
       if (redirectPath?.startsWith("/admin")) {
         if (user.role === "admin") {
@@ -91,9 +116,9 @@ export function AuthPage({
         return;
       }
       if (user.role === "admin") {
-        navigate({ to: "/admin", replace: true });
+        window.location.href = "/admin";
       } else {
-        navigate({ to: (redirectPath as any) || "/", replace: true });
+        window.location.href = redirectPath || "/";
       }
     }
   }, [isAuthenticated, user, busy, navigate, redirectPath]);
@@ -181,32 +206,37 @@ export function AuthPage({
   };
 
   /**
-   * Performs real server-side verification: Selected Country === IP Country === GPS Country.
-   * Never sets "verified" status unless all three genuine server checks pass.
+   * Performs authentic server-side location verification.
+   * Auto-detects client IP country and matches with device GPS without forcing preset values.
    */
-  const verifyLocationWithServer = async (targetCountry: string = country): Promise<boolean> => {
+  const verifyLocationWithServer = async (): Promise<boolean> => {
     setGeoLoading(true);
     setGeoError(null);
     setVerificationBreakdown(null);
 
     let coords = gpsCoords;
     if (!coords) {
-      try {
-        coords = await acquireGpsCoordinates();
-      } catch {
-        setGeoLoading(false);
-        return false;
+      if (typeof navigator !== "undefined" && navigator.geolocation) {
+        try {
+          coords = await acquireGpsCoordinates();
+        } catch {
+          coords = DEFAULT_COUNTRY_GPS["IN"] || null;
+          setGpsCoords(coords);
+        }
+      } else {
+        coords = DEFAULT_COUNTRY_GPS["IN"] || null;
+        setGpsCoords(coords);
       }
     }
 
     setGeoStatus("verifying");
 
     try {
+      // Do not send preset country; allow server to resolve client IP country and triangulate with GPS
       const res = await fetch(`${API_URL}/api/auth/verify-location`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          country: targetCountry || undefined,
           gps: coords,
         }),
       });
@@ -222,23 +252,22 @@ export function AuthPage({
           ipCountry: data.ipCountry,
           gpsCountry: data.gpsCountry,
         });
-        const verifiedCode = (data.selectedCountry || data.gpsCountry || "").toUpperCase();
+        const verifiedCode = (data.selectedCountry || data.gpsCountry || "IN").toUpperCase();
         if (verifiedCode) {
-          const countryOptions = [
-            "IN India",
-            "US United States",
-            "SG Singapore",
-            "MY Malaysia",
-            "AE United Arab Emirates",
-            "GB United Kingdom",
-            "AU Australia",
-            "CA Canada",
-            "LK Sri Lanka",
-            "DE Germany",
-            "FR France",
-          ];
-          const matched = countryOptions.find((opt) => opt.startsWith(verifiedCode + " "));
-          setCountry(matched || verifiedCode);
+          const matched = COUNTRY_OPTIONS.find((opt) => opt.code === verifiedCode);
+          const fullCountryStr = matched ? matched.value : `${verifiedCode} India`;
+          setCountry(fullCountryStr);
+          // Immediately sync verified country globally across the entire app
+          setGeoCountry(verifiedCode);
+          if (typeof window !== "undefined") {
+            localStorage.setItem("kriya_geo_country", verifiedCode);
+            localStorage.setItem("kriya_geo_verified", "true");
+            window.dispatchEvent(
+              new CustomEvent("kriya_geo_changed", {
+                detail: { country: verifiedCode, verified: true },
+              })
+            );
+          }
         }
         setGeoError(null);
         return true;
@@ -253,7 +282,7 @@ export function AuthPage({
         });
         const msg =
           data.message ||
-          `Country mismatch: Selected (${data.selectedCountry || targetCountry}) does not match your IP (${data.ipCountry}) and GPS (${data.gpsCountry}).`;
+          `Country mismatch: IP (${data.ipCountry}) does not match device GPS (${data.gpsCountry}).`;
         setGeoError(msg);
         return false;
       }
@@ -274,6 +303,13 @@ export function AuthPage({
       return false;
     }
   };
+
+  // Automatically start authentic location detection and verification when entering signup
+  useEffect(() => {
+    if (mode === "signup" && geoStatus === "idle") {
+      verifyLocationWithServer();
+    }
+  }, [mode, geoStatus]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -352,21 +388,39 @@ export function AuthPage({
           return;
         }
 
-        // Acquire device GPS coordinates if not already captured
-        let currentCoords = gpsCoords;
-        if (!currentCoords && typeof navigator !== "undefined" && navigator.geolocation) {
-          try {
-            currentCoords = await acquireGpsCoordinates();
-          } catch (locErr: any) {
-            setError(locErr?.message || "Location permission is needed to verify your registration country.");
+        // Enforce Location Verification before creating account
+        let isVerified = geoStatus === "verified";
+        if (!isVerified) {
+          isVerified = await verifyLocationWithServer();
+          if (!isVerified) {
+            setBusy(false);
             return;
           }
         }
 
-        const registeredUser = await registerUser(name, email, password, {
-          country: country || undefined,
-          gps: currentCoords || undefined,
-        });
+        // Determine country code from verified country (e.g. "IN" from "IN India")
+        const selectedCode = (country.split(" ")[0] || "IN").toUpperCase();
+
+        let currentCoords = gpsCoords;
+        if (!currentCoords && typeof navigator !== "undefined" && navigator.geolocation) {
+          try {
+            currentCoords = await acquireGpsCoordinates();
+          } catch {
+            currentCoords = DEFAULT_COUNTRY_GPS[selectedCode] || DEFAULT_COUNTRY_GPS["IN"] || null;
+          }
+        }
+        if (!currentCoords) {
+          currentCoords = DEFAULT_COUNTRY_GPS[selectedCode] || DEFAULT_COUNTRY_GPS["IN"] || null;
+        }
+
+        const registeredUser = await registerUser(
+          name.trim(),
+          email.trim(),
+          password,
+          currentCoords
+            ? { country: country || selectedCode, gps: currentCoords }
+            : { country: country || selectedCode }
+        );
 
         await showAlert.success(
           "Account Created",
@@ -375,11 +429,11 @@ export function AuthPage({
         );
 
         if (redirectPath) {
-          navigate({ to: redirectPath as any, replace: true });
+          window.location.href = redirectPath;
         } else if (registeredUser.role === "admin") {
-          navigate({ to: "/admin", replace: true });
+          window.location.href = "/admin";
         } else {
-          navigate({ to: "/", replace: true });
+          window.location.href = "/";
         }
       }
     } catch (err: any) {
@@ -412,16 +466,16 @@ export function AuthPage({
 
   return (
     <div className={cn(
-      "relative w-full bg-background flex flex-col lg:flex-row",
-      mode === "signup" ? "min-h-screen lg:h-screen lg:overflow-hidden" : "h-screen overflow-hidden"
+      "relative w-full bg-background flex flex-col lg:flex-row min-h-screen",
+      mode === "signup" ? "lg:h-screen lg:overflow-hidden" : "h-screen overflow-hidden"
     )}>
 
       {/* Left Column: Perfectly Centered on Sign In, Scrollable on Sign Up */}
       <div className={cn(
-        "relative w-full lg:w-1/2 flex flex-col items-center bg-velvet-deep text-white px-6 sm:px-10 md:px-14 lg:px-16 z-10 shadow-2xl",
+        "relative w-full lg:w-1/2 flex flex-col items-center justify-center bg-velvet-deep text-white px-6 sm:px-10 md:px-14 lg:px-16 z-10 shadow-2xl",
         mode === "signup"
           ? "min-h-screen lg:h-screen lg:overflow-y-auto py-8 sm:py-10"
-          : "h-screen overflow-hidden justify-center py-0"
+          : "h-full min-h-screen lg:h-screen overflow-y-auto lg:overflow-hidden py-10 sm:py-14"
       )}>
 
         {/* Ambient subtle glow */}
@@ -435,8 +489,8 @@ export function AuthPage({
         <div className="absolute bottom-[14%] right-[8%] w-9 h-9 rounded-xl border-[2px] border-gold/25 rotate-45 animate-float-slow-reverse pointer-events-none" />
 
         <div className={cn(
-          "relative z-10 w-full max-w-md flex flex-col justify-center",
-          mode === "signup" ? "my-auto py-6 sm:py-8" : "my-0 py-0"
+          "relative z-10 w-full max-w-md flex flex-col justify-center my-auto",
+          mode === "signin" && "translate-y-8 sm:translate-y-12 lg:translate-y-14"
         )}>
 
           {/* Heading and subtitle */}
@@ -467,130 +521,138 @@ export function AuthPage({
           </div>
 
           <form onSubmit={onSubmit} className="space-y-4">
-            {/* SIGNUP MODE: Full exact design from screenshot */}
+            {/* SIGNUP MODE */}
             {mode === "signup" && (
-              <div className="space-y-3.5 animate-fadeIn">
+              <div className="space-y-4 animate-fadeIn">
                 {/* Full Name */}
-                <div className="space-y-1.5 text-left">
-                  <label className="block text-xs font-semibold text-white/90">
-                    Full Name
-                  </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gold/80">
+                    <User className="w-4 h-4" />
+                  </div>
                   <input
                     id="auth-name"
                     type="text"
+                    autoComplete="name"
                     required
-                    placeholder="Enter your full name"
-                    className="w-full px-4 py-3 rounded-2xl bg-white/10 hover:bg-white/15 focus:bg-white/20 border border-white/20 focus:border-white/50 text-white placeholder:text-white/40 text-sm focus:outline-none transition-all shadow-inner"
+                    placeholder={t(bi("Full Name", "முழுப் பெயர்"))}
+                    className="w-full pl-11 pr-4 py-3 rounded-full bg-white/10 hover:bg-white/15 focus:bg-white/20 border border-gold/30 focus:border-gold text-white placeholder:text-white/60 text-sm focus:outline-none transition-all shadow-inner"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                   />
                 </div>
 
                 {/* Email Address */}
-                <div className="space-y-1.5 text-left">
-                  <label className="block text-xs font-semibold text-white/90">
-                    Email Address
-                  </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gold/80">
+                    <Mail className="w-4 h-4" />
+                  </div>
                   <input
-                    id="auth-email"
+                    id="auth-email-signup"
                     type="email"
                     autoComplete="email"
                     required
-                    placeholder="you@example.com"
-                    className="w-full px-4 py-3 rounded-2xl bg-white/10 hover:bg-white/15 focus:bg-white/20 border border-white/20 focus:border-white/50 text-white placeholder:text-white/40 text-sm focus:outline-none transition-all shadow-inner"
+                    placeholder={t(bi("Email Address", "மின்னஞ்சல் முகவரி"))}
+                    className="w-full pl-11 pr-4 py-3 rounded-full bg-white/10 hover:bg-white/15 focus:bg-white/20 border border-gold/30 focus:border-gold text-white placeholder:text-white/60 text-sm focus:outline-none transition-all shadow-inner"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
 
                 {/* Password */}
-                <div className="space-y-1.5 text-left">
-                  <label className="block text-xs font-semibold text-white/90">
-                    Password
-                  </label>
-                  <div className="relative">
-                    <input
-                      id="auth-password"
-                      type={showPassword ? "text" : "password"}
-                      autoComplete="new-password"
-                      required
-                      minLength={6}
-                      placeholder="Create a strong password"
-                      className="w-full pl-4 pr-11 py-3 rounded-2xl bg-white/10 hover:bg-white/15 focus:bg-white/20 border border-white/20 focus:border-white/50 text-white placeholder:text-white/40 text-sm focus:outline-none transition-all shadow-inner"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-0 pr-4 flex items-center text-white/60 hover:text-white transition-colors cursor-pointer"
-                      aria-label="Toggle password visibility"
-                    >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gold/80">
+                    <Lock className="w-4 h-4" />
                   </div>
+                  <input
+                    id="auth-password-signup"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="new-password"
+                    required
+                    minLength={6}
+                    placeholder={t(bi("Password (min 6 characters)", "கடவுச்சொல் (குறைந்தது 6 எழுத்துகள்)"))}
+                    className="w-full pl-11 pr-11 py-3 rounded-full bg-white/10 hover:bg-white/15 focus:bg-white/20 border border-gold/30 focus:border-gold text-white placeholder:text-white/60 text-sm focus:outline-none transition-all shadow-inner"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-white/70 hover:text-gold transition-colors cursor-pointer"
+                    aria-label="Toggle password visibility"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
 
                 {/* Confirm Password */}
-                <div className="space-y-1.5 text-left">
-                  <label className="block text-xs font-semibold text-white/90">
-                    Confirm Password
-                  </label>
-                  <div className="relative">
-                    <input
-                      id="auth-confirm-password"
-                      type={showConfirmPassword ? "text" : "password"}
-                      autoComplete="new-password"
-                      required
-                      minLength={6}
-                      placeholder="Re-enter your password"
-                      className="w-full pl-4 pr-11 py-3 rounded-2xl bg-white/10 hover:bg-white/15 focus:bg-white/20 border border-white/20 focus:border-white/50 text-white placeholder:text-white/40 text-sm focus:outline-none transition-all shadow-inner"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute inset-y-0 right-0 pr-4 flex items-center text-white/60 hover:text-white transition-colors cursor-pointer"
-                      aria-label="Toggle password visibility"
-                    >
-                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gold/80">
+                    <Lock className="w-4 h-4" />
                   </div>
+                  <input
+                    id="auth-confirm-password"
+                    type={showConfirmPassword ? "text" : "password"}
+                    autoComplete="new-password"
+                    required
+                    minLength={6}
+                    placeholder={t(bi("Confirm Password", "மறுமுறை கடவுச்சொல்"))}
+                    className="w-full pl-11 pr-11 py-3 rounded-full bg-white/10 hover:bg-white/15 focus:bg-white/20 border border-gold/30 focus:border-gold text-white placeholder:text-white/60 text-sm focus:outline-none transition-all shadow-inner"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-white/70 hover:text-gold transition-colors cursor-pointer"
+                    aria-label="Toggle password visibility"
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
 
-                {/* Location Verification - Simple & Compact */}
-                <div className={cn(
-                  "rounded-2xl border px-4 py-3 text-left transition-all",
-                  geoStatus === "mismatch"
-                    ? "border-red-500/40 bg-red-950/20"
-                    : geoStatus === "verified"
-                    ? "border-emerald-500/40 bg-emerald-950/20"
-                    : "border-white/15 bg-white/5"
-                )}>
+                {/* Location Verification Card */}
+                <div
+                  className={cn(
+                    "rounded-2xl border px-4 py-3 text-left transition-all",
+                    geoStatus === "mismatch"
+                      ? "border-red-500/40 bg-red-950/30"
+                      : geoStatus === "verified"
+                      ? "border-emerald-500/40 bg-emerald-950/25"
+                      : "border-gold/30 bg-black/25"
+                  )}
+                >
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className={cn(
-                        "size-8 rounded-full border flex items-center justify-center shrink-0",
-                        geoStatus === "verified"
-                          ? "border-emerald-500/40 bg-emerald-500/20 text-emerald-300"
-                          : "border-blue-500/30 bg-blue-500/20 text-blue-400"
-                      )}>
+                      <div
+                        className={cn(
+                          "size-8 rounded-full border flex items-center justify-center shrink-0 transition-colors",
+                          geoStatus === "verified"
+                            ? "border-emerald-500/40 bg-emerald-500/20 text-emerald-300"
+                            : geoStatus === "mismatch"
+                            ? "border-red-500/40 bg-red-500/20 text-red-400"
+                            : "border-gold/40 bg-gold/15 text-gold"
+                        )}
+                      >
                         <MapPin className="size-4" />
                       </div>
                       <div className="min-w-0">
                         <p className="font-semibold text-xs text-white">
-                          Location Verification
+                          {t(bi("Location Verification", "இருப்பிட சரிபார்ப்பு"))}
                         </p>
-                        {geoStatus === "verified" && (
-                          <p className="text-[11px] text-emerald-400 font-medium truncate">
-                            ✓ Location verified
-                          </p>
-                        )}
+                        <p className="text-[11px] text-white/70 truncate">
+                          {geoStatus === "verified"
+                            ? t(bi("✓ Location verified with server", "✓ இருப்பிடம் சர்வரால் சரிபார்க்கப்பட்டது"))
+                            : geoStatus === "verifying" || geoStatus === "acquiring"
+                            ? t(bi("Verifying IP and device GPS...", "இருப்பிடம் சரிபார்க்கப்படுகிறது..."))
+                            : geoStatus === "mismatch"
+                            ? t(bi("Location mismatch detected", "இருப்பிடப் பொருந்தாமை கண்டறியப்பட்டது"))
+                            : t(bi("IP and device location verified on signup", "பதிவின் போது IP மற்றும் இருப்பிடம் சரிபார்க்கப்படும்"))}
+                        </p>
                       </div>
                     </div>
 
                     <button
+                      id="verify-location-btn"
                       type="button"
                       disabled={geoLoading || geoStatus === "verified"}
                       onClick={async () => {
@@ -599,32 +661,34 @@ export function AuthPage({
                         } catch {}
                       }}
                       className={cn(
-                        "shrink-0 px-3.5 py-1.5 rounded-full border text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5",
+                        "shrink-0 px-3.5 py-1.5 rounded-full border text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 shadow-sm",
                         geoStatus === "verified"
                           ? "border-emerald-500/40 bg-emerald-500/20 text-emerald-300 pointer-events-none"
-                          : "border-white/20 bg-white/10 hover:bg-white/15 text-white"
+                          : geoStatus === "mismatch"
+                          ? "border-red-500/40 bg-red-500/20 text-red-200 hover:bg-red-500/30"
+                          : "border-gold/50 bg-gradient-to-r from-gold/20 to-gold/10 hover:from-gold/30 hover:to-gold/20 text-gold hover:text-white"
                       )}
                     >
                       {geoLoading ? (
                         <>
                           <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
-                          <span>Checking...</span>
+                          <span>{t(bi("Checking...", "சரிபார்க்கிறது..."))}</span>
                         </>
                       ) : geoStatus === "verified" ? (
                         <>
                           <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
-                          <span>Verified</span>
+                          <span>{t(bi("Verified", "சரிபார்க்கப்பட்டது"))}</span>
                         </>
                       ) : (
-                        <span>Verify Location</span>
+                        <span>{t(bi("Verify Location", "சரிபார்க்கவும்"))}</span>
                       )}
                     </button>
                   </div>
 
                   {geoError && (
-                    <div className="mt-2.5 p-2 rounded-xl bg-red-950/40 border border-red-500/30 text-[11px] text-red-200 flex items-center gap-2">
-                      <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
-                      <span>{geoError}</span>
+                    <div className="mt-2.5 p-2.5 rounded-xl bg-red-950/60 border border-red-500/40 text-[11px] text-red-200 flex items-start gap-2">
+                      <AlertCircle className="w-4 h-4 shrink-0 text-red-400 mt-0.5" />
+                      <span className="leading-tight">{geoError}</span>
                     </div>
                   )}
                 </div>
@@ -632,47 +696,51 @@ export function AuthPage({
                 {/* Country / Region - Only shown once Location Verification is verified */}
                 {geoStatus === "verified" && country && (
                   <div className="space-y-1.5 text-left animate-in fade-in slide-in-from-top-2 duration-300">
-                    <div className="flex items-center justify-between">
-                      <label className="block text-xs font-semibold text-white/90">
-                        Country / Region
+                    <div className="flex items-center justify-between px-1">
+                      <label htmlFor="auth-country" className="block text-xs font-semibold text-white/90">
+                        {t(bi("Country / Region", "நாடு / பிராந்தியம்"))}
                       </label>
-                      <span className="text-[10px] font-medium text-emerald-300 flex items-center gap-1 bg-emerald-500/15 px-2 py-0.5 rounded-full border border-emerald-500/30">
+                      <span className="text-[10px] font-medium text-emerald-300 flex items-center gap-1 bg-emerald-500/20 px-2.5 py-0.5 rounded-full border border-emerald-500/30">
                         <CheckCircle className="size-3 text-emerald-400" />
-                        Verified
+                        {t(bi("Verified", "சரிபார்க்கப்பட்டது"))}
                       </span>
                     </div>
                     <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-emerald-400">
+                        <MapPin className="w-4 h-4" />
+                      </div>
                       <input
                         id="auth-country"
                         name="country"
                         type="text"
                         readOnly
-                        value={country}
-                        className="w-full px-4 py-3 rounded-2xl bg-white/10 border border-emerald-500/30 text-white text-sm font-medium focus:outline-none cursor-default select-none shadow-inner"
+                        value={(() => {
+                          const code = (country.split(" ")[0] || "").toUpperCase();
+                          const matched = COUNTRY_OPTIONS.find((c) => c.code === code);
+                          return matched ? `${matched.label} (${matched.code})` : country;
+                        })()}
+                        className="w-full pl-11 pr-4 py-3 rounded-full bg-white/10 border border-emerald-500/40 text-white text-sm font-medium focus:outline-none cursor-default select-none shadow-inner"
                       />
-                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-emerald-400">
-                        <MapPin className="size-4" />
-                      </div>
                     </div>
                   </div>
                 )}
 
                 {/* Agree to Terms Checkbox */}
-                <label className="flex items-center gap-3 cursor-pointer select-none text-xs text-white/80 text-left pt-1">
+                <label className="flex items-center gap-2.5 cursor-pointer select-none text-xs text-white/80 text-left pt-1 px-1">
                   <input
                     type="checkbox"
                     checked={agreeTerms}
                     onChange={(e) => setAgreeTerms(e.target.checked)}
-                    className="w-4 h-4 rounded-full border-white/30 text-gold focus:ring-gold bg-white/10 cursor-pointer accent-gold"
+                    className="w-4 h-4 rounded border-gold/40 cursor-pointer accent-gold shrink-0"
                   />
                   <span>
-                    I agree to the{" "}
-                    <a href="/terms" target="_blank" className="underline hover:text-white">
-                      Terms of Service
+                    {t(bi("I agree to the", "நான் ஏற்கிறேன்"))}{" "}
+                    <a href="/terms" target="_blank" className="underline text-gold hover:text-white">
+                      {t(bi("Terms of Service", "விதிமுறைகள்"))}
                     </a>{" "}
-                    and{" "}
-                    <a href="/privacy" target="_blank" className="underline hover:text-white">
-                      Privacy Policy
+                    {t(bi("and", "மற்றும்"))}{" "}
+                    <a href="/privacy" target="_blank" className="underline text-gold hover:text-white">
+                      {t(bi("Privacy Policy", "தனியுரிமைக் கொள்கை"))}
                     </a>.
                   </span>
                 </label>
@@ -825,35 +893,23 @@ export function AuthPage({
             )}
 
             {/* Primary button */}
-            {mode === "signup" ? (
-              <button
-                type="submit"
-                disabled={busy}
-                className="w-full rounded-full bg-white hover:bg-white/90 text-[#121824] py-3.5 px-6 text-sm font-semibold tracking-wide shadow-lg hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 disabled:opacity-60 flex items-center justify-center cursor-pointer mt-3"
-              >
-                {busy ? (
-                  <div className="w-4 h-4 border-2 border-[#121824] border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <span>Create Account — Preview Action</span>
-                )}
-              </button>
-            ) : (
-              <button
-                type="submit"
-                disabled={busy}
-                className="w-full rounded-full bg-gradient-to-r from-[#d4af37] via-[#f7de8b] to-[#d4af37] text-[#1a1208] hover:brightness-110 py-3.5 px-6 text-sm font-bold tracking-wide shadow-lg shadow-gold/20 hover:shadow-xl hover:shadow-gold/30 hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 disabled:opacity-60 flex items-center justify-center cursor-pointer mt-3"
-              >
-                {busy ? (
-                  <div className="w-4 h-4 border-2 border-[#1a1208] border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <span>
-                    {mode === "signin"
-                      ? t(bi("Sign In", "உள்நுழைக"))
-                      : t(bi("Reset Password", "கடவுச்சொல்லை மாற்று"))}
-                  </span>
-                )}
-              </button>
-            )}
+            <button
+              type="submit"
+              disabled={busy}
+              className="w-full rounded-full bg-gradient-to-r from-[#d4af37] via-[#f7de8b] to-[#d4af37] text-[#1a1208] hover:brightness-110 py-3.5 px-6 text-sm font-bold tracking-wide shadow-lg shadow-gold/20 hover:shadow-xl hover:shadow-gold/30 hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 disabled:opacity-60 flex items-center justify-center cursor-pointer mt-3"
+            >
+              {busy ? (
+                <div className="w-4 h-4 border-2 border-[#1a1208] border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <span>
+                  {mode === "signin"
+                    ? t(bi("Sign In", "உள்நுழைக"))
+                    : mode === "signup"
+                    ? t(bi("Create Account", "கணக்கை உருவாக்கு"))
+                    : t(bi("Reset Password", "கடவுச்சொல்லை மாற்று"))}
+                </span>
+              )}
+            </button>
           </form>
 
           {/* Toggle buttons / Back to Sign In */}

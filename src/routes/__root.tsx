@@ -13,10 +13,11 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { LanguageProvider } from "@/lib/i18n";
+import { GeoProvider } from "@/lib/geo-context";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { ScrollObserver } from "@/components/ScrollObserver";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
+import { ScrollObserver } from "@/components/ScrollObserver";
 import { useAuth } from "@/lib/auth-store";
 import { cn } from "@/lib/utils";
 
@@ -104,6 +105,11 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
         <p className="mt-2 text-sm text-muted-foreground">
           Something went wrong on our end. You can try refreshing or head back home.
         </p>
+        {import.meta.env.DEV && (
+          <div className="mt-3 p-2.5 rounded-lg bg-red-950/40 border border-red-500/30 text-xs font-mono text-red-300 break-words text-left">
+            {error instanceof Error ? error.message : String(error)}
+          </div>
+        )}
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
             onClick={() => {
@@ -185,7 +191,7 @@ function RootComponent() {
   const { isAuthenticated } = useAuth();
   const pathname = router.state.location.pathname;
   const isPortal = pathname.startsWith("/admin");
-  const isAuthPage = pathname.startsWith("/auth") || (pathname === "/" && !isAuthenticated);
+  const isAuthPage = pathname.startsWith("/auth");
   const hideFooter = [
     "/buy",
     "/enroll",
@@ -212,7 +218,9 @@ function RootComponent() {
     return (
       <QueryClientProvider client={queryClient}>
         <LanguageProvider>
-          <Outlet />
+          <GeoProvider>
+            <Outlet />
+          </GeoProvider>
         </LanguageProvider>
       </QueryClientProvider>
     );
@@ -223,24 +231,26 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
-        <ScrollObserver />
-        <div className="flex min-h-screen flex-col">
-          <div className="flex-1 flex flex-col min-h-screen w-full">
-            {!isPortal && !isAuthPage && <Header />}
-            
-            <main className="flex-1 flex flex-col">
-              {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-              <Outlet />
-            </main>
-            
-            {!hideFooter && !isAuthPage && (
-              <div className={cn(hideMobileFooter && "hidden md:block")}>
-                <Footer />
-              </div>
-            )}
+        <GeoProvider>
+          <ScrollObserver />
+          <div className="flex min-h-screen flex-col">
+            <div className="flex-1 flex flex-col min-h-screen w-full">
+              {!isPortal && !isAuthPage && <Header />}
+              
+              <main className="flex-1 flex flex-col">
+                {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+                <Outlet />
+              </main>
+              
+              {!hideFooter && !isAuthPage && (
+                <div className={cn(hideMobileFooter && "hidden md:block")}>
+                  <Footer />
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-        {!isPortal && !isAuthPage && !hideMobileFooter && <MobileBottomNav />}
+          {!isPortal && !isAuthPage && !hideMobileFooter && <MobileBottomNav />}
+        </GeoProvider>
       </LanguageProvider>
     </QueryClientProvider>
   );

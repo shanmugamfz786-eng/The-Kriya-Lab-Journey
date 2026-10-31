@@ -4,8 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import { Section, PageHero } from "@/components/Primitives";
 import { fetchAllEvents, type EventItem } from "@/lib/events-api";
 import { bi, useLang } from "@/lib/i18n";
-import { Search, Calendar, Clock, MapPin } from "lucide-react";
+import { Search, Calendar, Clock, MapPin, Globe } from "lucide-react";
 import { CollectEnquiryModal } from "@/components/CollectEnquiryModal";
+import { useGeo } from "@/lib/geo-context";
 
 const filters = [
   { key: "all", label: bi("All Events", "அனைத்து நிகழ்வுகள்") },
@@ -153,12 +154,16 @@ function EventsPage() {
 
 function EventCard({ event, lang }: { event: EventItem; lang: "en" | "ta" }) {
   const ta = lang === "ta";
+  const { formatScheduleTime, isIndia, timezone } = useGeo();
   const [isCollectModalOpen, setCollectModalOpen] = useState(false);
   const title = (ta && event.title_ta ? event.title_ta : event.title) || event.title;
   const description = (ta && event.description_ta ? event.description_ta : event.description) || event.description || "";
   const venue = (ta && event.location_ta ? event.location_ta : event.location) || (event as any).venue || "";
   const eventDate = (ta && event.event_date_ta ? event.event_date_ta : event.event_date) || event.event_date;
-  const when = [(event as any).start_time, (event as any).end_time].filter(Boolean).join(" – ");
+  const startTime = (event as any).start_time || "";
+  const endTime = (event as any).end_time || "";
+  const scheduleInfo = formatScheduleTime(event.event_date, startTime, endTime);
+  const isCoimbatoreOrChennai = /coimbatore|chennai|bengaluru|ashram|velliangiri|tamil/i.test(venue);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -223,10 +228,18 @@ function EventCard({ event, lang }: { event: EventItem; lang: "en" | "ta" }) {
               <span>{eventDate}</span>
             </div>
           )}
-          {when ? (
-            <div className="flex items-center gap-2">
-              <Clock className="size-3.5 text-muted-foreground/70 shrink-0" />
-              <span>{when}</span>
+          {scheduleInfo.sourceTime ? (
+            <div className="flex flex-col gap-0.5">
+              <div className="flex items-center gap-2">
+                <Clock className="size-3.5 text-muted-foreground/70 shrink-0" />
+                <span>{scheduleInfo.sourceTime}</span>
+              </div>
+              {scheduleInfo.isDifferent && scheduleInfo.localTime && (
+                <div className="text-[0.68rem] text-gold font-medium pl-5.5 flex items-center gap-1">
+                  <span>🕒 {ta ? "உங்கள் உள்ளூர் நேரம்:" : "Your local time:"}</span>
+                  <span className="font-semibold underline decoration-gold/40">{scheduleInfo.localTime}</span>
+                </div>
+              )}
             </div>
           ) : null}
           {venue ? (
@@ -235,6 +248,21 @@ function EventCard({ event, lang }: { event: EventItem; lang: "en" | "ta" }) {
               <span className="truncate">{venue}</span>
             </div>
           ) : null}
+
+          {/* Location Recommendation Tag */}
+          <div className="pt-1">
+            {isIndia && isCoimbatoreOrChennai ? (
+              <span className="inline-flex items-center gap-1 text-[0.68rem] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+                <MapPin className="size-3" />
+                {ta ? "அருகிலுள்ள மையம் / ஆசிரமம்" : "Nearby Centre / Ashram"}
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 text-[0.68rem] font-semibold text-sky-600 dark:text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded-md border border-sky-500/20">
+                <Globe className="size-3" />
+                {ta ? "நேரலை ஸ்ட்ரீம் கிடைக்கும்" : "Online Live Stream Available"}
+              </span>
+            )}
+          </div>
         </div>
 
         {description ? (

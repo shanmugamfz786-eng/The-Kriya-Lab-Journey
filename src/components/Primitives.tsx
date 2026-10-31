@@ -21,7 +21,7 @@ export function Section({
     <section
       id={id}
       className={cn(
-        "px-5 py-20 lg:px-10 lg:py-28",
+        "px-5 py-10 sm:py-12 lg:px-10 lg:py-14",
         tone === "muted" && "bg-muted",
         tone === "velvet" && "bg-velvet-deep text-[oklch(0.94_0.01_300)]",
         className,
@@ -41,17 +41,19 @@ export function PageHero({
   title,
   intro,
   showBackToHome = true,
+  className,
 }: {
   eyebrow?: string;
   title: string;
   intro?: string;
   showBackToHome?: boolean;
+  className?: string;
 }) {
   const { lang } = useLang();
   const ta = lang === "ta";
 
   return (
-    <header className="bg-dawn px-5 pb-12 pt-8 sm:pb-16 sm:pt-12 lg:px-10 lg:pb-20 lg:pt-14">
+    <header className={cn("bg-dawn px-5 pb-6 pt-6 sm:pb-8 sm:pt-8 lg:px-10 lg:pb-8 lg:pt-10", className)}>
       <div className="mx-auto max-w-7xl animate-rise">
         {showBackToHome && (
           <Link

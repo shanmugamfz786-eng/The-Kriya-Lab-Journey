@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, useRef } from "react";
-import { useAuth } from "@/lib/auth-store";
+import { useAuth, getStoredUser } from "@/lib/auth-store";
 import { Section } from "@/components/Primitives";
 import { bi, useLang } from "@/lib/i18n";
 import {
@@ -13,13 +13,17 @@ import {
   Upload,
   Trash2,
   Loader2,
+  MapPin,
+  Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { uploadEventImageApi } from "@/lib/events-api";
 import { AccountNavTabs } from "@/components/AccountNavTabs";
+import { useGeo, SUPPORTED_COUNTRIES } from "@/lib/geo-context";
 
 export const Route = createFileRoute("/settings")({
   staticData: { sitemap: false },
+  ssr: false,
   head: () => ({
     meta: [
       { title: "Change Your Details | THE KRIYA LAB" },
@@ -31,6 +35,8 @@ export const Route = createFileRoute("/settings")({
 
 export function SettingsPage() {
   const { user, isAuthenticated } = useAuth();
+  const effectiveUser = user || (typeof window !== "undefined" ? getStoredUser() : null);
+  const effectiveAuth = isAuthenticated || Boolean(effectiveUser);
   const navigate = useNavigate();
   const { t, lang, setLang } = useLang();
   const ta = lang === "ta";
@@ -38,8 +44,10 @@ export function SettingsPage() {
   const [mounted, setMounted] = useState(false);
 
   // Form states
-  const [fullName, setFullName] = useState(user?.full_name || "");
-  const [avatar, setAvatar] = useState(user?.avatar || "");
+  const { countryCode, setCountry: setGeoCountry } = useGeo();
+  const [fullName, setFullName] = useState(effectiveUser?.full_name || "");
+  const [avatar, setAvatar] = useState(effectiveUser?.avatar || "");
+  const [country, setCountry] = useState(effectiveUser?.country || countryCode || "IN");
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -106,17 +114,18 @@ export function SettingsPage() {
 
   useEffect(() => {
     if (!mounted) return;
-    if (!isAuthenticated || !user) {
+    if (!effectiveAuth || !effectiveUser) {
       navigate({ to: "/auth", search: { redirect: "/settings" }, replace: true });
     } else {
-      if (!fullName && user.full_name) setFullName(user.full_name);
-      if (!avatar && user.avatar) setAvatar(user.avatar);
+      if (!fullName && effectiveUser.full_name) setFullName(effectiveUser.full_name);
+      if (!avatar && effectiveUser.avatar) setAvatar(effectiveUser.avatar);
     }
-  }, [mounted, isAuthenticated, user, navigate]);
+  }, [mounted, effectiveAuth, effectiveUser, navigate]);
 
   const handleSaveProfile = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!user) return;
+    const currentUser = user || effectiveUser;
+    if (!currentUser) return;
 
     setIsSaving(true);
     setErrorMsg(null);
@@ -124,22 +133,24 @@ export function SettingsPage() {
 
     try {
       const API_URL = (import.meta.env["VITE_API_URL"] as string) || "http://localhost:5000";
-      const res = await fetch(`${API_URL}/api/users/${user.id}`, {
+      const res = await fetch(`${API_URL}/api/users/${currentUser.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ full_name: fullName, avatar }),
+        body: JSON.stringify({ full_name: fullName, avatar, country }),
       });
 
       await res.json().catch(() => ({}));
-      const updatedUser = { ...user, full_name: fullName, avatar };
+      const updatedUser = { ...currentUser, full_name: fullName, avatar, country };
       localStorage.setItem("the_kriya_lab_user", JSON.stringify(updatedUser));
+      setGeoCountry(country);
       window.dispatchEvent(new Event("kriya_auth_changed"));
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err: any) {
       console.warn("Save profile fallback to client state:", err);
-      const updatedUser = { ...user, full_name: fullName, avatar };
+      const updatedUser = { ...currentUser, full_name: fullName, avatar, country };
       localStorage.setItem("the_kriya_lab_user", JSON.stringify(updatedUser));
+      setGeoCountry(country);
       window.dispatchEvent(new Event("kriya_auth_changed"));
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
@@ -160,7 +171,7 @@ export function SettingsPage() {
     localStorage.setItem("kriya_updates_pref", String(next));
   };
 
-  if (!isAuthenticated || !user) {
+  if (!mounted || !effectiveAuth || !effectiveUser) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <div className="text-center space-y-3">
@@ -215,7 +226,7 @@ export function SettingsPage() {
                     <img src={avatar} alt={fullName} className="w-full h-full object-cover" />
                   ) : (
                     <span className="text-gold font-bold text-xl font-serif">
-                      {fullName?.charAt(0).toUpperCase() || user.full_name?.charAt(0).toUpperCase() || "U"}
+                      {fullName?.charAt(0).toUpperCase() || effectiveUser?.full_name?.charAt(0).toUpperCase() || "U"}
                     </span>
                   )}
                 </div>
@@ -224,8 +235,8 @@ export function SettingsPage() {
                   <p className="text-[0.7rem] text-muted-foreground font-semibold uppercase tracking-wider">
                     {t(bi("User Name", "பயனர் பெயர்"))}
                   </p>
-                  <h3 className="font-semibold text-foreground text-base truncate">{user.full_name || fullName}</h3>
-                  <p className="text-xs text-gold font-mono truncate">{user.email}</p>
+                  <h3 className="font-semibold text-foreground text-base truncate">{effectiveUser?.full_name || fullName}</h3>
+                  <p className="text-xs text-gold font-mono truncate">{effectiveUser?.email}</p>
                 </div>
               </div>
 
@@ -318,7 +329,7 @@ export function SettingsPage() {
                       <input
                         id="email"
                         type="email"
-                        value={user.email}
+                        value={effectiveUser?.email || ""}
                         disabled
                         className="w-full rounded-xl border border-border/60 bg-muted/40 px-4 py-2.5 text-sm text-muted-foreground cursor-not-allowed font-mono text-xs"
                       />
@@ -331,6 +342,40 @@ export function SettingsPage() {
                         bi(
                           "Registered Gmail is permanently associated with your sadhana records.",
                           "பதிவு செய்யப்பட்ட ஜிமெயில் உங்கள் சாதனா பதிவுகளுடன் இணைக்கப்பட்டுள்ளது."
+                        )
+                      )}
+                    </p>
+                  </div>
+
+                  {/* Verified Country / Region (Locked) */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label htmlFor="country" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        <span className="flex items-center gap-1.5">
+                          <MapPin className="size-3.5 text-gold" />
+                          <span>{t(bi("Country / Region", "நாடு / பிராந்தியம்"))}</span>
+                        </span>
+                      </label>
+                      <span className="text-[0.68rem] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                        ✓ {ta ? "சரிபார்க்கப்பட்டது" : "Verified & Locked"}
+                      </span>
+                    </div>
+                    <div className="relative">
+                      <div className="w-full rounded-xl border border-border/60 bg-muted/40 px-4 py-2.5 text-sm text-foreground flex items-center justify-between shadow-2xs">
+                        <span className="flex items-center gap-2 font-medium">
+                          <span className="text-base">{SUPPORTED_COUNTRIES[countryCode]?.flag || "🇮🇳"}</span>
+                          <span>{SUPPORTED_COUNTRIES[countryCode]?.name || "India"} ({countryCode})</span>
+                        </span>
+                        <span className="text-xs text-gold font-semibold font-mono">
+                          {SUPPORTED_COUNTRIES[countryCode]?.currency || "INR"} ({SUPPORTED_COUNTRIES[countryCode]?.symbol || "₹"})
+                        </span>
+                      </div>
+                    </div>
+                    <p className="text-[0.68rem] text-muted-foreground mt-1">
+                      {t(
+                        bi(
+                          "Your location is verified and locked to protect account security and local pricing compliance.",
+                          "பதிவின் போது உங்கள் இருப்பிடம் சரிபார்க்கப்பட்டு பாதுகாப்பு கருதி பூட்டப்பட்டுள்ளது."
                         )
                       )}
                     </p>

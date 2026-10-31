@@ -15,7 +15,7 @@ export interface OrderItem {
   notes?: string;
 }
 
-const STORAGE_KEY = "kriya_admin_orders_v1";
+const STORAGE_KEY = "kriya_admin_orders_v3";
 
 const SEED_ORDERS: OrderItem[] = [
   {
@@ -79,7 +79,7 @@ const SEED_ORDERS: OrderItem[] = [
     status: "Completed",
     paymentMethod: "UPI",
     transactionRef: "pay_upi_mrg_04",
-    createdAt: "2026-10-23T09:30:00Z",
+    createdAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
     notes: "Direct sacred enrollment.",
   },
   {
@@ -95,7 +95,7 @@ const SEED_ORDERS: OrderItem[] = [
     status: "Completed",
     paymentMethod: "Razorpay (UPI)",
     transactionRef: "pay_rzp_994821a",
-    createdAt: "2026-10-21T09:30:00Z",
+    createdAt: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
     notes: "Payment verified via UPI auto-confirmation.",
   },
   {
@@ -182,6 +182,8 @@ const SEED_ORDERS: OrderItem[] = [
 export function getStoredOrders(): OrderItem[] {
   if (typeof window === "undefined") return SEED_ORDERS;
   try {
+    localStorage.removeItem("kriya_admin_orders_v1");
+    localStorage.removeItem("kriya_admin_orders_v2");
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(SEED_ORDERS));
@@ -225,6 +227,22 @@ export async function updateOrderStatus(orderId: string, status: OrderItem["stat
   if (!existing) return false;
   list[idx] = { ...existing, status };
   saveStoredOrders(list);
+  return true;
+}
+
+export async function deleteOrder(orderId: string): Promise<boolean> {
+  const list = getStoredOrders();
+  const filtered = list.filter((o) => o.id !== orderId);
+  if (filtered.length === list.length) return false;
+  saveStoredOrders(filtered);
+  return true;
+}
+
+export async function deleteOrdersByCustomerEmail(email: string): Promise<boolean> {
+  const list = getStoredOrders();
+  const normalized = email.toLowerCase().trim();
+  const filtered = list.filter((o) => (o.customerEmail || "").toLowerCase().trim() !== normalized);
+  saveStoredOrders(filtered);
   return true;
 }
 

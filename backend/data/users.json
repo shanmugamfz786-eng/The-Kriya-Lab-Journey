@@ -1,5 +1,68 @@
 [
   {
+    "id": "KL_017",
+    "full_name": "ronaldo",
+    "email": "ronaldo321@gmail.com",
+    "password_hash": "$2b$10$uGbFjWYZbLvIhI9f8M3Y3eL9fVrcubLdl9cr/hkoH2SD2u4rYQyKO",
+    "role": "student",
+    "country": "IN",
+    "created_at": "2026-10-31T06:26:37.361Z"
+  },
+  {
+    "id": "KL_016",
+    "full_name": "Kriya Live Seeker",
+    "email": "seeker_1793424969@thekriyalab.com",
+    "password_hash": "$2b$10$m0/kXkopnrwa9UJ7F2aaj./hA3hzhODlOyMSmlVymteozs2YjnWrO",
+    "role": "student",
+    "country": "IN",
+    "created_at": "2026-10-31T05:36:12.472Z"
+  },
+  {
+    "id": "KL_015",
+    "full_name": "Live Seeker 1793424760",
+    "email": "seeker_1793424760@thekriyalab.com",
+    "password_hash": "$2b$10$2mj.aLM2E2cGVOARl46ATu1z.KEuQrYzS.eK7ceeV1..k9HRvDz8S",
+    "role": "student",
+    "country": "IN",
+    "created_at": "2026-10-31T05:32:47.133Z"
+  },
+  {
+    "id": "KL_014",
+    "full_name": "Shanmugam Seeker",
+    "email": "shanmugam_seeker_1793387722893@thekriyalab.com",
+    "password_hash": "$2b$10$0KtxEepMerXA4p3IN5LbGOv63oMmUZZvsyq03GcySVQ2oLy2RrIxm",
+    "role": "student",
+    "country": "IN",
+    "created_at": "2026-10-30T19:15:23.972Z"
+  },
+  {
+    "id": "KL_013",
+    "full_name": "Shanmugam Seeker",
+    "email": "seeker_1793365445679@thekriyalab.com",
+    "password_hash": "$2b$10$LVk.llU.Lln4N26O2R43I.dE4f6uJys9HyrGGq8kXp1W5xtUilsGG",
+    "role": "student",
+    "country": "IN",
+    "created_at": "2026-10-30T13:04:10.666Z"
+  },
+  {
+    "id": "KL_012",
+    "full_name": "Shanmugam Seeker",
+    "email": "seeker_1793365052397@thekriyalab.com",
+    "password_hash": "$2b$10$pHADOdqp4n1.0QyCQI6x/uM9Q7M5yEB0MTAUqTEmghMnGZGjHu/KO",
+    "role": "student",
+    "country": "IN",
+    "created_at": "2026-10-30T12:57:37.931Z"
+  },
+  {
+    "id": "KL_011",
+    "full_name": "madara",
+    "email": "madara321@gmail.com",
+    "password_hash": "$2b$10$OilfkZEOZSMLf1RJaErh/OdT7dXuj.7JE5946Gj7yTUDwiIES5a8e",
+    "role": "student",
+    "country": "IN",
+    "created_at": "2026-10-30T12:23:59.530Z"
+  },
+  {
     "id": "KL_010",
     "full_name": "madara",
     "email": "madara72@gmail.com",
@@ -38,6 +101,7 @@
     "email": "admin@thekriyalab.com",
     "password_hash": "$2b$10$Rbj4sJSy8nk0WquCaOHL5.W20459fQHVx67KB8zTeTDX9Kw5w1AMS",
     "role": "admin",
+    "country": "IN",
     "created_at": "2026-10-01T00:00:00.000Z"
   },
   {
@@ -86,6 +150,7 @@
     "email": "user@thekriyalab.com",
     "password_hash": "$2b$10$IJ6yP.3dcsfWcF1Q652VoeHNpR2Az90taT.WDvJKSQS8zqCqhqKkC",
     "role": "student",
-    "created_at": "2026-10-22T06:00:00Z"
+    "created_at": "2026-10-22T06:00:00Z",
+    "country": "IN"
   }
 ]

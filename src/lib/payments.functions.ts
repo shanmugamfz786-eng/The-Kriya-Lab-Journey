@@ -96,6 +96,7 @@ export const createRazorpayOrder = createServerFn({ method: "POST" })
     customerEmail?: string;
     currency?: string;
     amount?: number;
+    count?: number;
   }) => {
     let program = PAID_PROGRAMS.find((p) => p.slug === data.programSlug);
     if (!program) {
@@ -119,13 +120,28 @@ export const createRazorpayOrder = createServerFn({ method: "POST" })
       return { error: "Razorpay is not configured yet. Please use card payment." };
     }
     try {
-      const isUsd = data.currency === "USD";
-      const orderCurrency = isUsd ? "USD" : "INR";
-      const finalAmount = data.amount
-        ? Math.round(data.amount * 100)
-        : isUsd
-          ? (data.program.amountUsd || 59) * 100
-          : data.program.amountInr * 100;
+      const reqCurrency = (data.currency || "INR").toUpperCase();
+      const participantCount = Math.min(20, Math.max(1, Number(data.count) || 1));
+      let unitPrice = data.program.amountInr;
+      let orderCurrency = "INR";
+
+      if (reqCurrency === "USD") {
+        unitPrice = data.program.amountUsd || Math.round(data.program.amountInr / 84);
+        orderCurrency = "USD";
+      } else if (reqCurrency === "GBP") {
+        unitPrice = Math.round(data.program.amountInr / 106);
+        orderCurrency = "GBP";
+      } else if (reqCurrency === "SGD") {
+        unitPrice = Math.round(data.program.amountInr / 63);
+        orderCurrency = "SGD";
+      } else if (reqCurrency === "AED") {
+        unitPrice = Math.round(data.program.amountInr / 22.8);
+        orderCurrency = "AED";
+      }
+
+      // Server-side authoritative amount calculation to prevent client tampering
+      const expectedTotal = unitPrice * participantCount;
+      const finalAmount = expectedTotal * 100;
 
       const res = await fetch("https://api.razorpay.com/v1/orders", {
         method: "POST",

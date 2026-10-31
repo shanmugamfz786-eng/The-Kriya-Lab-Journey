@@ -23,6 +23,7 @@ export interface SeekerItem {
   status: "Pending Review" | "Approved" | "Initiated";
   experience: string;
   location?: string | undefined;
+  country?: string | undefined;
   motivation?: string | undefined;
 }
 
@@ -169,9 +170,27 @@ export async function fetchAllUsers(): Promise<SeekerItem[]> {
           .forEach((u: any) => {
             const emailKey = String(u.email || "").toLowerCase().trim();
             const existing = seekersMap.get(emailKey);
+            const cleanCode = (u.country ? (String(u.country).split(" ")[0] || "").trim().toUpperCase().slice(0, 2) : "IN");
+            const countryLabels: Record<string, string> = {
+              IN: "India (IN)",
+              US: "United States (US)",
+              GB: "United Kingdom (GB)",
+              DE: "Germany (DE)",
+              FR: "France (FR)",
+              CA: "Canada (CA)",
+              AU: "Australia (AU)",
+              SG: "Singapore (SG)",
+              MY: "Malaysia (MY)",
+              AE: "United Arab Emirates (AE)",
+              LK: "Sri Lanka (LK)",
+            };
+            const formattedLocation = countryLabels[cleanCode] || u.country || "India (IN)";
+
             if (existing) {
               existing.id = u.id || existing.id;
               if (u.full_name) existing.name = u.full_name;
+              existing.location = formattedLocation;
+              existing.country = cleanCode;
             } else {
               seekersMap.set(emailKey, {
                 id: u.id || `KL_${String(userCounter++).padStart(3, "0")}`,
@@ -200,7 +219,8 @@ export async function fetchAllUsers(): Promise<SeekerItem[]> {
                 }),
                 status: "Approved",
                 experience: "Spiritual Aspirant",
-                location: "Tamil Nadu, India",
+                location: formattedLocation,
+                country: cleanCode,
                 motivation: "Joined THE KRIYA LAB platform.",
               });
             }

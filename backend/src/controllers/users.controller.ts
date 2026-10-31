@@ -22,6 +22,7 @@ export async function getUsers(req, res) {
         email: u.email,
         role: u.role,
         avatar: u.avatar,
+        country: u.country || "IN",
         created_at: u.created_at || new Date().toISOString(),
       });
     }
@@ -30,7 +31,7 @@ export async function getUsers(req, res) {
     try {
       const db = getDbPool();
       const [rows] = await db.query(
-        "SELECT id, full_name, email, role, avatar, created_at FROM users WHERE role != 'admin' ORDER BY created_at DESC"
+        "SELECT id, full_name, email, role, avatar, country, created_at FROM users WHERE role != 'admin' ORDER BY created_at DESC"
       );
       if (rows && rows.length > 0) {
         for (const r of rows) {
@@ -87,7 +88,7 @@ export async function deleteUser(req, res) {
 export async function updateUser(req, res) {
   try {
     const { id } = req.params;
-    const { full_name, avatar } = req.body;
+    const { full_name, avatar, country } = req.body;
 
     if (!id || !full_name) {
       return res.status(400).json({ error: "User ID and Full Name are required" });
@@ -100,15 +101,17 @@ export async function updateUser(req, res) {
         ...localUser,
         full_name,
         avatar: avatar || localUser.avatar,
+        country: country !== undefined ? country : localUser.country,
       });
     }
 
     // Try updating TiDB
     try {
       const db = getDbPool();
-      await db.query("UPDATE users SET full_name = ?, avatar = ? WHERE id = ?", [
+      await db.query("UPDATE users SET full_name = ?, avatar = ?, country = ? WHERE id = ?", [
         full_name,
         avatar || null,
+        country || (localUser?.country ?? null),
         id,
       ]);
     } catch (dbErr) {
@@ -118,7 +121,12 @@ export async function updateUser(req, res) {
     return res.json({
       success: true,
       message: "Profile updated successfully",
-      user: { id, full_name, avatar: avatar || null },
+      user: {
+        id,
+        full_name,
+        avatar: avatar || null,
+        country: country || localUser?.country || "IN",
+      },
     });
   } catch (err) {
     console.error("[Update User Error]:", err);

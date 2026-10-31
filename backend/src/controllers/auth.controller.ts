@@ -28,27 +28,38 @@ export async function detectCountry(req, res) {
     const ipCountry = await defaultIpGeoService.resolveCountry(req);
     console.log(`[GEO_DIAGNOSTIC] Detect Country -> IP Country: ${ipCountry}`);
 
-    const COUNTRY_NAMES: Record<string, string> = {
-      IN: "India",
-      US: "United States",
-      SG: "Singapore",
-      MY: "Malaysia",
-      AE: "United Arab Emirates",
-      GB: "United Kingdom",
-      AU: "Australia",
-      CA: "Canada",
-      LK: "Sri Lanka",
-      DE: "Germany",
-      FR: "France",
+    const COUNTRY_METADATA: Record<string, { name: string; currency: string; symbol: string; timezone: string }> = {
+      IN: { name: "India", currency: "INR", symbol: "₹", timezone: "Asia/Kolkata" },
+      US: { name: "United States", currency: "USD", symbol: "$", timezone: "America/New_York" },
+      GB: { name: "United Kingdom", currency: "GBP", symbol: "£", timezone: "Europe/London" },
+      DE: { name: "Germany", currency: "EUR", symbol: "€", timezone: "Europe/Berlin" },
+      FR: { name: "France", currency: "EUR", symbol: "€", timezone: "Europe/Paris" },
+      CA: { name: "Canada", currency: "CAD", symbol: "C$", timezone: "America/Toronto" },
+      AU: { name: "Australia", currency: "AUD", symbol: "A$", timezone: "Australia/Sydney" },
+      SG: { name: "Singapore", currency: "SGD", symbol: "S$", timezone: "Asia/Singapore" },
+      MY: { name: "Malaysia", currency: "MYR", symbol: "RM", timezone: "Asia/Kuala_Lumpur" },
+      AE: { name: "United Arab Emirates", currency: "AED", symbol: "AED", timezone: "Asia/Dubai" },
+      LK: { name: "Sri Lanka", currency: "LKR", symbol: "Rs", timezone: "Asia/Colombo" },
     };
 
-    const countryName = COUNTRY_NAMES[ipCountry] || ipCountry;
+    const meta = COUNTRY_METADATA[ipCountry] || {
+      name: ipCountry,
+      currency: "USD",
+      symbol: "$",
+      timezone: "UTC",
+    };
+
+    const countryName = meta.name;
     const display = `${ipCountry} ${countryName}`;
 
     return res.status(200).json({
       success: true,
       countryCode: ipCountry,
       countryName,
+      currency: meta.currency,
+      currencySymbol: meta.symbol,
+      timezone: meta.timezone,
+      isIndia: ipCountry === "IN",
       display,
     });
   } catch (err) {
@@ -57,6 +68,10 @@ export async function detectCountry(req, res) {
       success: true,
       countryCode: "IN",
       countryName: "India",
+      currency: "INR",
+      currencySymbol: "₹",
+      timezone: "Asia/Kolkata",
+      isIndia: true,
       display: "IN India",
       fallback: true,
     });
@@ -245,7 +260,13 @@ export async function register(req, res) {
     });
 
     const token = jwt.sign(
-      { id: userId, email: cleanEmail, full_name: full_name.trim(), role: assignedRole },
+      {
+        id: userId,
+        email: cleanEmail,
+        full_name: full_name.trim(),
+        role: assignedRole,
+        country: geoResult.selectedCountry,
+      },
       JWT_SECRET,
       { expiresIn: "7d" }
     );
@@ -254,7 +275,13 @@ export async function register(req, res) {
       success: true,
       message: "Account created successfully",
       token,
-      user: { id: userId, full_name: full_name.trim(), email: cleanEmail, role: assignedRole },
+      user: {
+        id: userId,
+        full_name: full_name.trim(),
+        email: cleanEmail,
+        role: assignedRole,
+        country: geoResult.selectedCountry,
+      },
     });
   } catch (err) {
     console.error("Register Error:", err);
@@ -279,6 +306,7 @@ export async function login(req, res) {
         full_name: "Kriya Master Admin",
         email: cleanEmail,
         role: "admin",
+        country: "IN",
       };
 
       const token = jwt.sign(adminUser, JWT_SECRET, { expiresIn: "7d" });
@@ -342,6 +370,8 @@ export async function login(req, res) {
       full_name: user.full_name,
       email: user.email,
       role: user.role || "student",
+      country: user.country || "IN",
+      avatar: user.avatar || null,
     };
 
     const token = jwt.sign(
@@ -350,6 +380,7 @@ export async function login(req, res) {
         email: effectiveUser.email,
         full_name: effectiveUser.full_name,
         role: effectiveUser.role,
+        country: effectiveUser.country,
       },
       JWT_SECRET,
       { expiresIn: "7d" }
@@ -375,11 +406,20 @@ export async function me(req, res) {
     }
 
     const token = authHeader.split(" ")[1];
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const decoded: any = jwt.verify(token, JWT_SECRET);
+
+    let country = decoded.country;
+    if (!country && decoded.email) {
+      const local = findLocalUserByEmail(decoded.email);
+      if (local?.country) country = local.country;
+    }
 
     return res.status(200).json({
       success: true,
-      user: decoded,
+      user: {
+        ...decoded,
+        country: country || "IN",
+      },
     });
   } catch {
     return res.status(401).json({ success: false, message: "Invalid or expired session" });

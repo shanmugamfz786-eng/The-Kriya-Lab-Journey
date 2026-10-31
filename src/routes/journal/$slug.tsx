@@ -1,5 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { PageHero, PlaceholderNote, Section } from "@/components/Primitives";
+import { PageHero, Section } from "@/components/Primitives";
 import { bi, useLang } from "@/lib/i18n";
 import { journal } from "@/content/site";
 
@@ -37,21 +37,20 @@ function ArticlePage() {
     <>
       <PageHero eyebrow={t(article.category)} title={t(article.title)} intro={t(article.subtitle)} />
 
-      <Section>
+      <Section className="!pt-4 sm:!pt-6 lg:!pt-8 !pb-10 sm:!pb-14">
         <div className="mx-auto max-w-2xl">
           <p className="text-xs tracking-widest text-muted-foreground uppercase">
             {article.date} · {t(article.readingTime)}
           </p>
-          <div className="mt-10 space-y-6 text-lg leading-relaxed text-muted-foreground">
+          <div className="mt-6 space-y-5 text-base sm:text-lg leading-relaxed text-muted-foreground">
             {article.body.map((p, i) => (
               <p key={i}>{t(p)}</p>
             ))}
           </div>
-          <PlaceholderNote />
         </div>
       </Section>
 
-      <Section tone="muted">
+      <Section tone="muted" className="!py-8 sm:!py-10">
         <h2 className="font-serif text-3xl">{t(bi("Related reading", "தொடர்புடைய வாசிப்பு"))}</h2>
         <div className="mt-8 grid gap-px bg-border md:grid-cols-2">
           {related.map((a) => (

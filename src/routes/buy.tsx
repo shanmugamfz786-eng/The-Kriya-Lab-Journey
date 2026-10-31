@@ -8,6 +8,7 @@ import { bi, useLang } from "@/lib/i18n";
 import { programs, purchaseTerms, ui } from "@/content/site";
 import { PAID_PROGRAMS, createRazorpayOrder, verifyRazorpayPayment } from "@/lib/payments.functions";
 import { useAuth } from "@/lib/auth-store";
+import { useGeo, SUPPORTED_COUNTRIES } from "@/lib/geo-context";
 import { fetchAllPrograms, INITIAL_PROGRAMS } from "@/lib/programs-api";
 import { enrollProgram } from "@/lib/enrollment-store";
 import { recordNewOrder } from "@/lib/orders-api";
@@ -87,21 +88,41 @@ type Participant = { name: string; age: string; language: string };
 const emptyParticipant = (): Participant => ({ name: "", age: "", language: "English" });
 
 export function BuyPage() {
+  const {
+    countryCode,
+    countryName,
+    currency: geoCurrency,
+    currencySymbol: geoCurrencySymbol,
+    isIndia,
+    getShippingEstimate,
+    setCountry: setGeoCountry,
+    convertPrice,
+    formatPrice,
+  } = useGeo();
+
   const search = useSearch({ strict: false }) as { program?: string; persons?: number; currency?: string };
   const preselected = search?.program;
   const prePersons = search?.persons;
-  const preCurrency = search?.currency === "USD" ? "USD" : search?.currency === "INR" ? "INR" : undefined;
+  const rawSearchCurr = typeof search?.currency === "string" ? search.currency.toUpperCase() : undefined;
+  const validCurrencies = Object.values(SUPPORTED_COUNTRIES).map((c) => c.currency);
+  const preCurrency = rawSearchCurr && (validCurrencies.includes(rawSearchCurr) || rawSearchCurr === "USD" || rawSearchCurr === "INR")
+    ? rawSearchCurr
+    : undefined;
 
-  const [currency, setCurrency] = useState<"INR" | "USD">(preCurrency || "INR");
+  const [currency, setCurrency] = useState<string>(() => {
+    if (preCurrency) return preCurrency;
+    return geoCurrency || (isIndia ? "INR" : "USD");
+  });
 
   useEffect(() => {
-    if (search?.currency === "USD") {
-      setCurrency("USD");
-      setMethod("credit-card");
-    } else if (search?.currency === "INR") {
-      setCurrency("INR");
+    if (preCurrency) {
+      setCurrency(preCurrency);
+      if (preCurrency !== "INR") setMethod("credit-card");
+    } else if (geoCurrency) {
+      setCurrency(geoCurrency);
+      if (geoCurrency !== "INR") setMethod("credit-card");
     }
-  }, [search?.currency]);
+  }, [preCurrency, geoCurrency]);
 
   const { t, lang } = useLang();
   const { user } = useAuth();
@@ -164,7 +185,8 @@ export function BuyPage() {
   const [name, setName] = useState(user?.full_name || "");
   const [email, setEmail] = useState(user?.email || "");
   const [phone, setPhone] = useState("");
-  const [country, setCountry] = useState("");
+  const [hasManuallyChangedCountry, setHasManuallyChangedCountry] = useState(false);
+  const [country, setCountry] = useState(user?.country || countryName || (isIndia ? "India" : "United States"));
   const [age, setAge] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -190,8 +212,11 @@ export function BuyPage() {
     if (user) {
       if (!name && user.full_name) setName(user.full_name);
       if (!email && user.email) setEmail(user.email);
+      if (user.country && !hasManuallyChangedCountry) setCountry(user.country);
+    } else if (countryName && !hasManuallyChangedCountry) {
+      setCountry(countryName);
     }
-  }, [user]);
+  }, [user, countryName, hasManuallyChangedCountry]);
 
   // Sync family language
   useEffect(() => {
@@ -203,13 +228,12 @@ export function BuyPage() {
   const setParticipant = (i: number, patch: Partial<Participant>) =>
     setParticipants((prev) => prev.map((p, idx) => (idx === i ? { ...p, ...patch } : p)));
 
-  const unitPrice = currency === "USD"
-    ? ((program as any).unitPriceUsd ?? ((program as any).unitPriceInr ? Math.round((program as any).unitPriceInr / 80) : 0))
-    : ((program as any).unitPriceInr ?? 0);
+  const programInrPrice = Number((program as any).unitPriceInr) || 0;
+  const unitPrice = convertPrice(programInrPrice, currency);
   const totalPrice = unitPrice * count;
-  const formattedTotal = currency === "USD"
-    ? `$${totalPrice.toLocaleString("en-US")}`
-    : `₹${totalPrice.toLocaleString("en-IN")}`;
+  const formattedTotal = formatPrice(programInrPrice * count, currency);
+  const totalInrPrice = programInrPrice * count;
+  const formattedInrTotal = formatPrice(totalInrPrice, "INR");
 
   const ready = agreed;
 
@@ -286,7 +310,7 @@ export function BuyPage() {
         return;
       }
       const order = await createRazorpayOrder({
-        data: { programSlug, customerName: name, customerEmail: email, currency, amount: totalPrice },
+        data: { programSlug, customerName: name, customerEmail: email, currency, count, amount: totalPrice },
       });
       if ("error" in order) {
         console.warn("Razorpay notice, proceeding with direct completion:", order.error);
@@ -407,9 +431,8 @@ export function BuyPage() {
                     className={inputClass()}
                   >
                     {allAvailablePrograms.map((p) => {
-                      const priceText = currency === "USD"
-                        ? ((p as any).unitPriceUsd ? `— $${(p as any).unitPriceUsd.toLocaleString("en-US")}` : "")
-                        : ((p as any).unitPriceInr ? `— ₹${(p as any).unitPriceInr.toLocaleString("en-IN")}` : "");
+                      const pInr = Number((p as any).unitPriceInr) || 0;
+                      const priceText = pInr ? `— ${formatPrice(pInr, currency)}` : "";
                       return (
                         <option key={p.slug} value={p.slug}>
                           {t(p.name)} {priceText}
@@ -553,13 +576,40 @@ export function BuyPage() {
                 </Field>
 
                 <Field label={t(ui.country)} htmlFor="country-input">
-                  <input
+                  <select
                     id="country-input"
-                    value={country}
-                    onChange={(e) => setCountry(e.target.value)}
+                    value={
+                      Object.entries(SUPPORTED_COUNTRIES).find(
+                        ([code, c]) =>
+                          c.name.toLowerCase() === country.toLowerCase() ||
+                          code.toLowerCase() === country.toLowerCase()
+                      )?.[0] || (isIndia ? "IN" : "US")
+                    }
+                    onChange={(e) => {
+                      setHasManuallyChangedCountry(true);
+                      const selected = SUPPORTED_COUNTRIES[e.target.value];
+                      if (selected) {
+                        setCountry(selected.name);
+                        setGeoCountry(selected.code);
+                        setCurrency(selected.currency);
+                        if (selected.code === "IN") {
+                          setMethod("upi");
+                        } else {
+                          setMethod("credit-card");
+                        }
+                      }
+                    }}
                     className={inputClass()}
-                    placeholder="e.g. India"
-                  />
+                  >
+                    {Object.values(SUPPORTED_COUNTRIES).map((c) => (
+                      <option key={c.code} value={c.code}>
+                        {c.flag} {c.name} ({c.currency} {c.symbol})
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-[0.65rem] text-muted-foreground mt-1">
+                    {t(bi("Detected automatically. You can change your country anytime.", "தானாகக் கண்டறியப்பட்டது. எப்போது வேண்டுமானாலும் மாற்றலாம்."))}
+                  </p>
                 </Field>
 
                 <Field label={t(ui.age)} htmlFor="age-input">
@@ -678,6 +728,21 @@ export function BuyPage() {
                   >
                     $ USD
                   </button>
+                  {geoCurrency !== "INR" && geoCurrency !== "USD" && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCurrency(geoCurrency);
+                        setMethod("credit-card");
+                      }}
+                      className={cn(
+                        "px-2.5 py-0.5 rounded-full transition-all cursor-pointer",
+                        currency === geoCurrency ? "bg-gold text-velvet-deep shadow-xs font-bold" : "text-white/60 hover:text-white"
+                      )}
+                    >
+                      {geoCurrencySymbol} {geoCurrency}
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -686,7 +751,9 @@ export function BuyPage() {
               <div className="mt-4 space-y-2.5 text-xs text-[oklch(0.85_0.02_300)] border-y border-white/10 py-3.5">
                 <div className="flex justify-between">
                   <span>{t(bi("Currency", "நாணயம்"))}:</span>
-                  <span className="font-semibold text-gold">{currency === "USD" ? "USD ($)" : "INR (₹)"}</span>
+                  <span className="font-semibold text-gold">
+                    {currency} ({Object.values(SUPPORTED_COUNTRIES).find((c) => c.currency === currency)?.symbol || "$"})
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span>{t(bi("Format", "வடிவம்"))}:</span>
@@ -708,6 +775,22 @@ export function BuyPage() {
                     <span className="font-medium text-white">{count}</span>
                   </div>
                 )}
+                {/* Shipping & Delivery Promise */}
+                <div className="flex justify-between items-start gap-2 pt-2 border-t border-white/10 text-[0.72rem]">
+                  <div className="flex flex-col">
+                    <span className="text-white font-medium">
+                      {isIndia
+                        ? t(bi("Domestic Delivery", "உள்நாட்டு விநியோகம்"))
+                        : t(bi("International Delivery & Access", "சர்வதேச விநியோகம் & அனுமதி"))}
+                    </span>
+                    <span className="text-[0.65rem] text-[oklch(0.85_0.02_300)]">
+                      {getShippingEstimate(format.toLowerCase().includes("online")).daysText}
+                    </span>
+                  </div>
+                  <span className="font-semibold text-emerald-400">
+                    {getShippingEstimate(format.toLowerCase().includes("online")).feeFormatted}
+                  </span>
+                </div>
               </div>
 
               <div className="mt-4 flex items-baseline justify-between">
@@ -718,6 +801,35 @@ export function BuyPage() {
                   {formattedTotal}
                 </span>
               </div>
+
+              {/* Payment Gateway Currency Transparency Notice */}
+              {currency !== "INR" && (method === "upi" || method === "netbanking") ? (
+                <div className="mt-3 rounded-lg bg-amber-500/15 border border-amber-500/40 p-2.5 text-xs text-amber-200">
+                  <p className="font-semibold text-amber-300 text-[0.72rem]">
+                    ⚠️ {t(bi("Domestic Gateway Notice", "உள்நாட்டு கட்டண அறிவிப்பு"))}
+                  </p>
+                  <p className="mt-1 text-[0.68rem] leading-relaxed">
+                    {t(
+                      bi(
+                        `UPI and Net Banking only support Indian Rupee (INR ₹) settlements. Your order will be settled as ${formattedInrTotal}. To pay directly in your local currency ${currency} (${formattedTotal}), please choose Credit / Debit Card.`,
+                        `UPI மற்றும் நெட் பேங்கிங் இந்திய ரூபாய் (INR ₹) வழியாக மட்டுமே செயல்படும். உங்கள் கட்டணம் ${formattedInrTotal} ஆக வசூலிக்கப்படும். உங்கள் உள்ளூர் நாணயமான ${currency} (${formattedTotal}) இல் செலுத்த கிரெடிட் / டெபிட் கார்டைத் தேர்ந்தெடுக்கவும்.`
+                      )
+                    )}
+                  </p>
+                </div>
+              ) : currency !== "INR" ? (
+                <div className="mt-3 rounded-lg bg-emerald-500/15 border border-emerald-500/30 p-2.5 text-xs text-emerald-200">
+                  <p className="text-[0.68rem] leading-relaxed flex items-center gap-1.5 font-medium">
+                    <span className="text-emerald-400 font-bold">✓</span>
+                    {t(
+                      bi(
+                        `Your card will be charged directly in ${currency} (${formattedTotal}). No foreign exchange markups.`,
+                        `உங்கள் கார்டில் நேரடியாக ${currency} (${formattedTotal}) கட்டணம் வசூலிக்கப்படும்.`
+                      )
+                    )}
+                  </p>
+                </div>
+              ) : null}
 
               {error && (
                 <div className="mt-4 rounded-md bg-destructive/20 p-3 text-xs text-destructive-foreground border border-destructive/40">
@@ -753,7 +865,12 @@ export function BuyPage() {
                   >
                     {busy
                       ? t(bi("Processing...", "செயல்படுகிறது..."))
-                      : t(bi(`Pay ${formattedTotal} via ${method === "upi" ? "UPI / GPay" : "Net Banking"}`, `${formattedTotal} ${method === "upi" ? "UPI / GPay" : "Net Banking"} மூலம் செலுத்துங்கள்`))}
+                      : t(
+                          bi(
+                            `Pay ${currency === "INR" ? formattedTotal : formattedInrTotal} via ${method === "upi" ? "UPI / GPay" : "Net Banking"}${currency !== "INR" ? " (INR)" : ""}`,
+                            `${currency === "INR" ? formattedTotal : formattedInrTotal} ${method === "upi" ? "UPI / GPay" : "Net Banking"} மூலம் செலுத்துங்கள்`
+                          )
+                        )}
                   </button>
                 )}
               </div>

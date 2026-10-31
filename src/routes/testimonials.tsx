@@ -34,24 +34,26 @@ function TestimonialsPage() {
         )}
       />
 
-      <Section>
+      <Section className="!pt-4 sm:!pt-6 lg:!pt-8 !pb-12 sm:!pb-16">
         {testimonials.length === 0 ? (
-          <p className="measure text-muted-foreground">
-            {t(
-              bi(
-                "We are collecting written experiences from students who have completed initiation. If you have practised with us and would like to share your experience, write to us and we will publish it here with your consent.",
-                "தீட்சை பெற்ற மாணவர்களிடமிருந்து அனுபவப் பகிர்வுகளைச் சேகரித்து வருகிறோம். எங்களுடன் பயிற்சி செய்திருந்தால், உங்கள் அனுபவத்தை எங்களுக்கு எழுதுங்கள்; உங்கள் அனுமதியுடன் இங்கே வெளியிடுவோம்.",
-              ),
-            )}
-          </p>
+          <div className="rounded-2xl border border-border/80 bg-card/60 p-6 sm:p-8 max-w-3xl">
+            <p className="measure text-sm sm:text-base text-muted-foreground leading-relaxed">
+              {t(
+                bi(
+                  "We are collecting written experiences from students who have completed initiation. If you have practised with us and would like to share your experience, write to us and we will publish it here with your consent.",
+                  "தீட்சை பெற்ற மாணவர்களிடமிருந்து அனுபவப் பகிர்வுகளைச் சேகரித்து வருகிறோம். எங்களுடன் பயிற்சி செய்திருந்தால், உங்கள் அனுபவத்தை எங்களுக்கு எழுதுங்கள்; உங்கள் அனுமதியுடன் இங்கே வெளியிடுவோம்.",
+                ),
+              )}
+            </p>
+          </div>
         ) : (
-          <div className="space-y-20">
+          <div className="space-y-8 sm:space-y-10">
             {testimonials.map((item, i) => (
-              <figure key={i} className="border-t border-border pt-10">
-                <blockquote className="measure font-serif text-[clamp(1.5rem,3vw,2.4rem)] leading-snug">
+              <figure key={i} className="border-t border-border pt-6 sm:pt-8 first:border-t-0 first:pt-0">
+                <blockquote className="measure font-serif text-[clamp(1.3rem,2.5vw,2rem)] leading-snug">
                   “{t(item.text)}”
                 </blockquote>
-                <figcaption className="mt-8 text-xs tracking-widest text-muted-foreground uppercase">
+                <figcaption className="mt-4 text-xs tracking-widest text-muted-foreground uppercase">
                   {t(item.name)} · {t(item.program)}
                 </figcaption>
               </figure>

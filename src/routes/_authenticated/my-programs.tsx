@@ -4,12 +4,13 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { PageHero, Section, Eyebrow } from "@/components/Primitives";
 import { getMyPrograms, linkMyPurchases, type StudentProgram } from "@/lib/student.functions";
-import { useAuth } from "@/lib/auth-store";
+import { useAuth, getStoredUser } from "@/lib/auth-store";
 import { bi, useLang } from "@/lib/i18n";
 import { useEnrollments } from "@/lib/enrollment-store";
 import { getStoredOrders } from "@/lib/orders-api";
-import { BookOpen, Video, FileText, ArrowRight, MessageSquare, Send, CheckCircle2 } from "lucide-react";
+import { BookOpen, Video, FileText, ArrowRight, MessageSquare, Send, CheckCircle2, MapPin } from "lucide-react";
 import { fetchUserEnquiries, subscribeToEnquiries, type EnquiryItem } from "@/lib/enquiries-api";
+import { useGeo } from "@/lib/geo-context";
 
 export const Route = createFileRoute("/_authenticated/my-programs")({
   staticData: { sitemap: false },
@@ -35,16 +36,19 @@ function MyProgramsPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { user, isAuthenticated, logout } = useAuth();
-  const { enrolledPrograms, loading: enrollmentsLoading } = useEnrollments(user?.id, user?.email);
+  const effectiveUser = user || (typeof window !== "undefined" ? getStoredUser() : null);
+  const effectiveAuth = isAuthenticated || Boolean(effectiveUser);
+  const { countryName, countryCode, flag } = useGeo();
+  const { enrolledPrograms, loading: enrollmentsLoading } = useEnrollments(effectiveUser?.id, effectiveUser?.email);
   const [userMessages, setUserMessages] = useState<EnquiryItem[]>([]);
   const fetchPrograms = useServerFn(getMyPrograms);
   const linkFn = useServerFn(linkMyPurchases);
 
   useEffect(() => {
-    if (!isAuthenticated || !user) {
+    if (!effectiveAuth || !effectiveUser) {
       navigate({ to: "/auth", search: { redirect: "/my-programs" }, replace: true });
     }
-  }, [isAuthenticated, user, navigate]);
+  }, [effectiveAuth, effectiveUser, navigate]);
 
   useEffect(() => {
     if (!user?.email) return;
@@ -159,6 +163,21 @@ function MyProgramsPage() {
       />
 
       <Section>
+        {/* Verified Seeker Location Pill */}
+        <div className="mb-6 flex flex-wrap items-center gap-2">
+          <div className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/10 px-3.5 py-1 text-xs text-gold font-medium">
+            <span className="size-1.5 rounded-full bg-gold animate-pulse" />
+            <span>{lang === "ta" ? `பயிற்சியாளர்: ${effectiveUser?.full_name || user?.full_name || "Seeker"}` : `Seeker: ${effectiveUser?.full_name || user?.full_name || "Seeker"}`}</span>
+          </div>
+          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/40 bg-emerald-950/15 dark:bg-emerald-950/40 px-3.5 py-1 text-xs text-emerald-700 dark:text-emerald-300 font-medium">
+            <span className="text-sm">{flag}</span>
+            <span className="font-semibold">{countryName} ({countryCode})</span>
+            <span className="text-[0.65rem] bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded-full font-mono font-bold">
+              ✓ {lang === "ta" ? "சரிபார்க்கப்பட்டது" : "Verified Location"}
+            </span>
+          </div>
+        </div>
+
         {/* Teacher Guidance / Direct Messages Alert Card */}
         {userMessages.length > 0 && (
           <div className="mb-10 rounded-2xl border border-emerald-300/80 bg-gradient-to-r from-emerald-50 via-white to-teal-50/60 p-5 sm:p-6 shadow-xs animate-fade-in">

@@ -7,13 +7,17 @@ import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { bi, useLang, type Bi } from "@/lib/i18n";
 import { programMessage } from "@/lib/whatsapp";
 import { Search, IndianRupee, DollarSign } from "lucide-react";
-import { fetchAllPrograms, type ProgramItem } from "@/lib/programs-api";
+import { fetchAllPrograms, getLocalPrograms, type ProgramItem } from "@/lib/programs-api";
 import { listPublicPrograms } from "@/lib/programs.functions";
 import { ProgramCard } from "@/components/ProgramCard";
 
 export const Route = createFileRoute("/programs/")({
   staticData: { sitemap: true },
   loader: async () => {
+    if (typeof window !== "undefined") {
+      const local = getLocalPrograms();
+      if (local && local.length > 0) return local;
+    }
     return await listPublicPrograms();
   },
   head: () => ({

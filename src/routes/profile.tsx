@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { useAuth } from "@/lib/auth-store";
+import { useAuth, getStoredUser } from "@/lib/auth-store";
 import { Section } from "@/components/Primitives";
 import { bi, useLang } from "@/lib/i18n";
 import {
@@ -14,11 +14,16 @@ import {
   ArrowRight,
   BookOpen,
   LogOut,
+  MapPin,
+  Clock,
+  Coins,
 } from "lucide-react";
 import { AccountNavTabs } from "@/components/AccountNavTabs";
+import { useGeo } from "@/lib/geo-context";
 
 export const Route = createFileRoute("/profile")({
   staticData: { sitemap: false },
+  ssr: false,
   head: () => ({
     meta: [
       { title: "Personal Details | THE KRIYA LAB" },
@@ -30,23 +35,29 @@ export const Route = createFileRoute("/profile")({
 
 export function ProfilePage() {
   const { user, isAuthenticated, logout } = useAuth();
-  const navigate = useNavigate();
-  const { t, lang } = useLang();
-  const ta = lang === "ta";
   const [mounted, setMounted] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    setCurrentUser(user || getStoredUser());
+  }, [user]);
+
+  const effectiveUser = currentUser || user || (typeof window !== "undefined" ? getStoredUser() : null);
+  const effectiveAuth = isAuthenticated || Boolean(effectiveUser);
+  const { countryName, countryCode, flag, currency, currencySymbol, timezone } = useGeo();
+  const navigate = useNavigate();
+  const { t, lang } = useLang();
+  const ta = lang === "ta";
 
   useEffect(() => {
     if (!mounted) return;
-    if (!isAuthenticated || !user) {
+    if (!effectiveAuth || !effectiveUser) {
       navigate({ to: "/auth", search: { redirect: "/profile" }, replace: true });
     }
-  }, [mounted, isAuthenticated, user, navigate]);
+  }, [mounted, effectiveAuth, effectiveUser, navigate]);
 
-  if (!isAuthenticated || !user) {
+  if (!mounted || !effectiveAuth || !effectiveUser) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <div className="text-center space-y-3">
@@ -94,11 +105,11 @@ export function ProfilePage() {
             {/* Main Avatar + Name Banner */}
             <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-gold/10 via-muted/40 to-muted/20 border border-gold/25 flex flex-col sm:flex-row items-center sm:items-start gap-5 text-center sm:text-left">
               <div className="size-24 rounded-full bg-gradient-to-br from-gold/40 via-gold/20 to-transparent border-3 border-gold/50 flex items-center justify-center overflow-hidden shrink-0 shadow-md">
-                {user.avatar ? (
-                  <img src={user.avatar} alt={user.full_name} className="w-full h-full object-cover" />
+                {effectiveUser.avatar ? (
+                  <img src={effectiveUser.avatar} alt={effectiveUser.full_name} className="w-full h-full object-cover" />
                 ) : (
                   <span className="text-gold font-bold text-3xl font-serif">
-                    {user.full_name?.charAt(0).toUpperCase() || "U"}
+                    {effectiveUser.full_name?.charAt(0).toUpperCase() || "U"}
                   </span>
                 )}
               </div>
@@ -109,18 +120,25 @@ export function ProfilePage() {
                     {t(bi("User Name", "பயனர் பெயர்"))}
                   </p>
                   <h3 className="font-serif text-2xl font-bold text-foreground leading-snug">
-                    {user.full_name || "Sadhaka"}
+                    {effectiveUser.full_name || "Sadhaka"}
                   </h3>
                 </div>
 
                 <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1">
                   <span className="inline-flex items-center gap-1 text-xs font-mono text-gold bg-gold/10 border border-gold/30 px-2.5 py-1 rounded-full">
                     <Mail className="size-3 text-gold" />
-                    {user.email}
+                    {effectiveUser.email}
                   </span>
                   <span className="inline-flex items-center gap-1 text-[0.68rem] text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-500/10 border border-emerald-500/25 px-2.5 py-1 rounded-full">
                     <CheckCircle2 className="size-3" />
                     {t(bi("Verified Email", "சரிபார்க்கப்பட்டது"))}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 text-[0.68rem] text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-500/10 border border-emerald-500/25 px-2.5 py-1 rounded-full">
+                    <span className="text-sm leading-none">{flag}</span>
+                    <span>{countryName} ({countryCode})</span>
+                    <span className="text-[0.62rem] bg-emerald-500/20 px-1.5 py-0.5 rounded-full font-mono font-bold">
+                      ✓ {ta ? "சரிபார்க்கப்பட்டது" : "Verified Location"}
+                    </span>
                   </span>
                 </div>
               </div>
@@ -132,14 +150,57 @@ export function ProfilePage() {
                 <p className="text-[0.7rem] uppercase font-bold text-muted-foreground tracking-wider">
                   {t(bi("Full Name", "முழு பெயர்"))}
                 </p>
-                <p className="text-sm font-semibold text-foreground truncate">{user.full_name || "-"}</p>
+                <p className="text-sm font-semibold text-foreground truncate">{effectiveUser.full_name || "-"}</p>
               </div>
 
               <div className="p-4 rounded-xl border border-border bg-background space-y-1">
                 <p className="text-[0.7rem] uppercase font-bold text-muted-foreground tracking-wider">
                   {t(bi("Gmail / Email Address", "ஜிமெயில் / மின்னஞ்சல் முகவரி"))}
                 </p>
-                <p className="text-sm font-mono text-foreground truncate">{user.email}</p>
+                <p className="text-sm font-mono text-foreground truncate">{effectiveUser.email}</p>
+              </div>
+
+              <div className="p-4 rounded-xl border border-border bg-background space-y-1">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <MapPin className="size-3.5 text-gold" />
+                    <p className="text-[0.7rem] uppercase font-bold text-muted-foreground tracking-wider">
+                      {t(bi("Country / Region", "நாடு / பிராந்தியம்"))}
+                    </p>
+                  </div>
+                  <span className="text-[0.65rem] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <CheckCircle2 className="size-2.5" />
+                    {ta ? "சரிபார்க்கப்பட்டது" : "Verified"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 pt-0.5">
+                  <span className="text-base">{flag}</span>
+                  <p className="text-sm font-semibold text-foreground">
+                    {countryName} ({countryCode})
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-xl border border-border bg-background space-y-1">
+                <div className="flex items-center gap-1.5">
+                  <Clock className="size-3.5 text-gold" />
+                  <p className="text-[0.7rem] uppercase font-bold text-muted-foreground tracking-wider">
+                    {t(bi("Local Timezone", "உள்ளூர் நேர மண்டலம்"))}
+                  </p>
+                </div>
+                <p className="text-sm font-semibold text-foreground truncate">{timezone}</p>
+              </div>
+
+              <div className="p-4 rounded-xl border border-border bg-background space-y-1">
+                <div className="flex items-center gap-1.5">
+                  <Coins className="size-3.5 text-gold" />
+                  <p className="text-[0.7rem] uppercase font-bold text-muted-foreground tracking-wider">
+                    {t(bi("Pricing Currency", "கட்டண நாணயம்"))}
+                  </p>
+                </div>
+                <p className="text-sm font-semibold text-foreground">
+                  {currencySymbol} {currency}
+                </p>
               </div>
 
               <div className="p-4 rounded-xl border border-border bg-background space-y-1">
@@ -224,8 +285,7 @@ export function ProfilePage() {
             <button
               type="button"
               onClick={() => {
-                logout();
-                navigate({ to: "/" });
+                logout("/auth?mode=signin");
               }}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 transition-all cursor-pointer"
             >

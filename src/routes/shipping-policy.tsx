@@ -33,8 +33,8 @@ export function ShippingPolicyPage() {
         )}
       />
 
-      <Section className="!py-12 sm:!py-16">
-        <div className="mx-auto max-w-4xl space-y-12">
+      <Section className="!pt-4 sm:!pt-6 !pb-10 sm:!pb-14">
+        <div className="mx-auto max-w-4xl space-y-6 sm:space-y-8">
           {/* Key Delivery Highlights */}
           <div className="grid sm:grid-cols-3 gap-6">
             <div className="rounded-2xl border border-border bg-card p-6 text-center space-y-3 shadow-xs">

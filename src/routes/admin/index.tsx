@@ -12,7 +12,6 @@ import {
   CheckCircle2,
   Clock,
   CreditCard,
-  MessageSquare,
   TrendingUp,
   RotateCcw,
 } from "lucide-react";
@@ -20,7 +19,6 @@ import {
 import { fetchAllEvents, type EventItem } from "@/lib/events-api";
 import { fetchAllUsers, type SeekerItem } from "@/lib/users-api";
 import { fetchAllOrders, type OrderItem } from "@/lib/orders-api";
-import { fetchAllEnquiries, type EnquiryItem } from "@/lib/enquiries-api";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/")({
@@ -33,7 +31,6 @@ function AdminDashboardPage() {
   const [events, setEvents] = useState<EventItem[]>([]);
   const [users, setUsers] = useState<SeekerItem[]>([]);
   const [orders, setOrders] = useState<OrderItem[]>([]);
-  const [enquiries, setEnquiries] = useState<EnquiryItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -41,12 +38,10 @@ function AdminDashboardPage() {
       fetchAllEvents(),
       fetchAllUsers(),
       fetchAllOrders(),
-      fetchAllEnquiries(),
-    ]).then(([eventsData, usersData, ordersData, enquiriesData]) => {
+    ]).then(([eventsData, usersData, ordersData]) => {
       setEvents(eventsData);
       setUsers(usersData);
       setOrders(ordersData);
-      setEnquiries(enquiriesData);
       setLoading(false);
     });
   }, []);
@@ -58,14 +53,14 @@ function AdminDashboardPage() {
 
   const stats = [
     {
-      title: "TOTAL SEEKER ENQUIRIES",
-      value: String(enquiries.length || 0),
-      change: "+100%",
-      subText: "active inquiries",
-      icon: MessageSquare,
+      title: "TOTAL ORDERS",
+      value: String(orders.length || 0),
+      change: "Active",
+      subText: "all transactions",
+      icon: CreditCard,
       iconColor: "text-[#334d84]",
       iconBg: "bg-[#334d84]/10",
-      href: "/admin/enquiries",
+      href: "/admin/orders",
     },
     {
       title: "INITIATED STUDENTS",
@@ -92,7 +87,7 @@ function AdminDashboardPage() {
       value: `₹${totalRevenue.toLocaleString("en-IN")}`,
       change: "Verified",
       subText: "all-time sales",
-      icon: CreditCard,
+      icon: TrendingUp,
       iconColor: "text-[#299cdb]",
       iconBg: "bg-[#299cdb]/10",
       href: "/admin/orders",
@@ -162,18 +157,18 @@ function AdminDashboardPage() {
 
         {/* Quick Actions & Recent Activity Grid */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          {/* Recent Seeker Enquiries Table (2 Cols) */}
+          {/* Recent Orders Table (2 Cols) */}
           <div className="lg:col-span-2 rounded-xl border border-gray-200/80 bg-white shadow-xs overflow-hidden">
             <div className="flex items-center justify-between border-b border-gray-100 p-5">
               <div>
-                <h3 className="text-sm font-bold text-gray-900">Recent Seeker Enquiries</h3>
-                <p className="text-xs text-gray-500">Latest questions & consultation requests</p>
+                <h3 className="text-sm font-bold text-gray-900">Recent Orders</h3>
+                <p className="text-xs text-gray-500">Latest seeker program enrolments & purchases</p>
               </div>
               <Link
-                to="/admin/enquiries"
+                to="/admin/orders"
                 className="inline-flex items-center gap-1 text-xs font-semibold text-[#334d84] hover:underline"
               >
-                <span>View All Enquiries</span>
+                <span>View All Orders</span>
                 <ArrowUpRight className="size-3.5" />
               </Link>
             </div>
@@ -183,59 +178,60 @@ function AdminDashboardPage() {
                   <tr className="border-b border-gray-100 bg-[#f8f9fa] text-[0.72rem] font-semibold text-gray-600 uppercase tracking-wider">
                     <th className="p-3.5 pl-5">Date</th>
                     <th className="p-3.5">Seeker Name</th>
-                    <th className="p-3.5">Subject & Query</th>
                     <th className="p-3.5">Program</th>
+                    <th className="p-3.5">Amount</th>
                     <th className="p-3.5">Status</th>
                     <th className="p-3.5 pr-5 text-right">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 font-normal">
-                  {enquiries.length === 0 ? (
+                  {orders.length === 0 ? (
                     <tr>
                       <td colSpan={6} className="p-8 text-center text-gray-400">
-                        No recent enquiries found.
+                        No recent orders found.
                       </td>
                     </tr>
-                  ) : enquiries.slice(0, 5).map((item) => (
-                    <tr key={item.id} className="hover:bg-gray-50/80 transition-colors">
-                      <td className="p-3.5 pl-5 text-gray-500 whitespace-nowrap">
-                        {new Date(item.createdAt).toLocaleDateString()}
-                      </td>
-                      <td className="p-3.5">
-                        <p className="font-semibold text-gray-900">{item.name}</p>
-                        <p className="text-[0.68rem] text-gray-400">{item.email}</p>
-                      </td>
-                      <td className="p-3.5 max-w-[200px]">
-                        <p className="font-semibold text-gray-800 truncate">{item.subject}</p>
-                        <p className="text-[0.68rem] text-gray-400 line-clamp-1">{item.message}</p>
-                      </td>
-                      <td className="p-3.5 text-gray-700 whitespace-nowrap">
-                        <span className="bg-gray-100 px-2 py-0.5 rounded text-[0.68rem]">
-                          {item.programInterested || "General"}
-                        </span>
-                      </td>
-                      <td className="p-3.5">
-                        <span
-                          className={cn(
-                            "inline-flex items-center rounded-md px-2 py-0.5 text-[0.7rem] font-medium",
-                            item.status === "Resolved" && "bg-[#0ab39c]/10 text-[#0ab39c]",
-                            item.status === "In Progress" && "bg-[#f7b84b]/15 text-[#b7791f]",
-                            item.status === "New" && "bg-blue-50 text-blue-600",
-                          )}
-                        >
-                          {item.status}
-                        </span>
-                      </td>
-                      <td className="p-3.5 pr-5 text-right">
-                        <Link
-                          to="/admin/enquiries"
-                          className="text-xs font-semibold text-[#334d84] hover:text-[#2b4273]"
-                        >
-                          Open
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
+                  ) : (
+                    orders.slice(0, 5).map((item) => (
+                      <tr key={item.id} className="hover:bg-gray-50/80 transition-colors">
+                        <td className="p-3.5 pl-5 text-gray-500 whitespace-nowrap">
+                          {new Date(item.createdAt).toLocaleDateString()}
+                        </td>
+                        <td className="p-3.5">
+                          <p className="font-semibold text-gray-900">{item.customerName}</p>
+                          <p className="text-[0.68rem] text-gray-400">{item.customerEmail}</p>
+                        </td>
+                        <td className="p-3.5 max-w-[200px]">
+                          <p className="font-semibold text-gray-800 truncate">{item.programTitle}</p>
+                          <p className="text-[0.68rem] text-gray-400">{item.paymentMethod}</p>
+                        </td>
+                        <td className="p-3.5 text-gray-900 font-semibold whitespace-nowrap">
+                          ₹{item.amount.toLocaleString("en-IN")}
+                        </td>
+                        <td className="p-3.5">
+                          <span
+                            className={cn(
+                              "inline-flex items-center rounded-md px-2 py-0.5 text-[0.7rem] font-medium",
+                              item.status === "Completed" && "bg-emerald-50 text-emerald-700 font-semibold",
+                              item.status === "Pending" && "bg-amber-50 text-amber-700 font-semibold",
+                              item.status === "Refunded" && "bg-purple-50 text-purple-700 font-semibold",
+                              item.status === "Failed" && "bg-rose-50 text-rose-700 font-semibold"
+                            )}
+                          >
+                            {item.status}
+                          </span>
+                        </td>
+                        <td className="p-3.5 pr-5 text-right">
+                          <Link
+                            to="/admin/orders"
+                            className="text-xs font-semibold text-[#334d84] hover:text-[#2b4273]"
+                          >
+                            View
+                          </Link>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -254,7 +250,7 @@ function AdminDashboardPage() {
                     <CreditCard className="size-4" />
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-gray-800">Orders & Payments</p>
+                    <p className="text-xs font-semibold text-gray-800">All Orders</p>
                     <p className="text-[0.68rem] text-gray-400">{orders.length} transactions recorded</p>
                   </div>
                 </div>
@@ -262,16 +258,16 @@ function AdminDashboardPage() {
               </Link>
 
               <Link
-                to="/admin/refunds"
+                to="/admin/users"
                 className="flex items-center justify-between rounded-lg border border-gray-200 p-3 hover:bg-gray-50 hover:border-[#334d84]/40 transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <div className="rounded-md bg-purple-500/10 p-2 text-purple-600">
-                    <RotateCcw className="size-4" />
+                  <div className="rounded-md bg-[#334d84]/10 p-2 text-[#334d84]">
+                    <Users className="size-4" />
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-gray-800">Refund Requests</p>
-                    <p className="text-[0.68rem] text-gray-400">Cancellations & batch transfers</p>
+                    <p className="text-xs font-semibold text-gray-800">Seeker Management</p>
+                    <p className="text-[0.68rem] text-gray-400">{users.length} enrolled aspirants</p>
                   </div>
                 </div>
                 <ArrowUpRight className="size-4 text-gray-400" />

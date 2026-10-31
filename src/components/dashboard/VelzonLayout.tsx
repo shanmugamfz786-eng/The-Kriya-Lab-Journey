@@ -17,7 +17,6 @@ import {
   History,
   Sparkles,
   CreditCard,
-  MessageSquare,
   RotateCcw,
   Check,
   X,
@@ -27,9 +26,9 @@ import { cn } from "@/lib/utils";
 import {
   getStoredNotifications,
   markAllNotificationsRead,
+  markNotificationRead,
   type AdminNotification,
 } from "@/lib/notifications-store";
-import { getStoredEnquiries, subscribeToEnquiries } from "@/lib/enquiries-api";
 
 interface VelzonLayoutProps {
   children: ReactNode;
@@ -59,7 +58,6 @@ export function VelzonLayout({ children }: VelzonLayoutProps) {
   const [programsExpanded, setProgramsExpanded] = useState(false);
   const [notifications, setNotifications] = useState<AdminNotification[]>([]);
   const [liveToast, setLiveToast] = useState<AdminNotification | null>(null);
-  const [newEnquiriesCount, setNewEnquiriesCount] = useState<number>(0);
 
   useEffect(() => {
     if (pathname.startsWith("/admin/events")) {
@@ -72,7 +70,21 @@ export function VelzonLayout({ children }: VelzonLayoutProps) {
 
   const handleNotificationClick = (n: AdminNotification) => {
     setNotificationsOpen(false);
-    const [pathname, queryString] = n.link.split("?");
+    
+    // Mark clicked notification as read immediately
+    markNotificationRead(n.id);
+    setNotifications(getStoredNotifications());
+
+    // When clicking New Order -> show ALL new orders list
+    // When clicking Refund Request -> show ALL pending / refund requests list
+    let targetLink = "/admin/orders";
+    if (n.type === "refund" || n.title.toLowerCase().includes("refund") || (n.link && n.link.includes("refund"))) {
+      targetLink = "/admin/orders?filter=pending";
+    } else {
+      targetLink = "/admin/orders?filter=new";
+    }
+
+    const [targetPath, queryString] = targetLink.split("?");
     const searchParams = new URLSearchParams(queryString || "");
     const searchObj: Record<string, string> = {};
     searchParams.forEach((val, key) => {
@@ -80,7 +92,7 @@ export function VelzonLayout({ children }: VelzonLayoutProps) {
     });
 
     navigate({
-      to: (pathname || "/admin") as any,
+      to: (targetPath || "/admin/orders") as any,
       search: searchObj as any,
     });
   };
@@ -93,20 +105,6 @@ export function VelzonLayout({ children }: VelzonLayoutProps) {
     const handleUpdate = () => {
       setNotifications(getStoredNotifications());
     };
-
-    // Track unhandled New enquiries in real-time
-    const updateEnquiriesCount = () => {
-      try {
-        const all = getStoredEnquiries();
-        const unhandled = all.filter((e) => e.status === "New");
-        setNewEnquiriesCount(unhandled.length);
-      } catch {
-        setNewEnquiriesCount(0);
-      }
-    };
-
-    updateEnquiriesCount();
-    const unsubEnquiries = subscribeToEnquiries(updateEnquiriesCount);
 
     // Listen for real-time toast alerts
     const handleToast = (e: Event) => {
@@ -125,7 +123,6 @@ export function VelzonLayout({ children }: VelzonLayoutProps) {
     window.addEventListener("kriya_notifications_updated", handleUpdate);
     window.addEventListener("kriya_toast_alert", handleToast);
     return () => {
-      unsubEnquiries();
       window.removeEventListener("kriya_notifications_updated", handleUpdate);
       window.removeEventListener("kriya_toast_alert", handleToast);
     };
@@ -135,10 +132,14 @@ export function VelzonLayout({ children }: VelzonLayoutProps) {
     (n) => n.type !== "enquiry" && n.id !== "notif_2" && !n.title.toLowerCase().includes("inquir")
   );
 
+  const unreadOrdersCount = activeNotifications.filter(
+    (n) => (n.type === "order" || n.type === "refund") && !n.read
+  ).length;
+
   const navItems: NavItem[] = [
     { id: "dashboard", name: "Dashboard", icon: LayoutDashboard, href: "/admin" },
     { id: "users", name: "Users", icon: Users, href: "/admin/users" },
-    { id: "orders", name: "Orders & Payments", icon: CreditCard, href: "/admin/orders" },
+    { id: "orders", name: "All Orders", icon: CreditCard, href: "/admin/orders", badge: unreadOrdersCount },
     { 
       id: "programs", 
       name: "Programs", 
@@ -160,13 +161,6 @@ export function VelzonLayout({ children }: VelzonLayoutProps) {
         { name: "All Past Events", href: "/admin/events/past", icon: History },
         { name: "All Future Events", href: "/admin/events/future", icon: Sparkles },
       ],
-    },
-    {
-      id: "enquiries",
-      name: "Enquiries & Questions",
-      icon: MessageSquare,
-      href: "/admin/enquiries",
-      badge: newEnquiriesCount,
     },
     { id: "settings", name: "Settings", icon: Settings, href: "/admin/settings" },
   ];
@@ -381,8 +375,7 @@ export function VelzonLayout({ children }: VelzonLayoutProps) {
                       type="button"
                       onClick={() => {
                         setUserDropdownOpen(false);
-                        logout();
-                        window.location.href = "/";
+                        logout("/auth?mode=signin");
                       }}
                       className="flex w-full items-center gap-2.5 px-4 py-2 text-xs text-rose-600 hover:bg-rose-50 transition-colors font-medium cursor-pointer"
                     >
@@ -557,7 +550,12 @@ export function VelzonLayout({ children }: VelzonLayoutProps) {
                           )}
                         />
                         {!sidebarOpen && (item.badge ?? 0) > 0 && (
-                          <span className="absolute -top-1 -right-1 size-2 rounded-full bg-rose-500 ring-2 ring-[#405189] animate-pulse" />
+                          <span
+                            className={cn(
+                              "absolute -top-1 -right-1 size-2 rounded-full ring-2 ring-[#405189] animate-pulse",
+                              item.id === "orders" ? "bg-emerald-400" : "bg-rose-500"
+                            )}
+                          />
                         )}
                       </div>
                       {sidebarOpen && (
@@ -565,9 +563,14 @@ export function VelzonLayout({ children }: VelzonLayoutProps) {
                       )}
                     </div>
 
-                    {/* Live Unhandled Enquiries Badge */}
+                    {/* Live Badge for Orders / Enquiries */}
                     {sidebarOpen && (item.badge ?? 0) > 0 && (
-                      <span className="inline-flex items-center justify-center min-w-5 h-5 px-1.5 text-[11px] font-bold text-white bg-rose-500 rounded-full shadow-xs animate-pulse shrink-0 ml-2">
+                      <span
+                        className={cn(
+                          "inline-flex items-center justify-center min-w-5 h-5 px-1.5 text-[11px] font-bold text-white rounded-full shadow-xs animate-pulse shrink-0 ml-2",
+                          item.id === "orders" ? "bg-emerald-500" : "bg-rose-500"
+                        )}
+                      >
                         {item.badge}
                       </span>
                     )}
@@ -578,7 +581,12 @@ export function VelzonLayout({ children }: VelzonLayoutProps) {
                     <div className="absolute left-full top-1/2 -translate-y-1/2 ml-1 hidden rounded-md bg-[#405189] px-3 py-1.5 shadow-xl group-hover/navitem:flex items-center gap-2 z-50 border border-white/10 animate-in fade-in zoom-in-95 whitespace-nowrap">
                       <span className="text-[13px] font-medium text-white">{item.name}</span>
                       {(item.badge ?? 0) > 0 && (
-                        <span className="px-1.5 py-0.5 text-[10px] font-bold text-white bg-rose-500 rounded-full">
+                        <span
+                          className={cn(
+                            "px-1.5 py-0.5 text-[10px] font-bold text-white rounded-full",
+                            item.id === "orders" ? "bg-emerald-500" : "bg-rose-500"
+                          )}
+                        >
                           {item.badge}
                         </span>
                       )}
