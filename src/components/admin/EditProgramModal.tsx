@@ -260,10 +260,9 @@ export function EditProgramModal({ program, onClose, onUpdated }: EditProgramMod
                   </select>
                 </div>
                 <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider">Schedule *</label>
-                    <span className="text-[10px] text-gray-500 font-normal">Manual text or calendar</span>
-                  </div>
+                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                    Schedule *
+                  </label>
                   <div className="relative flex items-center">
                     <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400 pointer-events-none" />
                     <input
