@@ -174,37 +174,55 @@ function ProgramPage() {
       <Section className="!py-6 sm:!py-8">
         <div className="grid gap-7 lg:grid-cols-[1.25fr_0.75fr] items-start">
           <div className="space-y-5">
+            {/* Dedicated Program Description Card (Above Overview) */}
+            {activeDesc && (
+              <div className="rounded-2xl border border-border/80 bg-background/90 p-5 sm:p-7 shadow-xs">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3.5 mb-4 border-b border-border/60">
+                  <div className="flex items-center gap-2">
+                    <BookOpen className="size-4.5 text-gold" />
+                    <h2 className="font-serif text-lg sm:text-xl font-bold text-foreground">
+                      {t(bi("Program Description", "பயிற்சியின் விளக்கம்"))}
+                    </h2>
+                  </div>
+
+                  {hasBothDesc && (
+                    <div className="flex items-center rounded-full border border-border p-0.5 bg-muted/60 text-[0.68rem] font-bold self-start sm:self-auto">
+                      <button
+                        type="button"
+                        onClick={() => setViewDescTa(false)}
+                        className={cn(
+                          "px-2.5 py-0.5 rounded-full transition-all cursor-pointer",
+                          !viewDescTa ? "bg-gold text-velvet-deep shadow-xs font-bold" : "text-muted-foreground hover:text-foreground"
+                        )}
+                      >
+                        English
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setViewDescTa(true)}
+                        className={cn(
+                          "px-2.5 py-0.5 rounded-full transition-all cursor-pointer",
+                          viewDescTa ? "bg-gold text-velvet-deep shadow-xs font-bold" : "text-muted-foreground hover:text-foreground"
+                        )}
+                      >
+                        தமிழ்
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <div className="text-foreground/90 whitespace-pre-line leading-relaxed text-sm sm:text-[0.95rem] font-sans selection:bg-gold/20">
+                  {activeDesc}
+                </div>
+              </div>
+            )}
+
             {/* Specifications & Overview */}
             <div className="rounded-2xl border border-border/80 bg-background/90 p-5 sm:p-7 shadow-xs">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3.5 mb-4 border-b border-border/60">
+              <div className="pb-3.5 mb-4 border-b border-border/60">
                 <h3 className="text-xs sm:text-sm font-bold uppercase tracking-widest text-muted-foreground">
                   {t(bi("Program Overview & Specifications", "பயிற்சி விபரம் & அட்டவணை"))}
                 </h3>
-
-                {hasBothDesc && (
-                  <div className="flex items-center rounded-full border border-border p-0.5 bg-muted/60 text-[0.68rem] font-bold self-start sm:self-auto">
-                    <button
-                      type="button"
-                      onClick={() => setViewDescTa(false)}
-                      className={cn(
-                        "px-2.5 py-0.5 rounded-full transition-all cursor-pointer",
-                        !viewDescTa ? "bg-gold text-velvet-deep shadow-xs font-bold" : "text-muted-foreground hover:text-foreground"
-                      )}
-                    >
-                      English
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setViewDescTa(true)}
-                      className={cn(
-                        "px-2.5 py-0.5 rounded-full transition-all cursor-pointer",
-                        viewDescTa ? "bg-gold text-velvet-deep shadow-xs font-bold" : "text-muted-foreground hover:text-foreground"
-                      )}
-                    >
-                      தமிழ்
-                    </button>
-                  </div>
-                )}
               </div>
 
               <dl className="grid sm:grid-cols-2 gap-x-6 gap-y-3.5">
@@ -221,22 +239,6 @@ function ProgramPage() {
                 })}
               </dl>
             </div>
-
-            {/* Dedicated Program Description Card (Below Overview) */}
-            {activeDesc && (
-              <div className="rounded-2xl border border-border/80 bg-background/90 p-5 sm:p-7 shadow-xs">
-                <div className="flex items-center gap-2 pb-3.5 mb-4 border-b border-border/60">
-                  <BookOpen className="size-4.5 text-gold" />
-                  <h2 className="font-serif text-lg sm:text-xl font-bold text-foreground">
-                    {t(bi("Program Description", "பயிற்சியின் விளக்கம்"))}
-                  </h2>
-                </div>
-
-                <div className="text-foreground/90 whitespace-pre-line leading-relaxed text-sm sm:text-[0.95rem] font-sans selection:bg-gold/20">
-                  {activeDesc}
-                </div>
-              </div>
-            )}
           </div>
 
           <aside className="rounded-2xl bg-muted overflow-hidden lg:sticky lg:top-24 border border-border/60 shadow-xs">
