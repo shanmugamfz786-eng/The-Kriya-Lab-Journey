@@ -84,15 +84,16 @@ function ProgramPage() {
     setViewDescTa(lang === "ta");
   }, [lang]);
 
-  const title = (ta ? program.title_ta : program.title_en) || program.title_en || (program as any).title || "";
+  const activeTa = viewDescTa;
+  const title = (activeTa ? program.title_ta : program.title_en) || program.title_en || (program as any).title || "";
   const descEn = program.description_en || (program as any).description || "";
   const descTa = program.description_ta || "";
-  const hasBothDesc = Boolean(descEn && descTa && descEn.trim() !== descTa.trim());
-  const activeDesc = (viewDescTa ? (descTa || descEn) : (descEn || descTa)) || descEn || descTa || (program as any).description || "";
+  const hasBothDesc = Boolean((descEn && descTa && descEn.trim() !== descTa.trim()) || (program.title_en && program.title_ta));
+  const activeDesc = (activeTa ? (descTa || descEn) : (descEn || descTa)) || descEn || descTa || (program as any).description || "";
 
-  const instructor = (ta ? program.instructor_ta : program.instructor_en) || program.instructor_en;
-  const location = (ta ? program.location_ta : program.location_en) || program.location_en;
-  const language = (ta ? program.language_ta : program.language_en) || program.language_en;
+  const instructor = (activeTa ? program.instructor_ta : program.instructor_en) || program.instructor_en;
+  const location = (activeTa ? program.location_ta : program.location_en) || program.location_en;
+  const language = (activeTa ? program.language_ta : program.language_en) || program.language_en;
 
   // Formatted price strings
   const baseInr = Number(program.price_inr) || 0;
@@ -173,41 +174,62 @@ function ProgramPage() {
       <Section className="!py-6 sm:!py-8">
         <div className="grid gap-7 lg:grid-cols-[1.25fr_0.75fr] items-start">
           <div className="space-y-5">
-            {/* Dedicated Program Description Card */}
+            {/* Specifications & Overview */}
+            <div className="rounded-2xl border border-border/80 bg-background/90 p-5 sm:p-7 shadow-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3.5 mb-4 border-b border-border/60">
+                <h3 className="text-xs sm:text-sm font-bold uppercase tracking-widest text-muted-foreground">
+                  {t(bi("Program Overview & Specifications", "பயிற்சி விபரம் & அட்டவணை"))}
+                </h3>
+
+                {hasBothDesc && (
+                  <div className="flex items-center rounded-full border border-border p-0.5 bg-muted/60 text-[0.68rem] font-bold self-start sm:self-auto">
+                    <button
+                      type="button"
+                      onClick={() => setViewDescTa(false)}
+                      className={cn(
+                        "px-2.5 py-0.5 rounded-full transition-all cursor-pointer",
+                        !viewDescTa ? "bg-gold text-velvet-deep shadow-xs font-bold" : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      English
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setViewDescTa(true)}
+                      className={cn(
+                        "px-2.5 py-0.5 rounded-full transition-all cursor-pointer",
+                        viewDescTa ? "bg-gold text-velvet-deep shadow-xs font-bold" : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      தமிழ்
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <dl className="grid sm:grid-cols-2 gap-x-6 gap-y-3.5">
+                {rows.map(([k, v], i) => {
+                  if (!v) return null;
+                  return (
+                    <div key={i} className="flex flex-col border-b border-border/40 pb-2.5 last:border-b-0 sm:last:border-b">
+                      <dt className="text-[0.7rem] tracking-widest text-muted-foreground uppercase font-semibold">
+                        {t(k)}
+                      </dt>
+                      <dd className="mt-0.5 text-sm sm:text-[0.95rem] font-medium text-foreground">{v}</dd>
+                    </div>
+                  );
+                })}
+              </dl>
+            </div>
+
+            {/* Dedicated Program Description Card (Below Overview) */}
             {activeDesc && (
               <div className="rounded-2xl border border-border/80 bg-background/90 p-5 sm:p-7 shadow-xs">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3.5 mb-4 border-b border-border/60">
-                  <div className="flex items-center gap-2">
-                    <BookOpen className="size-4.5 text-gold" />
-                    <h2 className="font-serif text-lg sm:text-xl font-bold text-foreground">
-                      {t(bi("Program Description", "பயிற்சியின் விளக்கம்"))}
-                    </h2>
-                  </div>
-
-                  {hasBothDesc && (
-                    <div className="flex items-center rounded-full border border-border p-0.5 bg-muted/60 text-[0.68rem] font-bold self-start sm:self-auto">
-                      <button
-                        type="button"
-                        onClick={() => setViewDescTa(false)}
-                        className={cn(
-                          "px-2.5 py-0.5 rounded-full transition-all cursor-pointer",
-                          !viewDescTa ? "bg-gold text-velvet-deep shadow-xs font-bold" : "text-muted-foreground hover:text-foreground"
-                        )}
-                      >
-                        English
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setViewDescTa(true)}
-                        className={cn(
-                          "px-2.5 py-0.5 rounded-full transition-all cursor-pointer",
-                          viewDescTa ? "bg-gold text-velvet-deep shadow-xs font-bold" : "text-muted-foreground hover:text-foreground"
-                        )}
-                      >
-                        தமிழ்
-                      </button>
-                    </div>
-                  )}
+                <div className="flex items-center gap-2 pb-3.5 mb-4 border-b border-border/60">
+                  <BookOpen className="size-4.5 text-gold" />
+                  <h2 className="font-serif text-lg sm:text-xl font-bold text-foreground">
+                    {t(bi("Program Description", "பயிற்சியின் விளக்கம்"))}
+                  </h2>
                 </div>
 
                 <div className="text-foreground/90 whitespace-pre-line leading-relaxed text-sm sm:text-[0.95rem] font-sans selection:bg-gold/20">
@@ -215,24 +237,6 @@ function ProgramPage() {
                 </div>
               </div>
             )}
-
-            {/* Specifications & Overview */}
-            <div className="rounded-2xl border border-border/80 bg-background/90 p-5 sm:p-7 shadow-xs">
-              <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4">
-                {t(bi("Program Overview & Specifications", "பயிற்சி விபரம் & அட்டவணை"))}
-              </h3>
-              <dl className="grid sm:grid-cols-2 gap-x-6 gap-y-3.5">
-                {rows.map(([k, v], i) => {
-                  if (!v) return null;
-                  return (
-                    <div key={i} className="flex flex-col border-b border-border/40 pb-2.5 last:border-b-0 sm:last:border-b">
-                      <dt className="text-[0.7rem] tracking-widest text-muted-foreground uppercase font-semibold">{t(k)}</dt>
-                      <dd className="mt-0.5 text-sm sm:text-[0.95rem] font-medium text-foreground">{v}</dd>
-                    </div>
-                  );
-                })}
-              </dl>
-            </div>
           </div>
 
           <aside className="rounded-2xl bg-muted overflow-hidden lg:sticky lg:top-24 border border-border/60 shadow-xs">
