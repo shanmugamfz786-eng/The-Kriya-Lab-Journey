@@ -240,13 +240,69 @@ function ProgramPage() {
           </div>
 
           <aside className="rounded-2xl bg-muted overflow-hidden lg:sticky lg:top-24 border border-border/60 shadow-xs">
-            {program.image_url && (
+            {program.image_url ? (
               <div className="aspect-[4/3] w-full bg-border">
                 <img 
                   src={program.image_url} 
                   alt={title} 
                   className="w-full h-full object-cover"
                 />
+              </div>
+            ) : (
+              /* Fallback specification badge card when no image is uploaded */
+              <div className="w-full p-5 sm:p-6 bg-gradient-to-br from-[#1c1815] via-[#2a221a] to-[#1a1410] text-white border-b border-gold/30 relative overflow-hidden">
+                <div className="pointer-events-none absolute -top-12 -right-12 w-40 h-40 bg-gold/10 rounded-full blur-2xl" />
+                <h4 className="text-xs uppercase tracking-widest text-gold font-bold mb-3">
+                  {ta ? "பயிற்சி விவரங்கள்" : "Program Specifications"}
+                </h4>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2.5 text-xs relative z-10">
+                  <div>
+                    <span className="block text-[0.65rem] uppercase tracking-wider text-gold/80 font-semibold">
+                      {ta ? "பயிற்சி வகை" : "Program Type"}
+                    </span>
+                    <span className="font-medium text-white capitalize">{program.program_type || "Online"}</span>
+                  </div>
+                  <div>
+                    <span className="block text-[0.65rem] uppercase tracking-wider text-gold/80 font-semibold">
+                      {ta ? "நிலை" : "Level"}
+                    </span>
+                    <span className="font-medium text-white capitalize">{program.level || "Beginner"}</span>
+                  </div>
+                  <div>
+                    <span className="block text-[0.65rem] uppercase tracking-wider text-gold/80 font-semibold">
+                      {ta ? "பதிவு நிலை" : "Enrolment Status"}
+                    </span>
+                    <span className="font-medium text-amber-300">{program.enrolment_status || "Open"}</span>
+                  </div>
+                  <div>
+                    <span className="block text-[0.65rem] uppercase tracking-wider text-gold/80 font-semibold">
+                      {ta ? "கால அளவு" : "Duration"}
+                    </span>
+                    <span className="font-medium text-white">{program.duration || "4 Weeks"}</span>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="block text-[0.65rem] uppercase tracking-wider text-gold/80 font-semibold">
+                      {ta ? "அட்டவணை" : "Schedule"}
+                    </span>
+                    <span className="font-medium text-white">{program.schedule_date || "To be announced"}</span>
+                  </div>
+                  <div>
+                    <span className="block text-[0.65rem] uppercase tracking-wider text-gold/80 font-semibold">
+                      Price (INR)
+                    </span>
+                    <span className="font-bold text-gold">
+                      {program.price_inr ? `₹ ${Number(program.price_inr).toLocaleString("en-IN")}` : "Contact"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="block text-[0.65rem] uppercase tracking-wider text-gold/80 font-semibold">
+                      Price (USD)
+                    </span>
+                    <span className="font-bold text-gold">
+                      {program.price_usd ? `$ ${Number(program.price_usd).toLocaleString("en-US")}` : (program.price_inr ? `$ ${Math.round(Number(program.price_inr) / 84)}` : "Contact")}
+                    </span>
+                  </div>
+                </div>
               </div>
             )}
             <div className="p-5 sm:p-7">
