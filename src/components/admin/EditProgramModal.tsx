@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { X, Upload, Image as ImageIcon, Sparkles, Languages, Globe } from "lucide-react";
+import { X, Upload, Image as ImageIcon, Sparkles, Languages, Globe, Calendar } from "lucide-react";
 import { updateProgramApi, type ProgramItem } from "@/lib/programs-api";
 import { uploadEventImageApi } from "@/lib/events-api";
 import { showAlert } from "@/lib/alert";
@@ -87,6 +87,18 @@ export function EditProgramModal({ program, onClose, onUpdated }: EditProgramMod
 
     setIsSubmitting(true);
 
+    let formattedSchedule = formSchedule.trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(formattedSchedule)) {
+      const d = new Date(`${formattedSchedule}T00:00:00`);
+      if (!isNaN(d.getTime())) {
+        formattedSchedule = d.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        });
+      }
+    }
+
     const payload = {
       title_en: formTitle.trim(),
       description_en: formDescription.trim(),
@@ -100,7 +112,7 @@ export function EditProgramModal({ program, onClose, onUpdated }: EditProgramMod
       language_ta: formLanguageTa.trim(),
       level: formLevel,
       duration: formDuration.trim(),
-      schedule_date: formSchedule.trim(),
+      schedule_date: formattedSchedule,
       enrolment_status: formEnrolmentStatus,
       image_url: formImageUrl.trim(),
       program_type: formProgramType,
@@ -248,8 +260,44 @@ export function EditProgramModal({ program, onClose, onUpdated }: EditProgramMod
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">Schedule *</label>
-                  <input type="text" required value={formSchedule} onChange={(e) => setFormSchedule(e.target.value)} className="w-full rounded-xl border border-gray-300 bg-gray-50 px-3 py-2.5 text-sm text-gray-900 focus:border-[#334d84] focus:outline-none" />
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider">Schedule *</label>
+                    <span className="text-[10px] text-gray-500 font-normal">Manual text or calendar</span>
+                  </div>
+                  <div className="relative flex items-center">
+                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400 pointer-events-none" />
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Nov 15, 2026 or Every Sunday 7:00 AM"
+                      value={formSchedule}
+                      onChange={(e) => setFormSchedule(e.target.value)}
+                      className="w-full rounded-xl border border-gray-300 bg-gray-50 pl-9 pr-9 py-2.5 text-sm text-gray-900 focus:border-[#334d84] focus:bg-white focus:outline-none transition-colors"
+                    />
+                    <label
+                      title="Pick date from calendar"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 cursor-pointer p-1 text-gray-400 hover:text-[#334d84] transition-colors"
+                    >
+                      <input
+                        type="date"
+                        className="sr-only"
+                        onChange={(e) => {
+                          if (e.target.value) {
+                            const d = new Date(`${e.target.value}T00:00:00`);
+                            if (!isNaN(d.getTime())) {
+                              const formatted = d.toLocaleDateString("en-US", {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              });
+                              setFormSchedule(formatted);
+                            }
+                          }
+                        }}
+                      />
+                      <Calendar className="size-4" />
+                    </label>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">Duration *</label>

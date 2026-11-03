@@ -150,11 +150,11 @@ function AdminAddProgramPage() {
 
     setIsSubmitting(true);
 
-    let formattedDate = formSchedule;
-    if (formSchedule) {
-      const d = new Date(formSchedule);
+    let formattedDate = formSchedule.trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(formattedDate)) {
+      const d = new Date(`${formattedDate}T00:00:00`);
       if (!isNaN(d.getTime())) {
-        formattedDate = d.toLocaleString("en-US", { 
+        formattedDate = d.toLocaleDateString("en-US", { 
           month: "short", day: "numeric", year: "numeric"
         });
       }
@@ -481,17 +481,47 @@ function AdminAddProgramPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2">
-                  Schedule (Date) *
-                </label>
-                <div className="relative">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    Schedule *
+                  </label>
+                  <span className="text-[10px] text-gray-500 font-normal">
+                    Manual text or pick from calendar
+                  </span>
+                </div>
+                <div className="relative flex items-center">
+                  <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-gray-400 pointer-events-none" />
                   <input
-                    type="date"
+                    type="text"
                     required
+                    placeholder="e.g. Nov 15, 2026 or Every Sunday 7:00 AM"
                     value={formSchedule}
                     onChange={(e) => setFormSchedule(e.target.value)}
-                    className="w-full rounded-xl border border-gray-300 bg-[#f8f9fa] px-4 py-3 text-xs text-gray-900 focus:border-[#334d84] focus:bg-white focus:outline-none transition-colors"
+                    className="w-full rounded-xl border border-gray-300 bg-[#f8f9fa] pl-10 pr-10 py-3 text-xs text-gray-900 focus:border-[#334d84] focus:bg-white focus:outline-none transition-colors"
                   />
+                  <label
+                    title="Pick date from calendar"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer p-1 text-gray-400 hover:text-[#334d84] transition-colors"
+                  >
+                    <input
+                      type="date"
+                      className="sr-only"
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          const d = new Date(`${e.target.value}T00:00:00`);
+                          if (!isNaN(d.getTime())) {
+                            const formatted = d.toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            });
+                            setFormSchedule(formatted);
+                          }
+                        }
+                      }}
+                    />
+                    <Calendar className="size-4" />
+                  </label>
                 </div>
               </div>
 
