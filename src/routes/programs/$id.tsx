@@ -7,7 +7,6 @@ import { bi, useLang, type Bi } from "@/lib/i18n";
 import { ui } from "@/content/site";
 import { listPublicPrograms } from "@/lib/programs.functions";
 import { type ProgramItem, fetchAllPrograms, INITIAL_PROGRAMS, getLocalPrograms } from "@/lib/programs-api";
-import { ProgramCard } from "@/components/ProgramCard";
 import { CollectEnquiryModal } from "@/components/CollectEnquiryModal";
 import { useAuth } from "@/lib/auth-store";
 import { enrollProgram, useEnrollments } from "@/lib/enrollment-store";
@@ -77,10 +76,6 @@ function ProgramPage() {
 
   const { enrolledIds } = useEnrollments(user?.id);
   const isEnrolled = enrolledIds.includes(program.id);
-  
-  const recentPrograms = allPrograms
-    .filter(p => p.id !== program.id)
-    .slice(0, 5);
   
   const ta = lang === "ta";
   const [viewDescTa, setViewDescTa] = useState(ta);
@@ -360,30 +355,6 @@ function ProgramPage() {
         onClose={() => setCollectModalOpen(false)} 
         programName={`${title} [${activePriceDisplay}]`}
       />
-
-      {recentPrograms.length > 0 && (
-        <Section tone="muted" className="!py-8 sm:!py-12">
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="font-serif text-2xl sm:text-3xl">
-              {t(bi("Recent Programs", "சமீபத்திய பயிற்சிகள்"))}
-            </h2>
-            <Link
-              to="/programs"
-              className="text-sm font-semibold text-[#334d84] hover:text-[#253861] transition-colors"
-            >
-              {t(bi("View All", "அனைத்தையும் காண்க"))} &rarr;
-            </Link>
-          </div>
-          
-          <div className="flex overflow-x-auto gap-6 pb-6 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-gray-300">
-            {recentPrograms.map((p) => (
-              <div key={p.id} className="min-w-[280px] sm:min-w-[320px] max-w-[320px] snap-start shrink-0">
-                <ProgramCard program={p} lang={lang} />
-              </div>
-            ))}
-          </div>
-        </Section>
-      )}
     </>
   );
 }
