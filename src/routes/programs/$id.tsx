@@ -328,14 +328,14 @@ function ProgramPage() {
                       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                       </svg>
-                      {t(bi("Already Collected", "ஏற்கனவே சேர்க்கப்பட்டது"))}
+                      {t(bi("Already Enrolled", "ஏற்கனவே பதிவு செய்யப்பட்டது"))}
                     </div>
                     <Link
                       to="/enroll"
                       search={{ program: String(program.id), currency }}
                       className="rounded-full border border-border bg-background px-5 py-2 text-center text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors flex items-center justify-center gap-1.5"
                     >
-                      {t(bi("Buy Again", "மீண்டும் வாங்கவும்"))} &rarr;
+                      {t(bi("Enroll Again", "மீண்டும் பதிவு செய்யவும்"))} &rarr;
                     </Link>
                   </div>
                 ) : (
@@ -344,7 +344,7 @@ function ProgramPage() {
                     search={{ program: String(program.id), currency }}
                     className="rounded-full bg-velvet px-5 py-2.5 text-center text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary shadow-xs cursor-pointer flex items-center justify-center gap-2"
                   >
-                    <span>{t(bi("Buy", "வாங்க"))}</span>
+                    <span>{t(bi("Enroll", "பதிவு செய்க"))}</span>
                     <span aria-hidden="true">&rarr;</span>
                   </Link>
                 )}

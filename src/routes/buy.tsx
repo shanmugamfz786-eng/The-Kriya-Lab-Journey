@@ -35,14 +35,14 @@ export const Route = createFileRoute("/buy")({
   }),
   head: () => ({
     meta: [
-      { title: "Buy a Program | THE KRIYA LAB" },
+      { title: "Enroll in a Program | THE KRIYA LAB" },
       {
         name: "description",
         content:
-          "Purchase a Kriya Yoga initiation program online — secure card and Razorpay payment options.",
+          "Enroll in a Kriya Yoga initiation program online — secure card and Razorpay payment options.",
       },
-      { property: "og:title", content: "Buy a Program — THE KRIYA LAB" },
-      { property: "og:description", content: "Purchase a Kriya Yoga initiation program online." },
+      { property: "og:title", content: "Enroll in a Program — THE KRIYA LAB" },
+      { property: "og:description", content: "Enroll in a Kriya Yoga initiation program online." },
     ],
   }),
   component: BuyPage,
@@ -394,7 +394,7 @@ export function BuyPage() {
           </p>
 
           <h1 className="mt-1.5 max-w-4xl font-serif text-[clamp(1.85rem,4vw,2.75rem)] font-bold leading-tight text-foreground">
-            {t(bi("Buy a Program", "நிகழ்ச்சியை வாங்குங்கள்"))}
+            {t(bi("Enroll in a Program", "பயிற்சியில் பதிவு செய்யுங்கள்"))}
           </h1>
 
           <p className="mt-2 text-sm sm:text-base text-muted-foreground max-w-2xl leading-relaxed">

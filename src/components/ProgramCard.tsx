@@ -30,7 +30,7 @@ export function ProgramCard({ program: p, lang }: { program: ProgramItem; lang: 
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
               </svg>
-              {ta ? "சேர்க்கப்பட்டது" : "Collected"}
+              {ta ? "பதிவு செய்யப்பட்டது" : "Enrolled"}
             </div>
           )}
         </div>

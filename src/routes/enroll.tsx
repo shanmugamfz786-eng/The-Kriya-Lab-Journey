@@ -15,14 +15,14 @@ export const Route = createFileRoute("/enroll")({
   }),
   head: () => ({
     meta: [
-      { title: "Buy a Program | THE KRIYA LAB" },
+      { title: "Enroll in a Program | THE KRIYA LAB" },
       {
         name: "description",
         content:
-          "Purchase a Kriya Yoga initiation program online — secure card and Razorpay payment options.",
+          "Enroll in a Kriya Yoga initiation program online — secure card and Razorpay payment options.",
       },
-      { property: "og:title", content: "Buy a Program — THE KRIYA LAB" },
-      { property: "og:description", content: "Purchase a Kriya Yoga initiation program online." },
+      { property: "og:title", content: "Enroll in a Program — THE KRIYA LAB" },
+      { property: "og:description", content: "Enroll in a Kriya Yoga initiation program online." },
     ],
   }),
   component: BuyPage,
