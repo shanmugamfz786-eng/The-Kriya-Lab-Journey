@@ -17,11 +17,12 @@ export const Route = createFileRoute("/")({
   }),
   beforeLoad: ({ search }) => {
     if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("kriya_user");
+      const stored = getStoredUser();
       if (!stored) {
         throw redirect({
           to: "/auth",
           search: { mode: search.mode || "signin", redirect: search.redirect },
+          replace: true,
         });
       }
     }

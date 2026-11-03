@@ -1,9 +1,9 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, redirect } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { bi, useLang } from "@/lib/i18n";
 import { Mail, Lock, User, Eye, EyeOff, ShieldCheck, MapPin, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import authAvatar from "@/assets/images/auth-avatar.png";
-import { useAuth } from "@/lib/auth-store";
+import { useAuth, getStoredUser } from "@/lib/auth-store";
 import { showAlert } from "@/lib/alert";
 import { cn } from "@/lib/utils";
 import { useGeo } from "@/lib/geo-context";
@@ -15,6 +15,17 @@ export const Route = createFileRoute("/auth")({
     redirect: typeof search["redirect"] === "string" ? search["redirect"] : undefined,
     mode: search["mode"] === "signup" ? "signup" : search["mode"] === "signin" ? "signin" : undefined,
   }),
+  beforeLoad: ({ search }) => {
+    if (typeof window !== "undefined") {
+      const user = getStoredUser();
+      if (user?.id) {
+        throw redirect({
+          to: (search.redirect as any) || (user.role === "admin" ? "/admin" : "/"),
+          replace: true,
+        });
+      }
+    }
+  },
   head: () => ({
     meta: [
       { title: "Sign In / Sign Up | THE KRIYA LAB" },
@@ -109,16 +120,11 @@ export function AuthPage({
 
   useEffect(() => {
     if (isAuthenticated && user && !busy) {
-      if (redirectPath?.startsWith("/admin")) {
-        if (user.role === "admin") {
-          navigate({ to: "/admin", replace: true });
-        }
-        return;
-      }
-      if (user.role === "admin") {
-        window.location.href = "/admin";
+      const target = redirectPath || (user.role === "admin" ? "/admin" : "/");
+      if (typeof window !== "undefined") {
+        window.location.replace(target);
       } else {
-        window.location.href = redirectPath || "/";
+        navigate({ to: target as any, replace: true });
       }
     }
   }, [isAuthenticated, user, busy, navigate, redirectPath]);
@@ -395,12 +401,11 @@ export function AuthPage({
 
       if (mode === "signin") {
         const loggedUser = await login(email, password);
-        if (redirectPath) {
-          navigate({ to: redirectPath as any, replace: true });
-        } else if (loggedUser.role === "admin") {
-          navigate({ to: "/admin", replace: true });
+        const target = redirectPath || (loggedUser.role === "admin" ? "/admin" : "/");
+        if (typeof window !== "undefined") {
+          window.location.replace(target);
         } else {
-          navigate({ to: "/", replace: true });
+          navigate({ to: target as any, replace: true });
         }
       } else {
         if (!name.trim()) {
@@ -472,12 +477,11 @@ export function AuthPage({
           1500
         );
 
-        if (redirectPath) {
-          window.location.href = redirectPath;
-        } else if (registeredUser.role === "admin") {
-          window.location.href = "/admin";
+        const target = redirectPath || (registeredUser.role === "admin" ? "/admin" : "/");
+        if (typeof window !== "undefined") {
+          window.location.replace(target);
         } else {
-          window.location.href = "/";
+          navigate({ to: target as any, replace: true });
         }
       }
     } catch (err: any) {
