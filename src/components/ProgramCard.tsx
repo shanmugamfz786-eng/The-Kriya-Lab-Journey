@@ -19,101 +19,159 @@ export function ProgramCard({ program: p, lang }: { program: ProgramItem; lang: 
   const priceDisplay = baseInr ? formatPrice(baseInr, currency) : null;
   const isOffline = p.program_type === "offline";
 
-  return (
-    <article className="rounded-2xl border border-border overflow-hidden bg-background shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full group">
-      {p.image_url ? (
-        <div className="w-full h-48 sm:h-56 bg-gray-50 flex items-center justify-center overflow-hidden border-b border-border shrink-0 relative">
-          <img src={p.image_url} alt={title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-          
-          {isEnrolled && (
-            <div className="absolute top-3 right-3 bg-green-50 text-green-700 text-xs font-bold px-3 py-1.5 rounded-full border border-green-200 shadow-sm flex items-center gap-1.5 z-10 backdrop-blur-md">
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-              </svg>
-              {ta ? "பதிவு செய்யப்பட்டது" : "Enrolled"}
-            </div>
-          )}
-        </div>
-      ) : (
-        /* Fallback specification badge card when no image is uploaded */
-        <div className="w-full p-4 bg-gradient-to-br from-[#1c1815] via-[#2a221a] to-[#1a1410] text-white border-b border-gold/30 shrink-0 relative overflow-hidden flex flex-col justify-between">
-          <div className="pointer-events-none absolute -top-10 -right-10 w-32 h-32 bg-gold/10 rounded-full blur-xl" />
-          
-          {isEnrolled && (
-            <div className="absolute top-2.5 right-2.5 bg-green-500/20 text-emerald-300 text-[0.65rem] font-bold px-2.5 py-1 rounded-full border border-emerald-500/30 flex items-center gap-1 z-10 backdrop-blur-xs">
-              <svg className="w-3 h-3 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-              </svg>
-              {ta ? "பதிவு செய்யப்பட்டது" : "Enrolled"}
-            </div>
-          )}
+  if (!p.image_url) {
+    const formattedPrice =
+      p.price_inr !== undefined && p.price_inr !== null && p.price_inr !== ""
+        ? `₹${Number(p.price_inr).toFixed(2)}`
+        : (ta ? "விசாரிக்கவும்" : "Contact");
 
-          <div className="grid grid-cols-2 gap-x-3 gap-y-2 text-[0.72rem] relative z-10">
-            <div>
-              <span className="block text-[0.62rem] uppercase tracking-wider text-gold/80 font-semibold">
-                {ta ? "வகை" : "Program Type"}
-              </span>
-              <span className="font-medium text-white capitalize">
-                {p.program_type || "Online"}
-              </span>
-            </div>
+    const formatDisplay =
+      p.program_type === "offline"
+        ? (ta ? "நேரடி" : "In person")
+        : (ta ? "ஆன்லைன்" : "Online");
 
-            <div>
-              <span className="block text-[0.62rem] uppercase tracking-wider text-gold/80 font-semibold">
-                {ta ? "நிலை" : "Level"}
-              </span>
-              <span className="font-medium text-white capitalize">
-                {p.level || "All Levels"}
-              </span>
-            </div>
+    const locationDisplay =
+      (ta ? p.location_ta : p.location_en) ||
+      p.location_en ||
+      (p.program_type === "offline" ? (ta ? "ஆசிரமம்" : "Centre") : (ta ? "ஆன்லைன்" : "Online"));
 
-            <div>
-              <span className="block text-[0.62rem] uppercase tracking-wider text-gold/80 font-semibold">
-                {ta ? "பதிவு நிலை" : "Enrolment Status"}
-              </span>
-              <span className="font-medium text-amber-300">
-                {p.enrolment_status || "Open"}
-              </span>
-            </div>
+    const instructorDisplay =
+      (ta ? p.instructor_ta : p.instructor_en) ||
+      p.instructor_en ||
+      (ta ? "அறிவிக்கப்படும்" : "To be announced");
 
-            <div>
-              <span className="block text-[0.62rem] uppercase tracking-wider text-gold/80 font-semibold">
-                {ta ? "கால அளவு" : "Duration"}
-              </span>
-              <span className="font-medium text-white">
-                {p.duration || "4 Weeks"}
-              </span>
-            </div>
+    const durationDisplay =
+      p.duration || (ta ? "அறிவிக்கப்படும்" : "To be announced");
 
-            <div className="col-span-2">
-              <span className="block text-[0.62rem] uppercase tracking-wider text-gold/80 font-semibold">
-                {ta ? "அட்டவணை" : "Schedule"}
-              </span>
-              <span className="font-medium text-white line-clamp-1">
-                {p.schedule_date || "To be announced"}
-              </span>
-            </div>
+    const scheduleDisplay =
+      p.schedule_date || (ta ? "தேதிகள் அறிவிக்கப்படும்" : "Dates to be announced");
 
-            <div>
-              <span className="block text-[0.62rem] uppercase tracking-wider text-gold/80 font-semibold">
-                Price (INR)
-              </span>
-              <span className="font-bold text-gold">
-                {p.price_inr ? `₹ ${Number(p.price_inr).toLocaleString("en-IN")}` : "Contact"}
-              </span>
-            </div>
+    const enrolmentDisplay =
+      p.enrolment_status || (ta ? "விசாரிக்கவும்" : "Enquire");
 
-            <div>
-              <span className="block text-[0.62rem] uppercase tracking-wider text-gold/80 font-semibold">
-                Price (USD)
-              </span>
-              <span className="font-bold text-gold">
-                {p.price_usd ? `$ ${Number(p.price_usd).toLocaleString("en-US")}` : (p.price_inr ? `$ ${Math.round(Number(p.price_inr) / 84)}` : "Contact")}
-              </span>
-            </div>
+    return (
+      <article className="rounded-2xl border border-border overflow-hidden bg-background shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full group p-6 sm:p-7">
+        {isEnrolled && (
+          <div className="inline-flex items-center gap-1.5 self-start mb-3 bg-green-50 text-green-700 text-xs font-bold px-3 py-1 rounded-full border border-green-200 shadow-2xs">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+            </svg>
+            {ta ? "பதிவு செய்யப்பட்டது" : "Enrolled"}
+          </div>
+        )}
+
+        <h2 className="font-serif text-2xl sm:text-[1.65rem] font-normal leading-snug text-foreground group-hover:text-[#522938] transition-colors">
+          {title}
+        </h2>
+        
+        {description && (
+          <p className="mt-3 text-sm sm:text-[0.95rem] text-muted-foreground line-clamp-3 leading-relaxed font-normal">
+            {description}
+          </p>
+        )}
+
+        {/* 2-column specifications grid showing admin entered details */}
+        <div className="grid grid-cols-2 gap-x-8 gap-y-5 mt-6 pt-6 border-t border-border/40 text-xs">
+          <div>
+            <span className="block text-[0.72rem] tracking-wider uppercase font-semibold text-muted-foreground">
+              LEVEL
+            </span>
+            <span className="mt-1.5 block text-sm sm:text-[0.92rem] font-normal text-foreground capitalize">
+              {p.level || "Beginner"}
+            </span>
+          </div>
+
+          <div>
+            <span className="block text-[0.72rem] tracking-wider uppercase font-semibold text-muted-foreground">
+              DURATION
+            </span>
+            <span className="mt-1.5 block text-sm sm:text-[0.92rem] font-normal text-foreground">
+              {durationDisplay}
+            </span>
+          </div>
+
+          <div>
+            <span className="block text-[0.72rem] tracking-wider uppercase font-semibold text-muted-foreground">
+              FORMAT
+            </span>
+            <span className="mt-1.5 block text-sm sm:text-[0.92rem] font-normal text-foreground capitalize">
+              {formatDisplay}
+            </span>
+          </div>
+
+          <div>
+            <span className="block text-[0.72rem] tracking-wider uppercase font-semibold text-muted-foreground">
+              INSTRUCTOR
+            </span>
+            <span className="mt-1.5 block text-sm sm:text-[0.92rem] font-normal text-foreground">
+              {instructorDisplay}
+            </span>
+          </div>
+
+          <div>
+            <span className="block text-[0.72rem] tracking-wider uppercase font-semibold text-muted-foreground">
+              PRICE
+            </span>
+            <span className="mt-1.5 block text-sm sm:text-[0.92rem] font-normal text-foreground">
+              {formattedPrice}
+            </span>
+          </div>
+
+          <div>
+            <span className="block text-[0.72rem] tracking-wider uppercase font-semibold text-muted-foreground">
+              SCHEDULE
+            </span>
+            <span className="mt-1.5 block text-sm sm:text-[0.92rem] font-normal text-foreground">
+              {scheduleDisplay}
+            </span>
+          </div>
+
+          <div>
+            <span className="block text-[0.72rem] tracking-wider uppercase font-semibold text-muted-foreground">
+              LOCATION
+            </span>
+            <span className="mt-1.5 block text-sm sm:text-[0.92rem] font-normal text-foreground">
+              {locationDisplay}
+            </span>
+          </div>
+
+          <div>
+            <span className="block text-[0.72rem] tracking-wider uppercase font-semibold text-muted-foreground">
+              ENROLMENT STATUS
+            </span>
+            <span className="mt-1.5 block text-sm sm:text-[0.92rem] font-normal text-foreground capitalize">
+              {enrolmentDisplay}
+            </span>
           </div>
         </div>
-      )}
+
+        <div className="mt-auto pt-8">
+          <Link
+            to="/programs/$id"
+            params={{ id: String(p.id) }}
+            className="inline-flex w-full items-center justify-center rounded-full bg-[#334d84] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#253861] hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300"
+          >
+            {ta ? "மேலும் காண்க" : "View Details"}
+          </Link>
+        </div>
+      </article>
+    );
+  }
+
+  return (
+    <article className="rounded-2xl border border-border overflow-hidden bg-background shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full group">
+      <div className="w-full h-48 sm:h-56 bg-gray-50 flex items-center justify-center overflow-hidden border-b border-border shrink-0 relative">
+        <img src={p.image_url} alt={title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+        
+        {isEnrolled && (
+          <div className="absolute top-3 right-3 bg-green-50 text-green-700 text-xs font-bold px-3 py-1.5 rounded-full border border-green-200 shadow-sm flex items-center gap-1.5 z-10 backdrop-blur-md">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+            </svg>
+            {ta ? "பதிவு செய்யப்பட்டது" : "Enrolled"}
+          </div>
+        )}
+      </div>
       <div className="p-5 sm:p-6 flex flex-col flex-1">
         <h2 className="font-serif text-[1.15rem] sm:text-xl leading-snug text-gray-900 group-hover:text-[#522938] transition-colors line-clamp-2">{title}</h2>
         
