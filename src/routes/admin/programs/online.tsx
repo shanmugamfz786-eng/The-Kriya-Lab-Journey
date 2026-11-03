@@ -41,7 +41,9 @@ function AdminOnlineProgramsPage() {
     loadPrograms();
   }, []);
 
-  const onlinePrograms = programs.filter((p) => p.program_type === "online");
+  const onlinePrograms = programs.filter(
+    (p) => (p.program_type || "").trim().toLowerCase() === "online"
+  );
 
   const filtered = onlinePrograms.filter(
     (p) =>

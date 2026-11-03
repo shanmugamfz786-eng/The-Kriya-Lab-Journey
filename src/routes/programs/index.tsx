@@ -55,7 +55,8 @@ function ProgramsPage() {
   const rows = data ?? [];
 
   const filteredRows = rows.filter((p) => {
-    if (filter !== "all" && p.program_type !== filter) return false;
+    if (filter === "online" && (p.program_type || "").trim().toLowerCase() !== "online") return false;
+    if (filter === "offline" && (p.program_type || "").trim().toLowerCase() === "online") return false;
     
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();

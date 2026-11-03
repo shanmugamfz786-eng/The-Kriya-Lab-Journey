@@ -31,7 +31,7 @@ export function EditProgramModal({ program, onClose, onUpdated }: EditProgramMod
   const [formDuration, setFormDuration] = useState(program.duration || "");
   const [formSchedule, setFormSchedule] = useState(program.schedule_date || "");
   const [formEnrolmentStatus, setFormEnrolmentStatus] = useState(program.enrolment_status || "Enquire");
-  const [formProgramType, setFormProgramType] = useState<"online" | "offline">(program.program_type);
+  const [formProgramType, setFormProgramType] = useState<string>(program.program_type || "Online");
   const [formPriceInr, setFormPriceInr] = useState(program.price_inr || "");
   const [formPriceUsd, setFormPriceUsd] = useState(program.price_usd || "");
   const [formImageUrl, setFormImageUrl] = useState(program.image_url || "");
@@ -237,11 +237,26 @@ export function EditProgramModal({ program, onClose, onUpdated }: EditProgramMod
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">Program Type</label>
-                  <select value={formProgramType} onChange={(e) => setFormProgramType(e.target.value as "online" | "offline")} className="w-full rounded-xl border border-gray-300 bg-gray-50 px-3 py-2.5 text-sm text-gray-900 focus:border-[#334d84] focus:outline-none">
-                    <option value="online">Online Program</option>
-                    <option value="offline">Offline Program</option>
-                  </select>
+                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">Program Type *</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Online, Offline, Workshop, Retreat..."
+                      value={formProgramType}
+                      onChange={(e) => setFormProgramType(e.target.value)}
+                      list="edit-program-types-list"
+                      className="w-full rounded-xl border border-gray-300 bg-gray-50 px-3 py-2.5 text-sm text-gray-900 focus:border-[#334d84] focus:bg-white focus:outline-none transition-colors"
+                    />
+                    <datalist id="edit-program-types-list">
+                      <option value="Online" />
+                      <option value="Offline" />
+                      <option value="In Person" />
+                      <option value="Workshop" />
+                      <option value="Retreat" />
+                      <option value="Hybrid" />
+                    </datalist>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">Level</label>

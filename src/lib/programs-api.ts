@@ -15,7 +15,7 @@ export interface ProgramItem {
   schedule_date: string;
   enrolment_status: string; // enquire / almost full / full
   image_url: string;
-  program_type: "online" | "offline";
+  program_type: string;
   price_inr?: string;
   price_usd?: string;
   created_at?: string;

@@ -40,7 +40,9 @@ function AdminOfflineProgramsPage() {
     loadPrograms();
   }, []);
 
-  const offlinePrograms = programs.filter((p) => p.program_type === "offline");
+  const offlinePrograms = programs.filter(
+    (p) => (p.program_type || "").trim().toLowerCase() !== "online"
+  );
 
   const filtered = offlinePrograms.filter(
     (p) =>

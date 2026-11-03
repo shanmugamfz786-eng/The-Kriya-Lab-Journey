@@ -54,7 +54,7 @@ function AdminAddProgramPage() {
   const [formPriceInr, setFormPriceInr] = useState("");
   const [formPriceUsd, setFormPriceUsd] = useState("");
   const [formImageUrl, setFormImageUrl] = useState("");
-  const [formProgramType, setFormProgramType] = useState<"online" | "offline">("online");
+  const [formProgramType, setFormProgramType] = useState("Online");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
@@ -440,14 +440,25 @@ function AdminAddProgramPage() {
                 <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2">
                   Program Type *
                 </label>
-                <select
-                  value={formProgramType}
-                  onChange={(e) => setFormProgramType(e.target.value as "online" | "offline")}
-                  className="w-full rounded-xl border border-gray-300 bg-[#f8f9fa] px-4 py-3 text-xs text-gray-900 focus:border-[#334d84] focus:bg-white focus:outline-none transition-colors"
-                >
-                  <option value="online">Online Program</option>
-                  <option value="offline">Offline Program</option>
-                </select>
+                <div className="relative">
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Online, Offline, Workshop, Retreat..."
+                    value={formProgramType}
+                    onChange={(e) => setFormProgramType(e.target.value)}
+                    list="program-types-list"
+                    className="w-full rounded-xl border border-gray-300 bg-[#f8f9fa] px-4 py-3 text-xs text-gray-900 focus:border-[#334d84] focus:bg-white focus:outline-none transition-colors"
+                  />
+                  <datalist id="program-types-list">
+                    <option value="Online" />
+                    <option value="Offline" />
+                    <option value="In Person" />
+                    <option value="Workshop" />
+                    <option value="Retreat" />
+                    <option value="Hybrid" />
+                  </datalist>
+                </div>
               </div>
 
               <div>

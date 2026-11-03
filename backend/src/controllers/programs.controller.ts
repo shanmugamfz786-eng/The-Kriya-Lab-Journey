@@ -213,7 +213,7 @@ export async function createProgram(req, res) {
     }
 
     const programId = "prg_" + Date.now().toString(36) + "_" + Math.random().toString(36).substring(2, 6);
-    const type = program_type === "offline" ? "offline" : "online";
+    const type = program_type ? String(program_type).trim() : "Online";
 
     await db.query(
       `INSERT INTO programs (
@@ -264,7 +264,7 @@ export async function createProgram(req, res) {
       schedule_date: schedule_date || "",
       enrolment_status: enrolment_status || "Enquire",
       image_url: image_url || "",
-      program_type: program_type === "offline" ? "offline" : "online",
+      program_type: program_type ? String(program_type).trim() : "Online",
       price_inr: price_inr || "",
       price_usd: price_usd || "",
       created_at: new Date().toISOString(),

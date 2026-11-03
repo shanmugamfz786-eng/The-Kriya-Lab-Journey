@@ -140,7 +140,10 @@ export function BuyPage() {
     description: bi(dp.description_en, dp.description_ta || dp.description_en),
     level: bi(dp.level, dp.level),
     duration: bi(dp.duration || "4 Weeks", dp.duration || "4 வாரங்கள்"),
-    format: bi(dp.program_type === "offline" ? "In person" : "Online", dp.program_type === "offline" ? "நேரில்" : "ஆன்லைன்"),
+    format: bi(
+      (dp.program_type || "").toLowerCase() === "offline" ? "In person" : (dp.program_type || "Online"),
+      (dp.program_type || "").toLowerCase() === "offline" ? "நேரில்" : (dp.program_type || "ஆன்லைன்")
+    ),
     instructor: bi(dp.instructor_en, dp.instructor_ta || dp.instructor_en),
     price: bi(dp.price_inr ? `₹${Number(dp.price_inr).toLocaleString("en-IN")}` : "₹0.00", dp.price_inr ? `₹${Number(dp.price_inr).toLocaleString("en-IN")}` : "₹0.00"),
     schedule: bi(dp.schedule_date || "To be announced", dp.schedule_date || "அறிவிக்கப்படும்"),
@@ -149,7 +152,7 @@ export function BuyPage() {
     maxParticipants: 10,
     unitPriceInr: Number(dp.price_inr) || 0,
     unitPriceUsd: Number(dp.price_usd) || (Number(dp.price_inr) ? Math.round(Number(dp.price_inr) / 80) : 0),
-    tags: ["beginner", dp.program_type === "offline" ? "in-person" : "online", "english", "tamil"] as ("beginner" | "online" | "in-person" | "english" | "tamil")[],
+    tags: ["beginner", (dp.program_type || "").toLowerCase() === "offline" ? "in-person" : "online", "english", "tamil"] as ("beginner" | "online" | "in-person" | "english" | "tamil")[],
   }));
 
   const allAvailablePrograms = [...dynamicPrograms, ...programs];
