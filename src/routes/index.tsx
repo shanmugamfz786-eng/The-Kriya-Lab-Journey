@@ -7,11 +7,6 @@ import { CTARow, Eyebrow, Section } from "@/components/Primitives";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth, getStoredUser } from "@/lib/auth-store";
-import { useQuery } from "@tanstack/react-query";
-import { fetchAllPrograms } from "@/lib/programs-api";
-import { fetchAllEvents } from "@/lib/events-api";
-import { ProgramCard } from "@/components/ProgramCard";
-import { ArrowRight, Calendar, MapPin } from "lucide-react";
 import { AuthPage } from "./auth";
 
 export const Route = createFileRoute("/")({
@@ -58,18 +53,6 @@ function Index() {
   const search = Route.useSearch();
   const navigate = useNavigate();
 
-  const { data: programsData } = useQuery({
-    queryKey: ["programs"],
-    queryFn: () => fetchAllPrograms(),
-    enabled: effectiveAuth,
-  });
-  
-  const { data: eventsData } = useQuery({
-    queryKey: ["events"],
-    queryFn: () => fetchAllEvents(),
-    enabled: effectiveAuth,
-  });
-
   // If user is not authenticated, do not show home page; redirect to sign in page
   useEffect(() => {
     if (!effectiveAuth) {
@@ -81,8 +64,6 @@ function Index() {
     return <AuthPage initialMode={search.mode || "signin"} redirectPath={search.redirect} />;
   }
 
-  const topPrograms = (programsData || []).slice(0, 3);
-  const topEvents = (eventsData || []).slice(0, 3);
   const ta = lang === "ta";
 
   const displayName = effectiveUser?.full_name || (effectiveUser as any)?.username || (effectiveUser as any)?.name || effectiveUser?.email?.split("@")[0] || "Seeker";
@@ -253,92 +234,6 @@ function Index() {
           </div>
         </div>
       </Section>
-
-      {/* Featured Offerings & Gatherings */}
-      {(topPrograms.length > 0 || topEvents.length > 0) && (
-        <Section tone="muted">
-          <div className="space-y-14">
-            {topPrograms.length > 0 && (
-              <div>
-                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
-                  <div>
-                    <Eyebrow>{t(bi("Offerings", "பயிற்சிகள்"))}</Eyebrow>
-                    <h2 className="mt-2 text-2xl sm:text-3xl lg:text-4xl font-serif">
-                      {t(bi("Latest Programs", "புதிய பயிற்சிகள்"))}
-                    </h2>
-                  </div>
-                  <Link to="/programs" className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary/80 transition-colors">
-                    {t(bi("Explore All Programs", "அனைத்து பயிற்சிகளையும் காண்க"))}
-                    <ArrowRight className="w-4 h-4" />
-                  </Link>
-                </div>
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                  {topPrograms.map(p => (
-                    <ProgramCard key={p.id} program={p} lang={lang} />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {topEvents.length > 0 && (
-              <div className={topPrograms.length > 0 ? "pt-12 border-t border-border" : ""}>
-                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
-                  <div>
-                    <Eyebrow>{t(bi("Gatherings", "நிகழ்வுகள்"))}</Eyebrow>
-                    <h2 className="mt-2 text-2xl sm:text-3xl lg:text-4xl font-serif">
-                      {t(bi("Upcoming Events", "வரவிருக்கும் நிகழ்வுகள்"))}
-                    </h2>
-                  </div>
-                  <Link to="/events" className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary/80 transition-colors">
-                    {t(bi("Explore All Events", "அனைத்து நிகழ்வுகளையும் காண்க"))}
-                    <ArrowRight className="w-4 h-4" />
-                  </Link>
-                </div>
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                  {topEvents.map(e => {
-                    const eTitle = (ta ? e.title_ta : e.title) || e.title;
-                    const eLoc = (ta ? e.location_ta : e.location) || e.location;
-                    return (
-                      <article key={e.id} className="rounded-2xl border border-border overflow-hidden bg-background shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full group">
-                        {e.image_url && (
-                          <div className="w-full h-48 bg-gray-50 flex items-center justify-center overflow-hidden border-b border-border">
-                            <img src={e.image_url} alt={eTitle} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                          </div>
-                        )}
-                        <div className="p-6 flex flex-col flex-1">
-                          <h3 className="font-serif text-[1.15rem] sm:text-xl line-clamp-2">{eTitle}</h3>
-                          <div className="mt-3 space-y-1.5 text-xs text-muted-foreground flex-1">
-                            {e.event_date && (
-                              <div className="flex items-center gap-1.5">
-                                <Calendar className="w-3.5 h-3.5 shrink-0" />
-                                <span>{e.event_date}</span>
-                              </div>
-                            )}
-                            {eLoc && (
-                              <div className="flex items-center gap-1.5">
-                                <MapPin className="w-3.5 h-3.5 shrink-0" />
-                                <span className="line-clamp-1">{eLoc}</span>
-                              </div>
-                            )}
-                          </div>
-                          <div className="mt-6 pt-4">
-                            <Link
-                              to="/events"
-                              className="inline-flex w-full items-center justify-center rounded-full bg-[#522938] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#41212d] hover:shadow-lg transition-all"
-                            >
-                              {ta ? "மேலும் காண்க" : "View Event"}
-                            </Link>
-                          </div>
-                        </div>
-                      </article>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
-        </Section>
-      )}
 
       {/* Invitation */}
       <Section tone="velvet">
